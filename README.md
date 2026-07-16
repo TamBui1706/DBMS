@@ -1,6 +1,6 @@
 # DBMS Architecture Design
 
-This project is a comprehensive, high-level object-oriented design and implementation plan for a modern Database Management System (DBMS). It serves as a foundational blueprint that covers all critical subsystems, adhering to SOLID principles and applying design patterns.
+This project is a comprehensive, high-level object-oriented design and implementation plan for a modern Database Management System (DBMS).
 
 ## 🏗️ System Architecture
 
