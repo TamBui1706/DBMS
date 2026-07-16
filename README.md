@@ -127,7 +127,7 @@ flowchart LR
 
 The detailed UML Class Diagrams defining the entities, properties, and relationships within each subsystem:
 
-```mermaid
+`````mermaid
 classDiagram
     %% Core DBMS Architecture
     class DBMS {
@@ -136,10 +136,11 @@ classDiagram
         -TransactionManager transactionManager
         -DatabaseObjectManager objectManager
         -SecurityManager securityManager
-        -RecoveryManager recoveryManager
+        -BackupDurabilityManager backupManager
+        -PerformanceManager performanceManager
+        -AdminMonitorManager adminManager
         +startSystem() void
         +stopSystem() void
-        +executeStatement(String sql) ResultSet
     }
 
     %% -----------------------------------------
@@ -149,30 +150,54 @@ classDiagram
         -SQLParser sqlParser
         -QueryOptimizer queryOptimizer
         -QueryExecution queryExecution
-        +processQuery(String sqlText) ResultSet
+        -QueryValidation queryValidation
     }
-
     class SQLParser {
         -LexicalAnalyzer lexer
         -SyntaxAnalyzer syntaxAnalyzer
         -ASTBuilder astBuilder
-        +parse(String sql) ASTNode
     }
-
+    class LexicalAnalyzer {
+        +tokenize(String sql) List~Token~
+    }
+    class SyntaxAnalyzer {
+        +checkSyntax(List~Token~ tokens) boolean
+    }
+    class ASTBuilder {
+        +buildTree(List~Token~ tokens) ASTNode
+    }
     class QueryOptimizer {
         -CostBasedOptimizer cbo
         -RuleBasedOptimizer rbo
-        -LogicalPlanGenerator logicalGen
-        -PhysicalPlanGenerator physicalGen
-        +optimizePlan(ASTNode astTree) PhysicalPlan
     }
-
+    class CostBasedOptimizer {
+        +estimateCost(Plan p) double
+    }
+    class RuleBasedOptimizer {
+        +applyRules(Plan p) Plan
+    }
     class QueryExecution {
         -OperatorScheduler scheduler
         -ExecutionEngine engine
         -ResourceManager resourceManager
-        +executePlan(PhysicalPlan plan) ResultSet
     }
+    class OperatorScheduler {
+        +schedule(Plan p) void
+    }
+    class ExecutionEngine {
+        +executeNode(OpNode n) Result
+    }
+
+    QueryProcessor *-- SQLParser
+    QueryProcessor *-- QueryOptimizer
+    QueryProcessor *-- QueryExecution
+    SQLParser *-- LexicalAnalyzer
+    SQLParser *-- SyntaxAnalyzer
+    SQLParser *-- ASTBuilder
+    QueryOptimizer *-- CostBasedOptimizer
+    QueryOptimizer *-- RuleBasedOptimizer
+    QueryExecution *-- OperatorScheduler
+    QueryExecution *-- ExecutionEngine
 
     %% -----------------------------------------
     %% Storage Engine Subsystem
@@ -182,60 +207,78 @@ classDiagram
         -RecordManager recordManager
         -IndexManager indexManager
         -AccessMethods accessMethods
-        -StorageAllocationCoordinator storageAllocator
         -LogManager logManager
-        +readRecord(RID rid) Record
-        +writeRecord(Record record) RID
-        +deleteRecord(RID rid) void
     }
-
     class BufferPoolManager {
         -PageReplacementAlgorithm replacementAlgo
         -BufferFrameManager frameManager
         -DirtyPageWriter dirtyWriter
         +fetchPage(PageID pid) Page
-        +pinPage(PageID pid) void
-        +unpinPage(PageID pid, boolean isDirty) void
-        +flushAllPages() void
     }
-
     class PageReplacementAlgorithm {
         <<interface>>
         +findVictim() PageID
-        +pin(PageID pid) void
-        +unpin(PageID pid) void
     }
-
+    class BufferFrameManager {
+        +allocateFrame() Frame
+    }
+    class DirtyPageWriter {
+        +flushDirtyPages() void
+    }
     class RecordManager {
         -RecordLayoutManager layoutManager
         -TupleHeaderManager headerManager
         -RIDGenerator ridGenerator
-        +insertTuple(Page page, Tuple tuple) RID
-        +updateTuple(RID rid, Tuple newTuple) void
     }
-
+    class RecordLayoutManager {
+        +formatRecord(Tuple t) byte[]
+    }
+    class RIDGenerator {
+        +generateRID() RID
+    }
     class IndexManager {
         -IndexMetadata metadata
         -BTreeCoreEngine bTreeEngine
-        -IndexConcurrencyControl indexConcurrency
-        +createIndex(String idxName, String tableName, String colName) void
-        +search(Key key) List~RID~
     }
-
+    class BTreeCoreEngine {
+        +insertNode(Key k, RID r) void
+    }
     class AccessMethods {
         -SequentialScan seqScan
         -IndexScan idxScan
-        -RangeScan rangeScan
-        +scan(TableID tableId) Iterator
     }
-
+    class SequentialScan {
+        +scan() Iterator
+    }
+    class IndexScan {
+        +scan(Key k) Iterator
+    }
     class LogManager {
         -LSNGenerator lsnGenerator
         -WALBuffer walBuffer
-        -LogSegmentManager segmentManager
-        +appendLogRecord(LogRecord log) LSN
-        +flushLogToDisk() void
     }
+    class LSNGenerator {
+        +nextLSN() LSN
+    }
+    class WALBuffer {
+        +appendLog(LogRecord l) void
+    }
+
+    StorageEngine *-- BufferPoolManager
+    StorageEngine *-- RecordManager
+    StorageEngine *-- IndexManager
+    StorageEngine *-- AccessMethods
+    StorageEngine *-- LogManager
+    BufferPoolManager *-- PageReplacementAlgorithm
+    BufferPoolManager *-- BufferFrameManager
+    BufferPoolManager *-- DirtyPageWriter
+    RecordManager *-- RecordLayoutManager
+    RecordManager *-- RIDGenerator
+    IndexManager *-- BTreeCoreEngine
+    AccessMethods *-- SequentialScan
+    AccessMethods *-- IndexScan
+    LogManager *-- LSNGenerator
+    LogManager *-- WALBuffer
 
     %% -----------------------------------------
     %% Transaction Subsystem
@@ -244,142 +287,198 @@ classDiagram
         -TransactionTable txnTable
         -LockManager lockManager
         -IsolationManager isolationManager
-        +beginTransaction() TransactionID
-        +commitTransaction(TransactionID txnId) void
-        +abortTransaction(TransactionID txnId) void
+        -DeadlockDetector deadlockDetector
     }
-
     class LockManager {
         -LockTable lockTable
         +acquireLock(TransactionID txnId, ResourceID resId, LockMode mode) boolean
-        +releaseLock(TransactionID txnId, ResourceID resId) void
     }
-
+    class LockTable {
+        +getLocks(ResourceID r) List~Lock~
+    }
     class DeadlockDetector {
         -WaitForGraph waitGraph
         -VictimSelectionStrategy victimStrategy
-        +detectDeadlock() TransactionID
-        +resolveDeadlock(TransactionID victimTxn) void
     }
-
+    class WaitForGraph {
+        +addEdge(TransactionID t1, TransactionID t2) void
+    }
     class IsolationManager {
         -ReadViewGenerator snapshotGen
         -VersionChainBuilder mvccBuilder
-        +getVisibleVersion(TransactionID txnId, Record record) Record
     }
+    class ReadViewGenerator {
+        +createSnapshot(TransactionID t) Snapshot
+    }
+    class VersionChainBuilder {
+        +linkVersion(Record r1, Record r2) void
+    }
+
+    TransactionManager *-- LockManager
+    TransactionManager *-- DeadlockDetector
+    TransactionManager *-- IsolationManager
+    LockManager *-- LockTable
+    DeadlockDetector *-- WaitForGraph
+    IsolationManager *-- ReadViewGenerator
+    IsolationManager *-- VersionChainBuilder
 
     %% -----------------------------------------
     %% Database Object Management
     %% -----------------------------------------
     class DatabaseObjectManager {
-        -DatabaseCatalogManager catalogManager
         -SchemaManager schemaManager
         -TableManager tableManager
         -ViewManager viewManager
         -ConstraintManager constraintManager
-        +createObject(DDLStatement ddl) void
-        +dropObject(DDLStatement ddl) void
+        -ColumnManager columnManager
     }
-
+    class SchemaManager {
+        +createSchema(String name) void
+    }
     class TableManager {
         -TableCreator tableCreator
         -PhysicalFileRegistration fileRegistry
-        +createTable(TableSchema schema) void
-        +alterTable(String name, AlterCommand cmd) void
     }
-
+    class PhysicalFileRegistration {
+        +registerFile(String path) void
+    }
     class ConstraintManager {
         -PrimaryKeyValidator pkValidator
         -UniqueConstraintManager ukManager
         -CheckConstraintEvaluator checkEvaluator
-        +validateConstraints(Record record) boolean
+    }
+    class PrimaryKeyValidator {
+        +validatePK(Record r) boolean
+    }
+    class ColumnManager {
+        -ColumnDefinitionManager colDefMgr
+        -DefaultValueManager defValMgr
     }
 
+    DatabaseObjectManager *-- SchemaManager
+    DatabaseObjectManager *-- TableManager
+    DatabaseObjectManager *-- ConstraintManager
+    DatabaseObjectManager *-- ColumnManager
+    ConstraintManager *-- PrimaryKeyValidator
+    TableManager *-- PhysicalFileRegistration
+    
     %% -----------------------------------------
     %% Backup & Durability
     %% -----------------------------------------
+    class BackupDurabilityManager {
+        -BackupManager backupManager
+        -RestoreManager restoreManager
+        -RecoveryManager recoveryManager
+        -CheckpointManager checkpointMgr
+    }
     class RecoveryManager {
         -CrashRecoveryManager crashRecovery
-        -CheckpointerDaemon checkpointer
-        -RestoreManager restoreManager
-        +initiateRecovery() void
-        +createCheckpoint() void
-    }
-
-    class CrashRecoveryManager {
         -REDOLogApplier redoApplier
         -UNDOLogApplier undoApplier
-        +analyzePhase() void
-        +redoPhase() void
-        +undoPhase() void
     }
-
-    class CheckpointerDaemon {
+    class REDOLogApplier {
+        +apply(LogRecord l) void
+    }
+    class UNDOLogApplier {
+        +rollback(LogRecord l) void
+    }
+    class CheckpointManager {
+        -CheckpointerDaemon checkpointer
         -FuzzyCheckpointController fuzzyController
-        -DirtyPageFlushCoordinator flushCoordinator
-        +triggerCheckpoint() void
     }
+    class FuzzyCheckpointController {
+        +triggerFuzzy() void
+    }
+    class RestoreManager {
+        -RestoreValidator validator
+        -FileRestorer fileRestorer
+    }
+    BackupDurabilityManager *-- RecoveryManager
+    BackupDurabilityManager *-- CheckpointManager
+    BackupDurabilityManager *-- RestoreManager
+    RecoveryManager *-- REDOLogApplier
+    RecoveryManager *-- UNDOLogApplier
+    CheckpointManager *-- FuzzyCheckpointController
 
     %% -----------------------------------------
     %% Security & Access Control
     %% -----------------------------------------
     class SecurityManager {
         -Authentication authModule
-        -AccessControl accessControlModule
-        -UserCatalog userCatalog
-        +authenticateUser(Credentials creds) SessionToken
-        +authorizeAction(SessionToken token, Resource res, Action act) boolean
+        -Authorization authzModule
+        -AccessControl accessControl
+        -UserManagement userMgmt
     }
-
+    class Authentication {
+        +authenticateUser(Credentials creds) SessionToken
+    }
     class AccessControl {
         -RBACPolicyEvaluator rbacEvaluator
         -DACEvaluator dacEvaluator
-        -RowLevelSecurityFilter rlsFilter
-        +evaluatePermissions(User user, Resource res) boolean
     }
+    class RBACPolicyEvaluator {
+        +evaluate(Role r, Action a) boolean
+    }
+    class UserManagement {
+        -UserCatalog userCatalog
+        -RoleHierarchyResolver roleResolver
+    }
+    class RoleHierarchyResolver {
+        +resolveRoles(User u) List~Role~
+    }
+    SecurityManager *-- Authentication
+    SecurityManager *-- AccessControl
+    SecurityManager *-- UserManagement
+    AccessControl *-- RBACPolicyEvaluator
+    UserManagement *-- RoleHierarchyResolver
 
     %% -----------------------------------------
-    %% Dependencies and Relationships
+    %% Performance and Admin Subsystems
     %% -----------------------------------------
+    class PerformanceManager {
+        -QueryPerformanceAnalyzer perfAnalyzer
+        -MemoryManagement memMgmt
+        -Caching cacheMgmt
+    }
+    class QueryPerformanceAnalyzer {
+        -IndexUsageAdvisor indexAdvisor
+        -SlowQueryProfiler slowProfiler
+    }
+    class MemoryManagement {
+        -SharedMemoryAllocator sharedAlloc
+        -MemoryPoolManager poolMgr
+    }
+    class AdminMonitorManager {
+        -MonitoringLogging monitoring
+        -ConfigurationManagement configMgmt
+    }
+    class MonitoringLogging {
+        -PerformanceMetricsCollector metricsCollector
+        -SystemErrorLogWriter errorWriter
+    }
+    
+    PerformanceManager *-- QueryPerformanceAnalyzer
+    PerformanceManager *-- MemoryManagement
+    AdminMonitorManager *-- MonitoringLogging
+
+    %% Cross-Subsystem Dependencies
     DBMS *-- QueryProcessor
     DBMS *-- StorageEngine
     DBMS *-- TransactionManager
     DBMS *-- DatabaseObjectManager
     DBMS *-- SecurityManager
-    DBMS *-- RecoveryManager
-
-    QueryProcessor *-- SQLParser
-    QueryProcessor *-- QueryOptimizer
-    QueryProcessor *-- QueryExecution
-
-    StorageEngine *-- BufferPoolManager
-    StorageEngine *-- RecordManager
-    StorageEngine *-- IndexManager
-    StorageEngine *-- AccessMethods
-    StorageEngine *-- LogManager
-
-    BufferPoolManager o-- PageReplacementAlgorithm
+    DBMS *-- BackupDurabilityManager
+    DBMS *-- PerformanceManager
+    DBMS *-- AdminMonitorManager
     
-    TransactionManager *-- LockManager
-    TransactionManager *-- IsolationManager
-    TransactionManager ..> DeadlockDetector
-
-    RecoveryManager *-- CrashRecoveryManager
-    RecoveryManager *-- CheckpointerDaemon
-
-    DatabaseObjectManager *-- TableManager
-    DatabaseObjectManager *-- ConstraintManager
-
-    SecurityManager *-- AccessControl
-
-    %% Cross-Subsystem Dependencies
     QueryExecution ..> StorageEngine
     QueryExecution ..> TransactionManager
     StorageEngine ..> LogManager
-    CrashRecoveryManager ..> LogManager
+    RecoveryManager ..> LogManager
     AccessMethods ..> BufferPoolManager
     TransactionManager ..> LogManager
 ```
+``
 
 ## 🧪 Test-Driven Development (TDD)
 

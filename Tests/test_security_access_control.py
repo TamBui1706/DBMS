@@ -3,7 +3,10 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Classes.security_access_control import AccessControl, UserManagement, Authentication, Authorization
+from Classes.SecurityAccessControl.access_control import AccessControl
+from Classes.SecurityAccessControl.user_management import UserManagement
+from Classes.SecurityAccessControl.authentication import Authentication
+from Classes.SecurityAccessControl.authorization import Authorization
 
 class TestAccessControl(unittest.TestCase):
     def setUp(self):

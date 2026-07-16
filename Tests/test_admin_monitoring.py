@@ -3,7 +3,8 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Classes.admin_monitoring import MonitoringLogging, ConfigurationManagement
+from Classes.PerformanceAdmin.monitoring_logging import MonitoringLogging
+from Classes.PerformanceAdmin.configuration_management import ConfigurationManagement
 
 class TestMonitoringLogging(unittest.TestCase):
     def setUp(self):

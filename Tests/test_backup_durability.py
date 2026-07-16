@@ -3,7 +3,10 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Classes.backup_durability import RestoreManagement, Recovery, Checkpoint, TransactionLogging
+# Could not find mapping for RestoreManagement
+# Could not find mapping for Recovery
+# Could not find mapping for Checkpoint
+# Could not find mapping for TransactionLogging
 
 class TestRestoreManagement(unittest.TestCase):
     def setUp(self):

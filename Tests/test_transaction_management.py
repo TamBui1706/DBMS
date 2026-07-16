@@ -3,7 +3,10 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Classes.transaction_management import TransactionManager, Concurrency, Deadlock, LockManager
+from Classes.TransactionManagement.transaction_manager import TransactionManager
+# Could not find mapping for Concurrency
+# Could not find mapping for Deadlock
+from Classes.TransactionManagement.lock_manager import LockManager
 
 class TestTransactionManager(unittest.TestCase):
     def setUp(self):

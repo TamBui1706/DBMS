@@ -3,7 +3,11 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Classes.storage_engine import BufferPool, RecordManagement, IndexManagement, AccessMethods, LogFile
+# Could not find mapping for BufferPool
+# Could not find mapping for RecordManagement
+# Could not find mapping for IndexManagement
+from Classes.StorageEngine.access_methods import AccessMethods
+# Could not find mapping for LogFile
 
 class TestBufferPool(unittest.TestCase):
     def setUp(self):

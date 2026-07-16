@@ -3,7 +3,8 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Classes.performance import QueryPerformanceAnalyzer, MemoryManagement
+from Classes.PerformanceAdmin.query_performance_analyzer import QueryPerformanceAnalyzer
+from Classes.PerformanceAdmin.memory_management import MemoryManagement
 
 class TestQueryPerformanceAnalyzer(unittest.TestCase):
     def setUp(self):

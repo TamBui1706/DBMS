@@ -3,7 +3,11 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Classes.db_object_management import DatabaseManagement, TableManagement, ViewManagement, ColumnManagement, ConstraintManagement
+from Classes.DatabaseObjectManagement.database_management import DatabaseManagement
+# Could not find mapping for TableManagement
+# Could not find mapping for ViewManagement
+# Could not find mapping for ColumnManagement
+# Could not find mapping for ConstraintManagement
 
 class TestDatabaseManagement(unittest.TestCase):
     def setUp(self):

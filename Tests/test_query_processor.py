@@ -3,7 +3,9 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Classes.query_processor import SQLParser, QueryOptimizer, QueryExecution
+from Classes.QueryProcessor.sql_parser import SQLParser
+from Classes.QueryProcessor.query_optimizer import QueryOptimizer
+from Classes.QueryProcessor.query_execution import QueryExecution
 
 class TestSQLParser(unittest.TestCase):
     def setUp(self):
