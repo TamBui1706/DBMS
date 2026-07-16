@@ -501,3 +501,49 @@ classDiagram
     TransactionManager *-- IsolationManager
     TransactionManager ..> DeadlockDetector
 ```
+
+## 🧪 Testing Strategy Mind Map
+
+Below is a mind map detailing the Unit Tests and Integration Tests strategy for the DBMS, adhering to the Test-Driven Development (TDD) approach:
+
+```mermaid
+mindmap
+  root((DBMS Testing Strategy))
+    Unit Tests
+      Query Processor
+        SQL Parser Tests
+        Query Optimizer Tests
+        Query Execution Tests
+      Storage Engine
+        Buffer Pool Tests
+        Record Management Tests
+        Index Management Tests
+        Log File Tests
+      Transaction Management
+        Begin/Commit/Abort Tests
+        Concurrency/Lock Tests
+        Deadlock Detection Tests
+      DB Object Management
+        Schema & Table DDL Tests
+        Constraint Validation Tests
+      Backup & Durability
+        Recovery Log Applier Tests
+        Checkpoint Daemon Tests
+      Security & Access Control
+        Auth & Encryption Tests
+        RBAC & DAC Tests
+      Performance & Admin
+        Metrics Collector Tests
+        Cache & Memory Tests
+    Integration Tests
+      End-to-End Query Execution
+        Parser --> Optimizer --> Storage
+      Transaction Concurrency
+        Multi-client Lock & Deadlock
+      Crash Recovery Simulation
+        WAL --> Checkpoint --> Restore
+      Security Access Control
+        Role Validation on DML
+      System DDL Integration
+        Schema Changes --> Physical Files
+```
