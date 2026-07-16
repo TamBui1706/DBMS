@@ -387,3 +387,117 @@ The implementation follows a **Test-Driven Development (TDD)** methodology.
 
 - `Classes/`: Contains the skeleton classes with properties and empty methods (`pass`) corresponding to the structural design.
 - `Tests/`: Contains the unit tests for each class, testing both happy paths and failure paths. Currently, all tests will naturally fail as the internal logic in the classes is yet to be fully implemented.
+
+## 🔍 Subsystem Class Diagrams
+
+Below are the detailed, isolated class diagrams for the most critical subsystems for better readability.
+
+### 1. Storage Engine Subsystem
+```mermaid
+classDiagram
+    class StorageEngine {
+        -BufferPoolManager bufferPool
+        -RecordManager recordManager
+        -IndexManager indexManager
+        -AccessMethods accessMethods
+        -LogManager logManager
+        +readRecord(RID rid) Record
+        +writeRecord(Record record) RID
+    }
+    class BufferPoolManager {
+        -PageReplacementAlgorithm replacementAlgo
+        -BufferFrameManager frameManager
+        -DirtyPageWriter dirtyWriter
+        +fetchPage(PageID pid) Page
+    }
+    class RecordManager {
+        -RecordLayoutManager layoutManager
+        -TupleHeaderManager headerManager
+        -RIDGenerator ridGenerator
+        +insertTuple(Page page, Tuple tuple) RID
+    }
+    class IndexManager {
+        -IndexMetadata metadata
+        -BTreeCoreEngine bTreeEngine
+        -IndexConcurrencyControl indexConcurrency
+    }
+    class AccessMethods {
+        -SequentialScan seqScan
+        -IndexScan idxScan
+        -RangeScan rangeScan
+    }
+    class LogManager {
+        -LSNGenerator lsnGenerator
+        -WALBuffer walBuffer
+        -LogSegmentManager segmentManager
+    }
+
+    StorageEngine *-- BufferPoolManager
+    StorageEngine *-- RecordManager
+    StorageEngine *-- IndexManager
+    StorageEngine *-- AccessMethods
+    StorageEngine *-- LogManager
+```
+
+### 2. Query Processor Subsystem
+```mermaid
+classDiagram
+    class QueryProcessor {
+        -SQLParser sqlParser
+        -QueryOptimizer queryOptimizer
+        -QueryExecution queryExecution
+        +processQuery(String sqlText) ResultSet
+    }
+    class SQLParser {
+        -LexicalAnalyzer lexer
+        -SyntaxAnalyzer syntaxAnalyzer
+        -ASTBuilder astBuilder
+        +parse(String sql) ASTNode
+    }
+    class QueryOptimizer {
+        -CostBasedOptimizer cbo
+        -RuleBasedOptimizer rbo
+        -LogicalPlanGenerator logicalGen
+        -PhysicalPlanGenerator physicalGen
+    }
+    class QueryExecution {
+        -OperatorScheduler scheduler
+        -ExecutionEngine engine
+        -ResourceManager resourceManager
+    }
+
+    QueryProcessor *-- SQLParser
+    QueryProcessor *-- QueryOptimizer
+    QueryProcessor *-- QueryExecution
+```
+
+### 3. Transaction Management Subsystem
+```mermaid
+classDiagram
+    class TransactionManager {
+        -TransactionTable txnTable
+        -LockManager lockManager
+        -IsolationManager isolationManager
+        +beginTransaction() TransactionID
+        +commitTransaction(TransactionID txnId) void
+        +abortTransaction(TransactionID txnId) void
+    }
+    class LockManager {
+        -LockTable lockTable
+        +acquireLock(TransactionID txnId, ResourceID resId, LockMode mode) boolean
+        +releaseLock(TransactionID txnId, ResourceID resId) void
+    }
+    class DeadlockDetector {
+        -WaitForGraph waitGraph
+        -VictimSelectionStrategy victimStrategy
+        +detectDeadlock() TransactionID
+    }
+    class IsolationManager {
+        -ReadViewGenerator snapshotGen
+        -VersionChainBuilder mvccBuilder
+    }
+
+    TransactionManager *-- LockManager
+    TransactionManager *-- IsolationManager
+    TransactionManager ..> DeadlockDetector
+```
