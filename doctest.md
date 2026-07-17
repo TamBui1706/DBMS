@@ -1,269 +1,248 @@
-# 🧪 Detailed Unit Test Plan
-
-## Core Architecture
-
-### 1. `DBMS`
-- `test_init_DBMS`
-- `test_startSystem_happy_path`
-- `test_startSystem_failure_path`
-- `test_stopSystem_happy_path`
-- `test_stopSystem_failure_path`
-
-## Query Processor Subsystem
-
-### 2. `QueryProcessor`
-- `test_init_QueryProcessor`
-
-### 3. `SQLParser`
-- `test_init_SQLParser`
-
-### 4. `LexicalAnalyzer`
-- `test_init_LexicalAnalyzer`
-- `test_tokenize_happy_path`
-- `test_tokenize_failure_path`
-
-### 5. `SyntaxAnalyzer`
-- `test_init_SyntaxAnalyzer`
-- `test_checkSyntax_happy_path`
-- `test_checkSyntax_failure_path`
-
-### 6. `ASTBuilder`
-- `test_init_ASTBuilder`
-- `test_buildTree_happy_path`
-- `test_buildTree_failure_path`
-
-### 7. `QueryOptimizer`
-- `test_init_QueryOptimizer`
-
-### 8. `CostBasedOptimizer`
-- `test_init_CostBasedOptimizer`
-- `test_estimateCost_happy_path`
-- `test_estimateCost_failure_path`
-
-### 9. `RuleBasedOptimizer`
-- `test_init_RuleBasedOptimizer`
-- `test_applyRules_happy_path`
-- `test_applyRules_failure_path`
-
-### 10. `QueryExecution`
-- `test_init_QueryExecution`
-
-### 11. `OperatorScheduler`
-- `test_init_OperatorScheduler`
-- `test_schedule_happy_path`
-- `test_schedule_failure_path`
-
-### 12. `ExecutionEngine`
-- `test_init_ExecutionEngine`
-- `test_executeNode_happy_path`
-- `test_executeNode_failure_path`
-
-## Storage Engine Subsystem
-
-### 13. `StorageEngine`
-- `test_init_StorageEngine`
-
-### 14. `BufferPoolManager`
-- `test_init_BufferPoolManager`
-- `test_fetchPage_happy_path`
-- `test_fetchPage_failure_path`
-
-### 15. `PageReplacementAlgorithm`
-- `test_init_PageReplacementAlgorithm`
-- `test_findVictim_happy_path`
-- `test_findVictim_failure_path`
-
-### 16. `BufferFrameManager`
-- `test_init_BufferFrameManager`
-- `test_allocateFrame_happy_path`
-- `test_allocateFrame_failure_path`
-
-### 17. `DirtyPageWriter`
-- `test_init_DirtyPageWriter`
-- `test_flushDirtyPages_happy_path`
-- `test_flushDirtyPages_failure_path`
-
-### 18. `RecordManager`
-- `test_init_RecordManager`
-
-### 19. `RecordLayoutManager`
-- `test_init_RecordLayoutManager`
-- `test_formatRecord_happy_path`
-- `test_formatRecord_failure_path`
-
-### 20. `RIDGenerator`
-- `test_init_RIDGenerator`
-- `test_generateRID_happy_path`
-- `test_generateRID_failure_path`
-
-### 21. `IndexManager`
-- `test_init_IndexManager`
-
-### 22. `BTreeCoreEngine`
-- `test_init_BTreeCoreEngine`
-- `test_insertNode_happy_path`
-- `test_insertNode_failure_path`
-
-### 23. `AccessMethods`
-- `test_init_AccessMethods`
-
-### 24. `SequentialScan`
-- `test_init_SequentialScan`
-- `test_scan_happy_path`
-- `test_scan_failure_path`
-
-### 25. `IndexScan`
-- `test_init_IndexScan`
-- `test_scan_happy_path`
-- `test_scan_failure_path`
-
-### 26. `LogManager`
-- `test_init_LogManager`
-
-### 27. `LSNGenerator`
-- `test_init_LSNGenerator`
-- `test_nextLSN_happy_path`
-- `test_nextLSN_failure_path`
-
-### 28. `WALBuffer`
-- `test_init_WALBuffer`
-- `test_appendLog_happy_path`
-- `test_appendLog_failure_path`
-
-## Transaction Subsystem
-
-### 29. `TransactionManager`
-- `test_init_TransactionManager`
-
-### 30. `LockManager`
-- `test_init_LockManager`
-- `test_acquireLock_happy_path`
-- `test_acquireLock_failure_path`
-
-### 31. `LockTable`
-- `test_init_LockTable`
-- `test_getLocks_happy_path`
-- `test_getLocks_failure_path`
-
-### 32. `DeadlockDetector`
-- `test_init_DeadlockDetector`
-
-### 33. `WaitForGraph`
-- `test_init_WaitForGraph`
-- `test_addEdge_happy_path`
-- `test_addEdge_failure_path`
-
-### 34. `IsolationManager`
-- `test_init_IsolationManager`
-
-### 35. `ReadViewGenerator`
-- `test_init_ReadViewGenerator`
-- `test_createSnapshot_happy_path`
-- `test_createSnapshot_failure_path`
-
-### 36. `VersionChainBuilder`
-- `test_init_VersionChainBuilder`
-- `test_linkVersion_happy_path`
-- `test_linkVersion_failure_path`
-
-## Database Object Management
-
-### 37. `DatabaseObjectManager`
-- `test_init_DatabaseObjectManager`
-
-### 38. `SchemaManager`
-- `test_init_SchemaManager`
-- `test_createSchema_happy_path`
-- `test_createSchema_failure_path`
-
-### 39. `TableManager`
-- `test_init_TableManager`
-
-### 40. `PhysicalFileRegistration`
-- `test_init_PhysicalFileRegistration`
-- `test_registerFile_happy_path`
-- `test_registerFile_failure_path`
-
-### 41. `ConstraintManager`
-- `test_init_ConstraintManager`
-
-### 42. `PrimaryKeyValidator`
-- `test_init_PrimaryKeyValidator`
-- `test_validatePK_happy_path`
-- `test_validatePK_failure_path`
-
-### 43. `ColumnManager`
-- `test_init_ColumnManager`
-
-## Backup & Durability
-
-### 44. `BackupDurabilityManager`
-- `test_init_BackupDurabilityManager`
-
-### 45. `RecoveryManager`
-- `test_init_RecoveryManager`
-
-### 46. `REDOLogApplier`
-- `test_init_REDOLogApplier`
-- `test_apply_happy_path`
-- `test_apply_failure_path`
-
-### 47. `UNDOLogApplier`
-- `test_init_UNDOLogApplier`
-- `test_rollback_happy_path`
-- `test_rollback_failure_path`
-
-### 48. `CheckpointManager`
-- `test_init_CheckpointManager`
-
-### 49. `FuzzyCheckpointController`
-- `test_init_FuzzyCheckpointController`
-- `test_triggerFuzzy_happy_path`
-- `test_triggerFuzzy_failure_path`
-
-### 50. `RestoreManager`
-- `test_init_RestoreManager`
-
-## Security & Access Control
-
-### 51. `SecurityManager`
-- `test_init_SecurityManager`
-
-### 52. `Authentication`
-- `test_init_Authentication`
-- `test_authenticateUser_happy_path`
-- `test_authenticateUser_failure_path`
-
-### 53. `AccessControl`
-- `test_init_AccessControl`
-
-### 54. `RBACPolicyEvaluator`
-- `test_init_RBACPolicyEvaluator`
-- `test_evaluate_happy_path`
-- `test_evaluate_failure_path`
-
-### 55. `UserManagement`
-- `test_init_UserManagement`
-
-### 56. `RoleHierarchyResolver`
-- `test_init_RoleHierarchyResolver`
-- `test_resolveRoles_happy_path`
-- `test_resolveRoles_failure_path`
-
-## Performance and Admin Subsystems
-
-### 57. `PerformanceManager`
-- `test_init_PerformanceManager`
-
-### 58. `QueryPerformanceAnalyzer`
-- `test_init_QueryPerformanceAnalyzer`
-
-### 59. `MemoryManagement`
-- `test_init_MemoryManagement`
-
-### 60. `AdminMonitorManager`
-- `test_init_AdminMonitorManager`
-
-### 61. `MonitoringLogging`
-- `test_init_MonitoringLogging`
+# 🧪 Unit Tests Architecture
+
+## 1. Core Architecture Unit Tests
+
+```mermaid
+mindmap
+  root_1["Core Architecture"]
+    cls_1_1["DBMS"]
+      t_1_1_1["Init_WhenCalled_ShouldInitializeDBMS"]
+      t_1_1_2["StartSystem_WhenValid_ShouldSucceed"]
+      t_1_1_3["StartSystem_WhenInvalid_ShouldThrow"]
+      t_1_1_4["StopSystem_WhenValid_ShouldSucceed"]
+      t_1_1_5["StopSystem_WhenInvalid_ShouldThrow"]
+```
+
+## 2. Query Processor Subsystem Unit Tests
+
+```mermaid
+mindmap
+  root_2["Query Processor Subsystem"]
+    cls_2_1["QueryProcessor"]
+      t_2_1_1["Init_WhenCalled_ShouldInitializeQueryProcessor"]
+    cls_2_2["SQLParser"]
+      t_2_2_1["Init_WhenCalled_ShouldInitializeSQLParser"]
+    cls_2_3["LexicalAnalyzer"]
+      t_2_3_1["Init_WhenCalled_ShouldInitializeLexicalAnalyzer"]
+      t_2_3_2["Tokenize_WhenValid_ShouldSucceed"]
+      t_2_3_3["Tokenize_WhenInvalid_ShouldThrow"]
+    cls_2_4["SyntaxAnalyzer"]
+      t_2_4_1["Init_WhenCalled_ShouldInitializeSyntaxAnalyzer"]
+      t_2_4_2["CheckSyntax_WhenValid_ShouldSucceed"]
+      t_2_4_3["CheckSyntax_WhenInvalid_ShouldThrow"]
+    cls_2_5["ASTBuilder"]
+      t_2_5_1["Init_WhenCalled_ShouldInitializeASTBuilder"]
+      t_2_5_2["BuildTree_WhenValid_ShouldSucceed"]
+      t_2_5_3["BuildTree_WhenInvalid_ShouldThrow"]
+    cls_2_6["QueryOptimizer"]
+      t_2_6_1["Init_WhenCalled_ShouldInitializeQueryOptimizer"]
+    cls_2_7["CostBasedOptimizer"]
+      t_2_7_1["Init_WhenCalled_ShouldInitializeCostBasedOptimizer"]
+      t_2_7_2["EstimateCost_WhenValid_ShouldSucceed"]
+      t_2_7_3["EstimateCost_WhenInvalid_ShouldThrow"]
+    cls_2_8["RuleBasedOptimizer"]
+      t_2_8_1["Init_WhenCalled_ShouldInitializeRuleBasedOptimizer"]
+      t_2_8_2["ApplyRules_WhenValid_ShouldSucceed"]
+      t_2_8_3["ApplyRules_WhenInvalid_ShouldThrow"]
+    cls_2_9["QueryExecution"]
+      t_2_9_1["Init_WhenCalled_ShouldInitializeQueryExecution"]
+    cls_2_10["OperatorScheduler"]
+      t_2_10_1["Init_WhenCalled_ShouldInitializeOperatorScheduler"]
+      t_2_10_2["Schedule_WhenValid_ShouldSucceed"]
+      t_2_10_3["Schedule_WhenInvalid_ShouldThrow"]
+    cls_2_11["ExecutionEngine"]
+      t_2_11_1["Init_WhenCalled_ShouldInitializeExecutionEngine"]
+      t_2_11_2["ExecuteNode_WhenValid_ShouldSucceed"]
+      t_2_11_3["ExecuteNode_WhenInvalid_ShouldThrow"]
+```
+
+## 3. Storage Engine Subsystem Unit Tests
+
+```mermaid
+mindmap
+  root_3["Storage Engine Subsystem"]
+    cls_3_1["StorageEngine"]
+      t_3_1_1["Init_WhenCalled_ShouldInitializeStorageEngine"]
+    cls_3_2["BufferPoolManager"]
+      t_3_2_1["Init_WhenCalled_ShouldInitializeBufferPoolManager"]
+      t_3_2_2["FetchPage_WhenValid_ShouldSucceed"]
+      t_3_2_3["FetchPage_WhenInvalid_ShouldThrow"]
+    cls_3_3["PageReplacementAlgorithm"]
+      t_3_3_1["Init_WhenCalled_ShouldInitializePageReplacementAlgorithm"]
+      t_3_3_2["FindVictim_WhenValid_ShouldSucceed"]
+      t_3_3_3["FindVictim_WhenInvalid_ShouldThrow"]
+    cls_3_4["BufferFrameManager"]
+      t_3_4_1["Init_WhenCalled_ShouldInitializeBufferFrameManager"]
+      t_3_4_2["AllocateFrame_WhenValid_ShouldSucceed"]
+      t_3_4_3["AllocateFrame_WhenInvalid_ShouldThrow"]
+    cls_3_5["DirtyPageWriter"]
+      t_3_5_1["Init_WhenCalled_ShouldInitializeDirtyPageWriter"]
+      t_3_5_2["FlushDirtyPages_WhenValid_ShouldSucceed"]
+      t_3_5_3["FlushDirtyPages_WhenInvalid_ShouldThrow"]
+    cls_3_6["RecordManager"]
+      t_3_6_1["Init_WhenCalled_ShouldInitializeRecordManager"]
+    cls_3_7["RecordLayoutManager"]
+      t_3_7_1["Init_WhenCalled_ShouldInitializeRecordLayoutManager"]
+      t_3_7_2["FormatRecord_WhenValid_ShouldSucceed"]
+      t_3_7_3["FormatRecord_WhenInvalid_ShouldThrow"]
+    cls_3_8["RIDGenerator"]
+      t_3_8_1["Init_WhenCalled_ShouldInitializeRIDGenerator"]
+      t_3_8_2["GenerateRID_WhenValid_ShouldSucceed"]
+      t_3_8_3["GenerateRID_WhenInvalid_ShouldThrow"]
+    cls_3_9["IndexManager"]
+      t_3_9_1["Init_WhenCalled_ShouldInitializeIndexManager"]
+    cls_3_10["BTreeCoreEngine"]
+      t_3_10_1["Init_WhenCalled_ShouldInitializeBTreeCoreEngine"]
+      t_3_10_2["InsertNode_WhenValid_ShouldSucceed"]
+      t_3_10_3["InsertNode_WhenInvalid_ShouldThrow"]
+    cls_3_11["AccessMethods"]
+      t_3_11_1["Init_WhenCalled_ShouldInitializeAccessMethods"]
+    cls_3_12["SequentialScan"]
+      t_3_12_1["Init_WhenCalled_ShouldInitializeSequentialScan"]
+      t_3_12_2["Scan_WhenValid_ShouldSucceed"]
+      t_3_12_3["Scan_WhenInvalid_ShouldThrow"]
+    cls_3_13["IndexScan"]
+      t_3_13_1["Init_WhenCalled_ShouldInitializeIndexScan"]
+      t_3_13_2["Scan_WhenValid_ShouldSucceed"]
+      t_3_13_3["Scan_WhenInvalid_ShouldThrow"]
+    cls_3_14["LogManager"]
+      t_3_14_1["Init_WhenCalled_ShouldInitializeLogManager"]
+    cls_3_15["LSNGenerator"]
+      t_3_15_1["Init_WhenCalled_ShouldInitializeLSNGenerator"]
+      t_3_15_2["NextLSN_WhenValid_ShouldSucceed"]
+      t_3_15_3["NextLSN_WhenInvalid_ShouldThrow"]
+    cls_3_16["WALBuffer"]
+      t_3_16_1["Init_WhenCalled_ShouldInitializeWALBuffer"]
+      t_3_16_2["AppendLog_WhenValid_ShouldSucceed"]
+      t_3_16_3["AppendLog_WhenInvalid_ShouldThrow"]
+```
+
+## 4. Transaction Subsystem Unit Tests
+
+```mermaid
+mindmap
+  root_4["Transaction Subsystem"]
+    cls_4_1["TransactionManager"]
+      t_4_1_1["Init_WhenCalled_ShouldInitializeTransactionManager"]
+    cls_4_2["LockManager"]
+      t_4_2_1["Init_WhenCalled_ShouldInitializeLockManager"]
+      t_4_2_2["AcquireLock_WhenValid_ShouldSucceed"]
+      t_4_2_3["AcquireLock_WhenInvalid_ShouldThrow"]
+    cls_4_3["LockTable"]
+      t_4_3_1["Init_WhenCalled_ShouldInitializeLockTable"]
+      t_4_3_2["GetLocks_WhenValid_ShouldSucceed"]
+      t_4_3_3["GetLocks_WhenInvalid_ShouldThrow"]
+    cls_4_4["DeadlockDetector"]
+      t_4_4_1["Init_WhenCalled_ShouldInitializeDeadlockDetector"]
+    cls_4_5["WaitForGraph"]
+      t_4_5_1["Init_WhenCalled_ShouldInitializeWaitForGraph"]
+      t_4_5_2["AddEdge_WhenValid_ShouldSucceed"]
+      t_4_5_3["AddEdge_WhenInvalid_ShouldThrow"]
+    cls_4_6["IsolationManager"]
+      t_4_6_1["Init_WhenCalled_ShouldInitializeIsolationManager"]
+    cls_4_7["ReadViewGenerator"]
+      t_4_7_1["Init_WhenCalled_ShouldInitializeReadViewGenerator"]
+      t_4_7_2["CreateSnapshot_WhenValid_ShouldSucceed"]
+      t_4_7_3["CreateSnapshot_WhenInvalid_ShouldThrow"]
+    cls_4_8["VersionChainBuilder"]
+      t_4_8_1["Init_WhenCalled_ShouldInitializeVersionChainBuilder"]
+      t_4_8_2["LinkVersion_WhenValid_ShouldSucceed"]
+      t_4_8_3["LinkVersion_WhenInvalid_ShouldThrow"]
+```
+
+## 5. Database Object Management Unit Tests
+
+```mermaid
+mindmap
+  root_5["Database Object Management"]
+    cls_5_1["DatabaseObjectManager"]
+      t_5_1_1["Init_WhenCalled_ShouldInitializeDatabaseObjectManager"]
+    cls_5_2["SchemaManager"]
+      t_5_2_1["Init_WhenCalled_ShouldInitializeSchemaManager"]
+      t_5_2_2["CreateSchema_WhenValid_ShouldSucceed"]
+      t_5_2_3["CreateSchema_WhenInvalid_ShouldThrow"]
+    cls_5_3["TableManager"]
+      t_5_3_1["Init_WhenCalled_ShouldInitializeTableManager"]
+    cls_5_4["PhysicalFileRegistration"]
+      t_5_4_1["Init_WhenCalled_ShouldInitializePhysicalFileRegistration"]
+      t_5_4_2["RegisterFile_WhenValid_ShouldSucceed"]
+      t_5_4_3["RegisterFile_WhenInvalid_ShouldThrow"]
+    cls_5_5["ConstraintManager"]
+      t_5_5_1["Init_WhenCalled_ShouldInitializeConstraintManager"]
+    cls_5_6["PrimaryKeyValidator"]
+      t_5_6_1["Init_WhenCalled_ShouldInitializePrimaryKeyValidator"]
+      t_5_6_2["ValidatePK_WhenValid_ShouldSucceed"]
+      t_5_6_3["ValidatePK_WhenInvalid_ShouldThrow"]
+    cls_5_7["ColumnManager"]
+      t_5_7_1["Init_WhenCalled_ShouldInitializeColumnManager"]
+```
+
+## 6. Backup & Durability Unit Tests
+
+```mermaid
+mindmap
+  root_6["Backup & Durability"]
+    cls_6_1["BackupDurabilityManager"]
+      t_6_1_1["Init_WhenCalled_ShouldInitializeBackupDurabilityManager"]
+    cls_6_2["RecoveryManager"]
+      t_6_2_1["Init_WhenCalled_ShouldInitializeRecoveryManager"]
+    cls_6_3["REDOLogApplier"]
+      t_6_3_1["Init_WhenCalled_ShouldInitializeREDOLogApplier"]
+      t_6_3_2["Apply_WhenValid_ShouldSucceed"]
+      t_6_3_3["Apply_WhenInvalid_ShouldThrow"]
+    cls_6_4["UNDOLogApplier"]
+      t_6_4_1["Init_WhenCalled_ShouldInitializeUNDOLogApplier"]
+      t_6_4_2["Rollback_WhenValid_ShouldSucceed"]
+      t_6_4_3["Rollback_WhenInvalid_ShouldThrow"]
+    cls_6_5["CheckpointManager"]
+      t_6_5_1["Init_WhenCalled_ShouldInitializeCheckpointManager"]
+    cls_6_6["FuzzyCheckpointController"]
+      t_6_6_1["Init_WhenCalled_ShouldInitializeFuzzyCheckpointController"]
+      t_6_6_2["TriggerFuzzy_WhenValid_ShouldSucceed"]
+      t_6_6_3["TriggerFuzzy_WhenInvalid_ShouldThrow"]
+    cls_6_7["RestoreManager"]
+      t_6_7_1["Init_WhenCalled_ShouldInitializeRestoreManager"]
+```
+
+## 7. Security & Access Control Unit Tests
+
+```mermaid
+mindmap
+  root_7["Security & Access Control"]
+    cls_7_1["SecurityManager"]
+      t_7_1_1["Init_WhenCalled_ShouldInitializeSecurityManager"]
+    cls_7_2["Authentication"]
+      t_7_2_1["Init_WhenCalled_ShouldInitializeAuthentication"]
+      t_7_2_2["AuthenticateUser_WhenValid_ShouldSucceed"]
+      t_7_2_3["AuthenticateUser_WhenInvalid_ShouldThrow"]
+    cls_7_3["AccessControl"]
+      t_7_3_1["Init_WhenCalled_ShouldInitializeAccessControl"]
+    cls_7_4["RBACPolicyEvaluator"]
+      t_7_4_1["Init_WhenCalled_ShouldInitializeRBACPolicyEvaluator"]
+      t_7_4_2["Evaluate_WhenValid_ShouldSucceed"]
+      t_7_4_3["Evaluate_WhenInvalid_ShouldThrow"]
+    cls_7_5["UserManagement"]
+      t_7_5_1["Init_WhenCalled_ShouldInitializeUserManagement"]
+    cls_7_6["RoleHierarchyResolver"]
+      t_7_6_1["Init_WhenCalled_ShouldInitializeRoleHierarchyResolver"]
+      t_7_6_2["ResolveRoles_WhenValid_ShouldSucceed"]
+      t_7_6_3["ResolveRoles_WhenInvalid_ShouldThrow"]
+```
+
+## 8. Performance and Admin Subsystems Unit Tests
+
+```mermaid
+mindmap
+  root_8["Performance and Admin Subsystems"]
+    cls_8_1["PerformanceManager"]
+      t_8_1_1["Init_WhenCalled_ShouldInitializePerformanceManager"]
+    cls_8_2["QueryPerformanceAnalyzer"]
+      t_8_2_1["Init_WhenCalled_ShouldInitializeQueryPerformanceAnalyzer"]
+    cls_8_3["MemoryManagement"]
+      t_8_3_1["Init_WhenCalled_ShouldInitializeMemoryManagement"]
+    cls_8_4["AdminMonitorManager"]
+      t_8_4_1["Init_WhenCalled_ShouldInitializeAdminMonitorManager"]
+    cls_8_5["MonitoringLogging"]
+      t_8_5_1["Init_WhenCalled_ShouldInitializeMonitoringLogging"]
+```
 
