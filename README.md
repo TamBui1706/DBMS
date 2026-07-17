@@ -119,7 +119,6 @@ The detailed UML Class Diagrams defining the entities, properties, and relations
 
 ```mermaid
 classDiagram
-    %% Core DBMS Architecture
     class DBMS {
         -QueryProcessor queryProcessor
         -StorageEngine storageEngine
@@ -133,9 +132,6 @@ classDiagram
         +stopSystem() void
     }
 
-    %% -----------------------------------------
-    %% Query Processor Subsystem
-    %% -----------------------------------------
     class QueryProcessor {
         -SQLParser sqlParser
         -QueryOptimizer queryOptimizer
@@ -189,9 +185,6 @@ classDiagram
     QueryExecution *-- OperatorScheduler
     QueryExecution *-- ExecutionEngine
 
-    %% -----------------------------------------
-    %% Storage Engine Subsystem
-    %% -----------------------------------------
     class StorageEngine {
         -BufferPoolManager bufferPool
         -RecordManager recordManager
@@ -270,9 +263,6 @@ classDiagram
     LogManager *-- LSNGenerator
     LogManager *-- WALBuffer
 
-    %% -----------------------------------------
-    %% Transaction Subsystem
-    %% -----------------------------------------
     class TransactionManager {
         -TransactionTable txnTable
         -LockManager lockManager
@@ -312,9 +302,6 @@ classDiagram
     IsolationManager *-- ReadViewGenerator
     IsolationManager *-- VersionChainBuilder
 
-    %% -----------------------------------------
-    %% Database Object Management
-    %% -----------------------------------------
     class DatabaseObjectManager {
         -SchemaManager schemaManager
         -TableManager tableManager
@@ -351,10 +338,7 @@ classDiagram
     DatabaseObjectManager *-- ColumnManager
     ConstraintManager *-- PrimaryKeyValidator
     TableManager *-- PhysicalFileRegistration
-    
-    %% -----------------------------------------
-    %% Backup & Durability
-    %% -----------------------------------------
+
     class BackupDurabilityManager {
         -BackupManager backupManager
         -RestoreManager restoreManager
@@ -390,9 +374,6 @@ classDiagram
     RecoveryManager *-- UNDOLogApplier
     CheckpointManager *-- FuzzyCheckpointController
 
-    %% -----------------------------------------
-    %% Security & Access Control
-    %% -----------------------------------------
     class SecurityManager {
         -Authentication authModule
         -Authorization authzModule
@@ -422,9 +403,6 @@ classDiagram
     AccessControl *-- RBACPolicyEvaluator
     UserManagement *-- RoleHierarchyResolver
 
-    %% -----------------------------------------
-    %% Performance and Admin Subsystems
-    %% -----------------------------------------
     class PerformanceManager {
         -QueryPerformanceAnalyzer perfAnalyzer
         -MemoryManagement memMgmt
@@ -446,12 +424,11 @@ classDiagram
         -PerformanceMetricsCollector metricsCollector
         -SystemErrorLogWriter errorWriter
     }
-    
+
     PerformanceManager *-- QueryPerformanceAnalyzer
     PerformanceManager *-- MemoryManagement
     AdminMonitorManager *-- MonitoringLogging
 
-    %% Cross-Subsystem Dependencies
     DBMS *-- QueryProcessor
     DBMS *-- StorageEngine
     DBMS *-- TransactionManager
@@ -460,7 +437,7 @@ classDiagram
     DBMS *-- BackupDurabilityManager
     DBMS *-- PerformanceManager
     DBMS *-- AdminMonitorManager
-    
+
     QueryExecution ..> StorageEngine
     QueryExecution ..> TransactionManager
     StorageEngine ..> LogManager
@@ -478,7 +455,7 @@ classDiagram
 ### 1. Query Processor Subsystem
 ```mermaid
 classDiagram
-class QueryProcessor {
+    class QueryProcessor {
         -SQLParser sqlParser
         -QueryOptimizer queryOptimizer
         -QueryExecution queryExecution
@@ -535,7 +512,7 @@ class QueryProcessor {
 ### 2. Storage Engine Subsystem
 ```mermaid
 classDiagram
-class StorageEngine {
+    class StorageEngine {
         -BufferPoolManager bufferPool
         -RecordManager recordManager
         -IndexManager indexManager
@@ -617,7 +594,7 @@ class StorageEngine {
 ### 3. Transaction Subsystem
 ```mermaid
 classDiagram
-class TransactionManager {
+    class TransactionManager {
         -TransactionTable txnTable
         -LockManager lockManager
         -IsolationManager isolationManager
@@ -660,7 +637,7 @@ class TransactionManager {
 ### 4. Database Object Management
 ```mermaid
 classDiagram
-class DatabaseObjectManager {
+    class DatabaseObjectManager {
         -SchemaManager schemaManager
         -TableManager tableManager
         -ViewManager viewManager
@@ -701,7 +678,7 @@ class DatabaseObjectManager {
 ### 5. Backup & Durability
 ```mermaid
 classDiagram
-class BackupDurabilityManager {
+    class BackupDurabilityManager {
         -BackupManager backupManager
         -RestoreManager restoreManager
         -RecoveryManager recoveryManager
@@ -740,7 +717,7 @@ class BackupDurabilityManager {
 ### 6. Security & Access Control
 ```mermaid
 classDiagram
-class SecurityManager {
+    class SecurityManager {
         -Authentication authModule
         -Authorization authzModule
         -AccessControl accessControl
@@ -773,7 +750,7 @@ class SecurityManager {
 ### 7. Performance and Admin Subsystems
 ```mermaid
 classDiagram
-class PerformanceManager {
+    class PerformanceManager {
         -QueryPerformanceAnalyzer perfAnalyzer
         -MemoryManagement memMgmt
         -Caching cacheMgmt
@@ -794,7 +771,7 @@ class PerformanceManager {
         -PerformanceMetricsCollector metricsCollector
         -SystemErrorLogWriter errorWriter
     }
-    
+
     PerformanceManager *-- QueryPerformanceAnalyzer
     PerformanceManager *-- MemoryManagement
     AdminMonitorManager *-- MonitoringLogging
