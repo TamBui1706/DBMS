@@ -15,14 +15,9 @@ Below is the mind map illustrating the layered architecture of the DBMS.
 
 ```mermaid
 flowchart LR
-    %% Root Node
     DBMS[Database Management System]
 
-    %% -----------------------------------------
-    %% LEFT SIDE BRANCHES (Child --- Parent --- DBMS)
-    %% -----------------------------------------
 
-    %% Transaction Branch (Left)
     Concurrency[Concurrency] --- Transaction[Transaction Management]
     Deadlock[Deadlock] --- Transaction
     TxnManager[Transaction Manager] --- Transaction
@@ -30,7 +25,6 @@ flowchart LR
     Isolation[Isolation Management] --- Transaction
     Transaction --- DBMS
 
-    %% Storage Engine Branch (Left)
     DataFile[Data File Manager] --- Storage[Storage Engine]
     BufferPool[Buffer Pool + Cache] --- Storage
     RecordMgmt[Record Management] --- Storage
@@ -40,7 +34,6 @@ flowchart LR
     LogFile[Log File] --- Storage
     Storage --- DBMS
 
-    %% Backup & Durability Branch (Left)
     BackupMgmt[Backup Management] --- Backup[Backup & Durability]
     RestoreMgmt[Restore Management] --- Backup
     TxnLogging[Transaction Logging] --- Backup
@@ -49,18 +42,13 @@ flowchart LR
     Replication[Replication] --- Backup
     Backup --- DBMS
 
-    %% Administration & Monitoring Branch (Left)
     BackupStrategy[Backup Strategy] --- Admin[Administration & Monitoring]
     Monitoring[Monitoring & Logging] --- Admin
     ConfigMgmt[Configuration Management] --- Admin
     ImportExport[Import and Export] --- Admin
     Admin --- DBMS
 
-    %% -----------------------------------------
-    %% RIGHT SIDE BRANCHES (DBMS --- Parent --- Child)
-    %% -----------------------------------------
 
-    %% Query Processor Branch (Right)
     DBMS --- QP[Query Processor]
     QP --- Parser[SQL Parser]
     QP --- Optimizer[Query Optimizer]
@@ -68,7 +56,6 @@ flowchart LR
     QP --- Validation[Query Validation]
     QP --- Result[Result Processing]
 
-    %% Database Object Management Branch (Right)
     DBMS --- DBObject[Database Object Management]
     DBObject --- DBMgmt[Database Management]
     DBObject --- SchemaMgmt[Schema Management]
@@ -82,7 +69,6 @@ flowchart LR
     DBObject --- DataType[Data Type]
     DBObject --- MetaMgmt[Metadata Management]
 
-    %% Performance Branch (Right)
     DBMS --- Perf[Performance]
     Perf --- PerfAnalyzer[Query Performance Analyzer]
     Perf --- Caching[Caching]
@@ -90,7 +76,6 @@ flowchart LR
     Perf --- DataDist[Data Distribution]
     Perf --- ConnThread[Connection & Thread Management]
 
-    %% Security & Access Control Branch (Right)
     DBMS --- Security[Security & Access Control]
     Security --- Auth[Authentication]
     Security --- Authorization[Authorization]
@@ -99,9 +84,6 @@ flowchart LR
     Security --- Encryption[Encryption]
     Security --- Auditing[Auditing]
 
-    %% -----------------------------------------
-    %% STYLING
-    %% -----------------------------------------
     style DBMS fill:#e6e6ff,stroke:#b3b3ff,stroke-width:2px
     style Transaction fill:#e6e6ff,stroke:#b3b3ff,stroke-width:2px
     style Storage fill:#e6e6ff,stroke:#b3b3ff,stroke-width:2px
