@@ -110,8 +110,8 @@ classDiagram
         -BackupDurabilityManager backupManager
         -PerformanceManager performanceManager
         -AdminMonitorManager adminManager
-        +startSystem() void
-        +stopSystem() void
+        +startSystem()
+        +stopSystem()
     }
 
     class QueryProcessor {
@@ -126,23 +126,23 @@ classDiagram
         -ASTBuilder astBuilder
     }
     class LexicalAnalyzer {
-        +tokenize(String sql) List_Token
+        +tokenize(String sql)
     }
     class SyntaxAnalyzer {
-        +checkSyntax(List_Token tokens) boolean
+        +checkSyntax(TokenList tokens)
     }
     class ASTBuilder {
-        +buildTree(List_Token tokens) ASTNode
+        +buildTree(TokenList tokens)
     }
     class QueryOptimizer {
         -CostBasedOptimizer cbo
         -RuleBasedOptimizer rbo
     }
     class CostBasedOptimizer {
-        +estimateCost(Plan p) double
+        +estimateCost(Plan p)
     }
     class RuleBasedOptimizer {
-        +applyRules(Plan p) Plan
+        +applyRules(Plan p)
     }
     class QueryExecution {
         -OperatorScheduler scheduler
@@ -150,10 +150,10 @@ classDiagram
         -ResourceManager resourceManager
     }
     class OperatorScheduler {
-        +schedule(Plan p) void
+        +schedule(Plan p)
     }
     class ExecutionEngine {
-        +executeNode(OpNode n) Result
+        +executeNode(OpNode n)
     }
 
     QueryProcessor *-- SQLParser
@@ -178,17 +178,17 @@ classDiagram
         -PageReplacementAlgorithm replacementAlgo
         -BufferFrameManager frameManager
         -DirtyPageWriter dirtyWriter
-        +fetchPage(PageID pid) Page
+        +fetchPage(PageID pid)
     }
     class PageReplacementAlgorithm {
         <<interface>>
-        +findVictim() PageID
+        +findVictim()
     }
     class BufferFrameManager {
-        +allocateFrame() Frame
+        +allocateFrame()
     }
     class DirtyPageWriter {
-        +flushDirtyPages() void
+        +flushDirtyPages()
     }
     class RecordManager {
         -RecordLayoutManager layoutManager
@@ -196,37 +196,37 @@ classDiagram
         -RIDGenerator ridGenerator
     }
     class RecordLayoutManager {
-        +formatRecord(Tuple t) ByteArray
+        +formatRecord(Tuple t)
     }
     class RIDGenerator {
-        +generateRID() RID
+        +generateRID()
     }
     class IndexManager {
         -IndexMetadata metadata
         -BTreeCoreEngine bTreeEngine
     }
     class BTreeCoreEngine {
-        +insertNode(Key k, RID r) void
+        +insertNode(Key k, RID r)
     }
     class AccessMethods {
         -SequentialScan seqScan
         -IndexScan idxScan
     }
     class SequentialScan {
-        +scan() Iterator
+        +scan()
     }
     class IndexScan {
-        +scan(Key k) Iterator
+        +scan(Key k)
     }
     class LogManager {
         -LSNGenerator lsnGenerator
         -WALBuffer walBuffer
     }
     class LSNGenerator {
-        +nextLSN() LSN
+        +nextLSN()
     }
     class WALBuffer {
-        +appendLog(LogRecord l) void
+        +appendLog(LogRecord l)
     }
 
     StorageEngine *-- BufferPoolManager
@@ -253,27 +253,27 @@ classDiagram
     }
     class LockManager {
         -LockTable lockTable
-        +acquireLock(TransactionID txnId, ResourceID resId, LockMode mode) boolean
+        +acquireLock(TransactionID txnId, ResourceID resId, LockMode mode)
     }
     class LockTable {
-        +getLocks(ResourceID r) List_Lock
+        +getLocks(ResourceID r)
     }
     class DeadlockDetector {
         -WaitForGraph waitGraph
         -VictimSelectionStrategy victimStrategy
     }
     class WaitForGraph {
-        +addEdge(TransactionID t1, TransactionID t2) void
+        +addEdge(TransactionID t1, TransactionID t2)
     }
     class IsolationManager {
         -ReadViewGenerator snapshotGen
         -VersionChainBuilder mvccBuilder
     }
     class ReadViewGenerator {
-        +createSnapshot(TransactionID t) Snapshot
+        +createSnapshot(TransactionID t)
     }
     class VersionChainBuilder {
-        +linkVersion(Record r1, Record r2) void
+        +linkVersion(Record r1, Record r2)
     }
 
     TransactionManager *-- LockManager
@@ -292,14 +292,14 @@ classDiagram
         -ColumnManager columnManager
     }
     class SchemaManager {
-        +createSchema(String name) void
+        +createSchema(String name)
     }
     class TableManager {
         -TableCreator tableCreator
         -PhysicalFileRegistration fileRegistry
     }
     class PhysicalFileRegistration {
-        +registerFile(String path) void
+        +registerFile(String path)
     }
     class ConstraintManager {
         -PrimaryKeyValidator pkValidator
@@ -307,7 +307,7 @@ classDiagram
         -CheckConstraintEvaluator checkEvaluator
     }
     class PrimaryKeyValidator {
-        +validatePK(Record r) boolean
+        +validatePK(Record r)
     }
     class ColumnManager {
         -ColumnDefinitionManager colDefMgr
@@ -333,17 +333,17 @@ classDiagram
         -UNDOLogApplier undoApplier
     }
     class REDOLogApplier {
-        +apply(LogRecord l) void
+        +apply(LogRecord l)
     }
     class UNDOLogApplier {
-        +rollback(LogRecord l) void
+        +rollback(LogRecord l)
     }
     class CheckpointManager {
         -CheckpointerDaemon checkpointer
         -FuzzyCheckpointController fuzzyController
     }
     class FuzzyCheckpointController {
-        +triggerFuzzy() void
+        +triggerFuzzy()
     }
     class RestoreManager {
         -RestoreValidator validator
@@ -363,21 +363,21 @@ classDiagram
         -UserManagement userMgmt
     }
     class Authentication {
-        +authenticateUser(Credentials creds) SessionToken
+        +authenticateUser(Credentials creds)
     }
     class AccessControl {
         -RBACPolicyEvaluator rbacEvaluator
         -DACEvaluator dacEvaluator
     }
     class RBACPolicyEvaluator {
-        +evaluate(Role r, Action a) boolean
+        +evaluate(Role r, Action a)
     }
     class UserManagement {
         -UserCatalog userCatalog
         -RoleHierarchyResolver roleResolver
     }
     class RoleHierarchyResolver {
-        +resolveRoles(User u) List_Role
+        +resolveRoles(User u)
     }
     SecurityManager *-- Authentication
     SecurityManager *-- AccessControl
@@ -426,6 +426,34 @@ classDiagram
     RecoveryManager ..> LogManager
     AccessMethods ..> BufferPoolManager
     TransactionManager ..> LogManager
+    class TupleHeaderManager
+    class ResourceManager
+    class SlowQueryProfiler
+    class PerformanceMetricsCollector
+    class ViewManager
+    class ConfigurationManagement
+    class SharedMemoryAllocator
+    class ColumnDefinitionManager
+    class DACEvaluator
+    class TransactionTable
+    class Authorization
+    class CheckpointerDaemon
+    class UserCatalog
+    class TableCreator
+    class SystemErrorLogWriter
+    class IndexUsageAdvisor
+    class BackupManager
+    class FileRestorer
+    class QueryValidation
+    class Caching
+    class MemoryPoolManager
+    class UniqueConstraintManager
+    class DefaultValueManager
+    class IndexMetadata
+    class CrashRecoveryManager
+    class CheckConstraintEvaluator
+    class VictimSelectionStrategy
+    class RestoreValidator
 ```
 
 
@@ -449,23 +477,23 @@ classDiagram
         -ASTBuilder astBuilder
     }
     class LexicalAnalyzer {
-        +tokenize(String sql) List_Token
+        +tokenize(String sql)
     }
     class SyntaxAnalyzer {
-        +checkSyntax(List_Token tokens) boolean
+        +checkSyntax(TokenList tokens)
     }
     class ASTBuilder {
-        +buildTree(List_Token tokens) ASTNode
+        +buildTree(TokenList tokens)
     }
     class QueryOptimizer {
         -CostBasedOptimizer cbo
         -RuleBasedOptimizer rbo
     }
     class CostBasedOptimizer {
-        +estimateCost(Plan p) double
+        +estimateCost(Plan p)
     }
     class RuleBasedOptimizer {
-        +applyRules(Plan p) Plan
+        +applyRules(Plan p)
     }
     class QueryExecution {
         -OperatorScheduler scheduler
@@ -473,10 +501,10 @@ classDiagram
         -ResourceManager resourceManager
     }
     class OperatorScheduler {
-        +schedule(Plan p) void
+        +schedule(Plan p)
     }
     class ExecutionEngine {
-        +executeNode(OpNode n) Result
+        +executeNode(OpNode n)
     }
 
     QueryProcessor *-- SQLParser
@@ -489,6 +517,8 @@ classDiagram
     QueryOptimizer *-- RuleBasedOptimizer
     QueryExecution *-- OperatorScheduler
     QueryExecution *-- ExecutionEngine
+    class QueryValidation
+    class ResourceManager
 ```
 
 ### 2. Storage Engine Subsystem
@@ -505,17 +535,17 @@ classDiagram
         -PageReplacementAlgorithm replacementAlgo
         -BufferFrameManager frameManager
         -DirtyPageWriter dirtyWriter
-        +fetchPage(PageID pid) Page
+        +fetchPage(PageID pid)
     }
     class PageReplacementAlgorithm {
         <<interface>>
-        +findVictim() PageID
+        +findVictim()
     }
     class BufferFrameManager {
-        +allocateFrame() Frame
+        +allocateFrame()
     }
     class DirtyPageWriter {
-        +flushDirtyPages() void
+        +flushDirtyPages()
     }
     class RecordManager {
         -RecordLayoutManager layoutManager
@@ -523,37 +553,37 @@ classDiagram
         -RIDGenerator ridGenerator
     }
     class RecordLayoutManager {
-        +formatRecord(Tuple t) ByteArray
+        +formatRecord(Tuple t)
     }
     class RIDGenerator {
-        +generateRID() RID
+        +generateRID()
     }
     class IndexManager {
         -IndexMetadata metadata
         -BTreeCoreEngine bTreeEngine
     }
     class BTreeCoreEngine {
-        +insertNode(Key k, RID r) void
+        +insertNode(Key k, RID r)
     }
     class AccessMethods {
         -SequentialScan seqScan
         -IndexScan idxScan
     }
     class SequentialScan {
-        +scan() Iterator
+        +scan()
     }
     class IndexScan {
-        +scan(Key k) Iterator
+        +scan(Key k)
     }
     class LogManager {
         -LSNGenerator lsnGenerator
         -WALBuffer walBuffer
     }
     class LSNGenerator {
-        +nextLSN() LSN
+        +nextLSN()
     }
     class WALBuffer {
-        +appendLog(LogRecord l) void
+        +appendLog(LogRecord l)
     }
 
     StorageEngine *-- BufferPoolManager
@@ -571,6 +601,8 @@ classDiagram
     AccessMethods *-- IndexScan
     LogManager *-- LSNGenerator
     LogManager *-- WALBuffer
+    class IndexMetadata
+    class TupleHeaderManager
 ```
 
 ### 3. Transaction Subsystem
@@ -584,27 +616,27 @@ classDiagram
     }
     class LockManager {
         -LockTable lockTable
-        +acquireLock(TransactionID txnId, ResourceID resId, LockMode mode) boolean
+        +acquireLock(TransactionID txnId, ResourceID resId, LockMode mode)
     }
     class LockTable {
-        +getLocks(ResourceID r) List_Lock
+        +getLocks(ResourceID r)
     }
     class DeadlockDetector {
         -WaitForGraph waitGraph
         -VictimSelectionStrategy victimStrategy
     }
     class WaitForGraph {
-        +addEdge(TransactionID t1, TransactionID t2) void
+        +addEdge(TransactionID t1, TransactionID t2)
     }
     class IsolationManager {
         -ReadViewGenerator snapshotGen
         -VersionChainBuilder mvccBuilder
     }
     class ReadViewGenerator {
-        +createSnapshot(TransactionID t) Snapshot
+        +createSnapshot(TransactionID t)
     }
     class VersionChainBuilder {
-        +linkVersion(Record r1, Record r2) void
+        +linkVersion(Record r1, Record r2)
     }
 
     TransactionManager *-- LockManager
@@ -614,6 +646,8 @@ classDiagram
     DeadlockDetector *-- WaitForGraph
     IsolationManager *-- ReadViewGenerator
     IsolationManager *-- VersionChainBuilder
+    class TransactionTable
+    class VictimSelectionStrategy
 ```
 
 ### 4. Database Object Management
@@ -627,14 +661,14 @@ classDiagram
         -ColumnManager columnManager
     }
     class SchemaManager {
-        +createSchema(String name) void
+        +createSchema(String name)
     }
     class TableManager {
         -TableCreator tableCreator
         -PhysicalFileRegistration fileRegistry
     }
     class PhysicalFileRegistration {
-        +registerFile(String path) void
+        +registerFile(String path)
     }
     class ConstraintManager {
         -PrimaryKeyValidator pkValidator
@@ -642,7 +676,7 @@ classDiagram
         -CheckConstraintEvaluator checkEvaluator
     }
     class PrimaryKeyValidator {
-        +validatePK(Record r) boolean
+        +validatePK(Record r)
     }
     class ColumnManager {
         -ColumnDefinitionManager colDefMgr
@@ -655,6 +689,12 @@ classDiagram
     DatabaseObjectManager *-- ColumnManager
     ConstraintManager *-- PrimaryKeyValidator
     TableManager *-- PhysicalFileRegistration
+    class UniqueConstraintManager
+    class TableCreator
+    class CheckConstraintEvaluator
+    class ColumnDefinitionManager
+    class DefaultValueManager
+    class ViewManager
 ```
 
 ### 5. Backup & Durability
@@ -672,17 +712,17 @@ classDiagram
         -UNDOLogApplier undoApplier
     }
     class REDOLogApplier {
-        +apply(LogRecord l) void
+        +apply(LogRecord l)
     }
     class UNDOLogApplier {
-        +rollback(LogRecord l) void
+        +rollback(LogRecord l)
     }
     class CheckpointManager {
         -CheckpointerDaemon checkpointer
         -FuzzyCheckpointController fuzzyController
     }
     class FuzzyCheckpointController {
-        +triggerFuzzy() void
+        +triggerFuzzy()
     }
     class RestoreManager {
         -RestoreValidator validator
@@ -694,6 +734,11 @@ classDiagram
     RecoveryManager *-- REDOLogApplier
     RecoveryManager *-- UNDOLogApplier
     CheckpointManager *-- FuzzyCheckpointController
+    class CheckpointerDaemon
+    class BackupManager
+    class RestoreValidator
+    class FileRestorer
+    class CrashRecoveryManager
 ```
 
 ### 6. Security & Access Control
@@ -706,27 +751,30 @@ classDiagram
         -UserManagement userMgmt
     }
     class Authentication {
-        +authenticateUser(Credentials creds) SessionToken
+        +authenticateUser(Credentials creds)
     }
     class AccessControl {
         -RBACPolicyEvaluator rbacEvaluator
         -DACEvaluator dacEvaluator
     }
     class RBACPolicyEvaluator {
-        +evaluate(Role r, Action a) boolean
+        +evaluate(Role r, Action a)
     }
     class UserManagement {
         -UserCatalog userCatalog
         -RoleHierarchyResolver roleResolver
     }
     class RoleHierarchyResolver {
-        +resolveRoles(User u) List_Role
+        +resolveRoles(User u)
     }
     SecurityManager *-- Authentication
     SecurityManager *-- AccessControl
     SecurityManager *-- UserManagement
     AccessControl *-- RBACPolicyEvaluator
     UserManagement *-- RoleHierarchyResolver
+    class UserCatalog
+    class Authorization
+    class DACEvaluator
 ```
 
 ### 7. Performance and Admin Subsystems
@@ -757,5 +805,13 @@ classDiagram
     PerformanceManager *-- QueryPerformanceAnalyzer
     PerformanceManager *-- MemoryManagement
     AdminMonitorManager *-- MonitoringLogging
+    class ConfigurationManagement
+    class SharedMemoryAllocator
+    class MemoryPoolManager
+    class PerformanceMetricsCollector
+    class SlowQueryProfiler
+    class IndexUsageAdvisor
+    class SystemErrorLogWriter
+    class Caching
 ```
 
