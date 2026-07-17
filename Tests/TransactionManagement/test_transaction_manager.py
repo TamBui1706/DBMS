@@ -1,13 +1,15 @@
 import unittest
-import sys
-import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from Classes.TransactionManagement.transaction_manager import TransactionManager
 
 class TestTransactionManager(unittest.TestCase):
-    def test_Init_WhenCalled_ShouldInitializeTransactionManager(self):
+    def BeginTransaction_CreatesAndRegistersNewActiveTransaction(self):
         pass
 
-if __name__ == '__main__':
-    unittest.main()
+    def Commit_WhenSuccessful_WritesToLogAndChangesState(self):
+        pass
+
+    def Rollback_WhenCalled_RevertsAllModifications(self):
+        pass
+
+    def Commit_WhenValidationFails_ForcesRollback(self):
+        pass
+

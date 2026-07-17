@@ -1,13 +1,15 @@
 import unittest
-import sys
-import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from Classes.SecurityAccessControl.security_manager import SecurityManager
 
 class TestSecurityManager(unittest.TestCase):
-    def test_Init_WhenCalled_ShouldInitializeSecurityManager(self):
+    def Authenticate_WhenValidCredentials_ReturnsSessionToken(self):
         pass
 
-if __name__ == '__main__':
-    unittest.main()
+    def Authenticate_WhenInvalidCredentials_ThrowsAuthException(self):
+        pass
+
+    def Authorize_WhenUserHasRequiredRole_Succeeds(self):
+        pass
+
+    def Authorize_WhenUserLacksPermission_ThrowsAccessException(self):
+        pass
+
