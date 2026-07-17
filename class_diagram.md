@@ -29,13 +29,13 @@ classDiagram
         -ASTBuilder astBuilder
     }
     class LexicalAnalyzer {
-        +tokenize(String sql) List~Token~
+        +tokenize(String sql) List_Token
     }
     class SyntaxAnalyzer {
-        +checkSyntax(List~Token~ tokens) boolean
+        +checkSyntax(List_Token tokens) boolean
     }
     class ASTBuilder {
-        +buildTree(List~Token~ tokens) ASTNode
+        +buildTree(List_Token tokens) ASTNode
     }
     class QueryOptimizer {
         -CostBasedOptimizer cbo
@@ -102,7 +102,7 @@ classDiagram
         -RIDGenerator ridGenerator
     }
     class RecordLayoutManager {
-        +formatRecord(Tuple t) byte[]
+        +formatRecord(Tuple t) ByteArray
     }
     class RIDGenerator {
         +generateRID() RID
@@ -165,7 +165,7 @@ classDiagram
         +acquireLock(TransactionID txnId, ResourceID resId, LockMode mode) boolean
     }
     class LockTable {
-        +getLocks(ResourceID r) List~Lock~
+        +getLocks(ResourceID r) List_Lock
     }
     class DeadlockDetector {
         -WaitForGraph waitGraph
@@ -295,7 +295,7 @@ classDiagram
         -RoleHierarchyResolver roleResolver
     }
     class RoleHierarchyResolver {
-        +resolveRoles(User u) List~Role~
+        +resolveRoles(User u) List_Role
     }
     SecurityManager *-- Authentication
     SecurityManager *-- AccessControl
