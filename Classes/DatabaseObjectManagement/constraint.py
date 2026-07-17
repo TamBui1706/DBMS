@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class PageReplacementAlgorithm(ABC):
+class Constraint(ABC):
     @abstractmethod
-    def findVictim(self):
+    def validate(self):
         pass

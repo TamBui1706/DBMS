@@ -1,7 +1,3 @@
 class LockTable:
-    def __init__(self):
+    def getLocks(self):
         pass
-
-    def getLocks(self, r):
-        pass
-

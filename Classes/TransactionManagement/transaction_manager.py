@@ -1,7 +1,9 @@
 class TransactionManager:
-    def __init__(self):
-        self.txnTable = None
-        self.lockManager = None
-        self.isolationManager = None
-        self.deadlockDetector = None
+    def beginTransaction(self):
+        pass
 
+    def commit(self):
+        pass
+
+    def rollback(self):
+        pass

@@ -1,269 +1,302 @@
-# 🧪 Detailed Unit Test Plan
-
-## Core Architecture
-
-### 1. `DBMS`
-- `test_Init_WhenCalled_ShouldInitializeDBMS`
-- `test_StartSystem_WhenValid_ShouldSucceed`
-- `test_StartSystem_WhenInvalid_ShouldThrow`
-- `test_StopSystem_WhenValid_ShouldSucceed`
-- `test_StopSystem_WhenInvalid_ShouldThrow`
-
-## Query Processor Subsystem
-
-### 2. `QueryProcessor`
-- `test_Init_WhenCalled_ShouldInitializeQueryProcessor`
-
-### 3. `SQLParser`
-- `test_Init_WhenCalled_ShouldInitializeSQLParser`
-
-### 4. `LexicalAnalyzer`
-- `test_Init_WhenCalled_ShouldInitializeLexicalAnalyzer`
-- `test_Tokenize_WhenValid_ShouldSucceed`
-- `test_Tokenize_WhenInvalid_ShouldThrow`
-
-### 5. `SyntaxAnalyzer`
-- `test_Init_WhenCalled_ShouldInitializeSyntaxAnalyzer`
-- `test_CheckSyntax_WhenValid_ShouldSucceed`
-- `test_CheckSyntax_WhenInvalid_ShouldThrow`
-
-### 6. `ASTBuilder`
-- `test_Init_WhenCalled_ShouldInitializeASTBuilder`
-- `test_BuildTree_WhenValid_ShouldSucceed`
-- `test_BuildTree_WhenInvalid_ShouldThrow`
-
-### 7. `QueryOptimizer`
-- `test_Init_WhenCalled_ShouldInitializeQueryOptimizer`
-
-### 8. `CostBasedOptimizer`
-- `test_Init_WhenCalled_ShouldInitializeCostBasedOptimizer`
-- `test_EstimateCost_WhenValid_ShouldSucceed`
-- `test_EstimateCost_WhenInvalid_ShouldThrow`
-
-### 9. `RuleBasedOptimizer`
-- `test_Init_WhenCalled_ShouldInitializeRuleBasedOptimizer`
-- `test_ApplyRules_WhenValid_ShouldSucceed`
-- `test_ApplyRules_WhenInvalid_ShouldThrow`
-
-### 10. `QueryExecution`
-- `test_Init_WhenCalled_ShouldInitializeQueryExecution`
-
-### 11. `OperatorScheduler`
-- `test_Init_WhenCalled_ShouldInitializeOperatorScheduler`
-- `test_Schedule_WhenValid_ShouldSucceed`
-- `test_Schedule_WhenInvalid_ShouldThrow`
-
-### 12. `ExecutionEngine`
-- `test_Init_WhenCalled_ShouldInitializeExecutionEngine`
-- `test_ExecuteNode_WhenValid_ShouldSucceed`
-- `test_ExecuteNode_WhenInvalid_ShouldThrow`
-
-## Storage Engine Subsystem
-
-### 13. `StorageEngine`
-- `test_Init_WhenCalled_ShouldInitializeStorageEngine`
-
-### 14. `BufferPoolManager`
-- `test_Init_WhenCalled_ShouldInitializeBufferPoolManager`
-- `test_FetchPage_WhenValid_ShouldSucceed`
-- `test_FetchPage_WhenInvalid_ShouldThrow`
-
-### 15. `PageReplacementAlgorithm`
-- `test_Init_WhenCalled_ShouldInitializePageReplacementAlgorithm`
-- `test_FindVictim_WhenValid_ShouldSucceed`
-- `test_FindVictim_WhenInvalid_ShouldThrow`
-
-### 16. `BufferFrameManager`
-- `test_Init_WhenCalled_ShouldInitializeBufferFrameManager`
-- `test_AllocateFrame_WhenValid_ShouldSucceed`
-- `test_AllocateFrame_WhenInvalid_ShouldThrow`
-
-### 17. `DirtyPageWriter`
-- `test_Init_WhenCalled_ShouldInitializeDirtyPageWriter`
-- `test_FlushDirtyPages_WhenValid_ShouldSucceed`
-- `test_FlushDirtyPages_WhenInvalid_ShouldThrow`
-
-### 18. `RecordManager`
-- `test_Init_WhenCalled_ShouldInitializeRecordManager`
-
-### 19. `RecordLayoutManager`
-- `test_Init_WhenCalled_ShouldInitializeRecordLayoutManager`
-- `test_FormatRecord_WhenValid_ShouldSucceed`
-- `test_FormatRecord_WhenInvalid_ShouldThrow`
-
-### 20. `RIDGenerator`
-- `test_Init_WhenCalled_ShouldInitializeRIDGenerator`
-- `test_GenerateRID_WhenValid_ShouldSucceed`
-- `test_GenerateRID_WhenInvalid_ShouldThrow`
-
-### 21. `IndexManager`
-- `test_Init_WhenCalled_ShouldInitializeIndexManager`
+# Unit Tests for DBMS Core Architecture
+
+
+
+---
+
+## 1. Core Server & Connections
+
+### 1. `DatabaseServer`
+- `Start_WhenConfigValid_InitializesAllSubsystems`
+- `Start_WhenAlreadyRunning_ThrowsIllegalStateException`
+- `Stop_WhenRunning_ShutsDownGracefully`
+- `Stop_WhenAlreadyStopped_DoesNothing`
+- `Status_ReturnsCurrentOperationalState`
+
+### 2. `ConnectionManager`
+- `AcceptConnection_WhenUnderMaxLimit_CreatesClientSession`
+- `AcceptConnection_WhenAtMaxLimit_RejectsConnection`
+- `AcceptConnection_WhenServerPaused_QueuesOrRejects`
+- `CloseConnection_WhenValidSession_ReleasesResources`
+- `CloseConnection_WhenInvalidSession_ThrowsException`
+
+### 3. `ClientSession`
+- `Init_SetsSessionIdAndTimestamp`
+- `Execute_WhenValidQuery_ReturnsExecutionResult`
+- `Execute_WhenSessionExpired_ThrowsTimeoutException`
+- `Execute_WhenConnectionLost_FailsGracefully`
+
+### 4. `DatabaseManager`
+- `CreateDatabase_WhenNameIsValid_CreatesMetadataAndFiles`
+- `CreateDatabase_WhenNameExists_ThrowsDuplicateDatabaseException`
+- `CreateDatabase_WhenInvalidCharacters_ThrowsValidationException`
+- `DropDatabase_WhenExists_RemovesAllAssociatedData`
+- `DropDatabase_WhenInUse_ThrowsConcurrencyException`
+
+### 5. `Database`
+- `Init_SetsDatabaseNameCorrectly`
+- `Open_WhenValidMetadata_LoadsDatabaseContext`
+- `Open_WhenCorruptedMetadata_ThrowsCorruptionException`
+
+### 6. `CatalogManager`
+- `RegisterObject_WhenObjectIsValid_UpdatesCatalogDictionary`
+- `RegisterObject_WhenDuplicateId_ThrowsException`
+- `FindObject_WhenExists_ReturnsObjectMetadata`
+- `FindObject_WhenNotExists_ReturnsNull`
+
+---
+
+## 2. Database Object Management
+
+### 7. `Schema`
+- `Init_SetsSchemaName`
+- `CreateTable_WhenValidTable_RegistersInSchema`
+- `CreateTable_WhenTableNameExists_ThrowsException`
+- `DropTable_WhenExists_RemovesFromSchema`
+
+### 8. `Table`
+- `Insert_WhenValidRowAndConstraintsMet_AppendsRow`
+- `Insert_WhenPrimaryKeyViolated_ThrowsConstraintException`
+- `Update_WhenRowExists_ModifiesValues`
+- `Update_WhenRowNotExists_ReturnsZeroAffectedRows`
+- `Delete_WhenRowExists_RemovesRow`
+
+### 9. `View`
+- `Init_SetsQueryDefinition`
+- `CompileView_WhenUnderlyingTablesExist_Succeeds`
+
+### 10. `StoredProcedure`
+- `Execute_WhenValidParametersProvided_RunsLogic`
+- `Execute_WhenTypeMismatchInParams_ThrowsException`
+
+### 11. `Function`
+- `Evaluate_WhenValidArguments_ReturnsComputedValue`
+- `Evaluate_WhenMissingArguments_ThrowsArgumentException`
+
+### 12. `Sequence`
+- `NextValue_IncrementsByStepAndReturnsValue`
+- `NextValue_WhenMaxLimitReached_ThrowsOverflowException`
+
+### 13. `Trigger`
+- `Fire_OnEventConditionMet_ExecutesTriggerAction`
+- `Fire_OnEventConditionNotMet_SkipsExecution`
+
+### 14. `Partition`
+- `Init_SetsPartitionKeyCorrectly`
+- `CheckBoundary_WhenValueInRange_ReturnsTrue`
+
+### 15. `Column`
+- `Init_SetsNameAndNullableFlags`
+- `ValidateType_WhenDataMatchesColumnType_Succeeds`
 
-### 22. `BTreeCoreEngine`
-- `test_Init_WhenCalled_ShouldInitializeBTreeCoreEngine`
-- `test_InsertNode_WhenValid_ShouldSucceed`
-- `test_InsertNode_WhenInvalid_ShouldThrow`
+### 16. `Row`
+- `Init_GeneratesRowIdAndInitializesValueList`
+- `GetValue_WhenIndexValid_ReturnsData`
 
-### 23. `AccessMethods`
-- `test_Init_WhenCalled_ShouldInitializeAccessMethods`
+### 17. `DataType` (Enum)
+- `EnumValues_IncludeIntVarcharDateBoolean`
+- `ParseString_WhenValidFormat_ReturnsDataTypeInstance`
 
-### 24. `SequentialScan`
-- `test_Init_WhenCalled_ShouldInitializeSequentialScan`
-- `test_Scan_WhenValid_ShouldSucceed`
-- `test_Scan_WhenInvalid_ShouldThrow`
+### 18. `Constraint` (Abstract)
+- `Instantiation_OfAbstractClass_FailsWithTypeError`
 
-### 25. `IndexScan`
-- `test_Init_WhenCalled_ShouldInitializeIndexScan`
-- `test_Scan_WhenValid_ShouldSucceed`
-- `test_Scan_WhenInvalid_ShouldThrow`
+### 19. `PrimaryKey`
+- `Validate_WhenValueIsUniqueAndNotNull_Succeeds`
+- `Validate_WhenValueIsNull_ThrowsNullException`
+- `Validate_WhenValueIsDuplicate_ThrowsDuplicateKeyException`
 
-### 26. `LogManager`
-- `test_Init_WhenCalled_ShouldInitializeLogManager`
+### 20. `ForeignKey`
+- `Validate_WhenReferencedRowExists_Succeeds`
+- `Validate_WhenReferencedRowDoesNotExist_ThrowsForeignKeyException`
+- `Init_SetsReferenceTableCorrectly`
 
-### 27. `LSNGenerator`
-- `test_Init_WhenCalled_ShouldInitializeLSNGenerator`
-- `test_NextLSN_WhenValid_ShouldSucceed`
-- `test_NextLSN_WhenInvalid_ShouldThrow`
+### 21. `UniqueConstraint`
+- `Validate_WhenValueIsGloballyUnique_Succeeds`
+- `Validate_WhenValueExistsInAnotherRow_ThrowsException`
 
-### 28. `WALBuffer`
-- `test_Init_WhenCalled_ShouldInitializeWALBuffer`
-- `test_AppendLog_WhenValid_ShouldSucceed`
-- `test_AppendLog_WhenInvalid_ShouldThrow`
+### 22. `CheckConstraint`
+- `Validate_WhenExpressionEvaluatesToTrue_Succeeds`
+- `Validate_WhenExpressionEvaluatesToFalse_ThrowsCheckException`
 
-## Transaction Subsystem
+### 23. `Index` (Abstract)
+- `Instantiation_OfAbstractClass_FailsWithTypeError`
 
-### 29. `TransactionManager`
-- `test_Init_WhenCalled_ShouldInitializeTransactionManager`
+### 24. `BTreeIndex`
+- `InsertKey_WhenValid_AddsNodeToTreeBalancing`
+- `Search_WhenKeyExists_ReturnsCorrespondingRowID`
+- `Search_WhenKeyNotExists_ReturnsEmptyResult`
 
-### 30. `LockManager`
-- `test_Init_WhenCalled_ShouldInitializeLockManager`
-- `test_AcquireLock_WhenValid_ShouldSucceed`
-- `test_AcquireLock_WhenInvalid_ShouldThrow`
+### 25. `HashIndex`
+- `InsertKey_ComputesHashAndAddsToBucket`
+- `Search_WhenKeyExists_ResolvesHashToRowID`
+- `HandleCollision_CreatesLinkedListInBucket`
 
-### 31. `LockTable`
-- `test_Init_WhenCalled_ShouldInitializeLockTable`
-- `test_GetLocks_WhenValid_ShouldSucceed`
-- `test_GetLocks_WhenInvalid_ShouldThrow`
+### 26. `BitmapIndex`
+- `InsertKey_UpdatesBitmapBitsForGivenValue`
+- `Search_WhenKeyExists_UsesBitwiseOperationsToFindRID`
 
-### 32. `DeadlockDetector`
-- `test_Init_WhenCalled_ShouldInitializeDeadlockDetector`
+---
 
-### 33. `WaitForGraph`
-- `test_Init_WhenCalled_ShouldInitializeWaitForGraph`
-- `test_AddEdge_WhenValid_ShouldSucceed`
-- `test_AddEdge_WhenInvalid_ShouldThrow`
+## 3. Query Processor
 
-### 34. `IsolationManager`
-- `test_Init_WhenCalled_ShouldInitializeIsolationManager`
+### 27. `QueryProcessor`
+- `ProcessQuery_WhenValidSQL_ReturnsQueryResult`
+- `ProcessQuery_WhenExecutionFails_RollsBackAndThrows`
 
-### 35. `ReadViewGenerator`
-- `test_Init_WhenCalled_ShouldInitializeReadViewGenerator`
-- `test_CreateSnapshot_WhenValid_ShouldSucceed`
-- `test_CreateSnapshot_WhenInvalid_ShouldThrow`
+### 28. `SQLParser`
+- `Parse_WhenValidSelectStatement_GeneratesAST`
+- `Parse_WhenInvalidSyntax_ThrowsSyntaxErrorException`
+- `Parse_WhenUnsupportedCommand_ThrowsNotImplementedException`
 
-### 36. `VersionChainBuilder`
-- `test_Init_WhenCalled_ShouldInitializeVersionChainBuilder`
-- `test_LinkVersion_WhenValid_ShouldSucceed`
-- `test_LinkVersion_WhenInvalid_ShouldThrow`
+### 29. `Lexer`
+- `Tokenize_WhenValidString_ReturnsListOfTokens`
+- `Tokenize_IgnoresWhitespaceAndComments`
 
-## Database Object Management
+### 30. `AST`
+- `Init_SetsRootNode`
+- `Traverse_VisitsAllNodesInCorrectOrder`
 
-### 37. `DatabaseObjectManager`
-- `test_Init_WhenCalled_ShouldInitializeDatabaseObjectManager`
+### 31. `QueryOptimizer`
+- `Optimize_WhenGivenLogicalPlan_TransformsToPhysicalPlan`
+- `Optimize_AppliesFilterPushdownRule`
 
-### 38. `SchemaManager`
-- `test_Init_WhenCalled_ShouldInitializeSchemaManager`
-- `test_CreateSchema_WhenValid_ShouldSucceed`
-- `test_CreateSchema_WhenInvalid_ShouldThrow`
+### 32. `CostModel`
+- `EstimateCost_CalculatesIOAndCPUCost`
+- `EstimateCost_WhenUsingIndex_ReturnsLowerCostThanSeqScan`
 
-### 39. `TableManager`
-- `test_Init_WhenCalled_ShouldInitializeTableManager`
+### 33. `StatisticsManager`
+- `Collect_UpdatesRowCountsAndCardinality`
+- `GetStatistics_WhenCalled_ReturnsAccurateMetadata`
 
-### 40. `PhysicalFileRegistration`
-- `test_Init_WhenCalled_ShouldInitializePhysicalFileRegistration`
-- `test_RegisterFile_WhenValid_ShouldSucceed`
-- `test_RegisterFile_WhenInvalid_ShouldThrow`
+### 34. `LogicalPlan`
+- `Init_CreatesEmptyOperatorTree`
+- `AddOperator_AppendsToPlan`
 
-### 41. `ConstraintManager`
-- `test_Init_WhenCalled_ShouldInitializeConstraintManager`
+### 35. `LogicalOperator` (Abstract)
+- `Instantiation_OfAbstractClass_FailsWithTypeError`
 
-### 42. `PrimaryKeyValidator`
-- `test_Init_WhenCalled_ShouldInitializePrimaryKeyValidator`
-- `test_ValidatePK_WhenValid_ShouldSucceed`
-- `test_ValidatePK_WhenInvalid_ShouldThrow`
+### 36. `PhysicalPlan`
+- `Init_CreatesEmptyOperatorTree`
+- `ValidatePipeline_EnsuresOperatorCompatibility`
 
-### 43. `ColumnManager`
-- `test_Init_WhenCalled_ShouldInitializeColumnManager`
+### 37. `PhysicalOperator` (Abstract)
+- `Instantiation_OfAbstractClass_FailsWithTypeError`
 
-## Backup & Durability
+### 38. `QueryExecutor`
+- `ExecutePlan_WhenValidPhysicalPlan_IteratesAndYieldsResults`
+- `ExecutePlan_WhenMemoryExceeded_SpillsToDiskOrThrows`
 
-### 44. `BackupDurabilityManager`
-- `test_Init_WhenCalled_ShouldInitializeBackupDurabilityManager`
+---
 
-### 45. `RecoveryManager`
-- `test_Init_WhenCalled_ShouldInitializeRecoveryManager`
+## 4. Transaction Management
 
-### 46. `REDOLogApplier`
-- `test_Init_WhenCalled_ShouldInitializeREDOLogApplier`
-- `test_Apply_WhenValid_ShouldSucceed`
-- `test_Apply_WhenInvalid_ShouldThrow`
+### 39. `TransactionManager`
+- `BeginTransaction_CreatesAndRegistersNewActiveTransaction`
+- `Commit_WhenSuccessful_WritesToLogAndChangesState`
+- `Rollback_WhenCalled_RevertsAllModifications`
+- `Commit_WhenValidationFails_ForcesRollback`
 
-### 47. `UNDOLogApplier`
-- `test_Init_WhenCalled_ShouldInitializeUNDOLogApplier`
-- `test_Rollback_WhenValid_ShouldSucceed`
-- `test_Rollback_WhenInvalid_ShouldThrow`
+### 40. `Transaction`
+- `Init_GeneratesUniqueTransactionId`
+- `SetIsolationLevel_UpdatesTransactionProperties`
 
-### 48. `CheckpointManager`
-- `test_Init_WhenCalled_ShouldInitializeCheckpointManager`
+### 41. `IsolationLevel` (Enum)
+- `EnumValues_IncludeReadCommittedAndSerializable`
 
-### 49. `FuzzyCheckpointController`
-- `test_Init_WhenCalled_ShouldInitializeFuzzyCheckpointController`
-- `test_TriggerFuzzy_WhenValid_ShouldSucceed`
-- `test_TriggerFuzzy_WhenInvalid_ShouldThrow`
+### 42. `TransactionState` (Enum)
+- `EnumValues_IncludeActiveCommittedAborted`
 
-### 50. `RestoreManager`
-- `test_Init_WhenCalled_ShouldInitializeRestoreManager`
+### 43. `LockManager`
+- `AcquireLock_WhenResourceFree_GrantsLockInstantly`
+- `AcquireLock_WhenResourceLocked_BlocksOrThrowsTimeout`
+- `ReleaseLock_WhenHoldingLock_FreesResourceAndWakesWaiters`
 
-## Security & Access Control
+### 44. `LockTable`
+- `GetLocks_ReturnsCurrentLockInformation`
+- `AddLock_RegistersNewLockForResource`
 
-### 51. `SecurityManager`
-- `test_Init_WhenCalled_ShouldInitializeSecurityManager`
+### 45. `DeadlockDetector`
+- `DetectAndResolve_WhenCycleFound_AbortsVictimTransaction`
+- `DetectAndResolve_WhenNoCycleFound_DoesNothing`
 
-### 52. `Authentication`
-- `test_Init_WhenCalled_ShouldInitializeAuthentication`
-- `test_AuthenticateUser_WhenValid_ShouldSucceed`
-- `test_AuthenticateUser_WhenInvalid_ShouldThrow`
+### 46. `MVCCManager`
+- `CreateVersion_AppendsNewRecordVersionToChain`
+- `GarbageCollect_RemovesVersionsInvisibleToAllActiveTransactions`
 
-### 53. `AccessControl`
-- `test_Init_WhenCalled_ShouldInitializeAccessControl`
+---
 
-### 54. `RBACPolicyEvaluator`
-- `test_Init_WhenCalled_ShouldInitializeRBACPolicyEvaluator`
-- `test_Evaluate_WhenValid_ShouldSucceed`
-- `test_Evaluate_WhenInvalid_ShouldThrow`
+## 5. Storage Engine
 
-### 55. `UserManagement`
-- `test_Init_WhenCalled_ShouldInitializeUserManagement`
+### 47. `StorageEngine`
+- `ReadPage_WhenPageNotInBuffer_LoadsFromDisk`
+- `WritePage_WhenPageIsDirty_FlushesToDisk`
 
-### 56. `RoleHierarchyResolver`
-- `test_Init_WhenCalled_ShouldInitializeRoleHierarchyResolver`
-- `test_ResolveRoles_WhenValid_ShouldSucceed`
-- `test_ResolveRoles_WhenInvalid_ShouldThrow`
+### 48. `BufferPool`
+- `PinPage_IncrementsPinCountAndPreventsEviction`
+- `UnpinPage_DecrementsPinCount`
+- `FlushPage_ForcesDirtyPageToDisk`
+- `FetchPage_WhenPoolFull_EvictsUnpinnedPage`
 
-## Performance and Admin Subsystems
+### 49. `PageReplacementAlgorithm` (Interface)
+- `Instantiation_OfInterface_FailsWithTypeError`
+- `FindVictim_Implementation_ReturnsUnpinnedPageId`
 
-### 57. `PerformanceManager`
-- `test_Init_WhenCalled_ShouldInitializePerformanceManager`
+### 50. `Page`
+- `Init_SetsPageIdAndClearsDirtyFlag`
+- `MarkDirty_SetsDirtyFlagToTrue`
 
-### 58. `QueryPerformanceAnalyzer`
-- `test_Init_WhenCalled_ShouldInitializeQueryPerformanceAnalyzer`
+### 51. `FileManager`
+- `AllocateSpace_CreatesNewBlockAndReturnsId`
+- `DeallocateSpace_MarksBlockAsFree`
 
-### 59. `MemoryManagement`
-- `test_Init_WhenCalled_ShouldInitializeMemoryManagement`
+### 52. `DataFile`
+- `Init_OpensFileStreamForDataBlocks`
+- `ReadBlock_LoadsBytesFromDisk`
 
-### 60. `AdminMonitorManager`
-- `test_Init_WhenCalled_ShouldInitializeAdminMonitorManager`
+### 53. `IndexFile`
+- `Init_OpensFileStreamForIndexBlocks`
+- `WriteBlock_SavesBytesToDisk`
 
-### 61. `MonitoringLogging`
-- `test_Init_WhenCalled_ShouldInitializeMonitoringLogging`
+---
+
+## 6. Backup & Durability
+
+### 54. `RecoveryManager`
+- `Recover_WhenSystemCrashes_ReplaysWALToRestoreState`
+- `Recover_WhenUndoNeeded_RollsBackUncommittedTransactions`
+
+### 55. `CheckpointManager`
+- `TakeCheckpoint_FlushesAllDirtyPages`
+- `TakeCheckpoint_WritesCheckpointRecordToLog`
+
+### 56. `WALManager`
+- `AppendLog_AddsRecordToMemoryBuffer`
+- `Flush_WritesBufferToDiskSynchronously`
+- `AppendLog_WhenBufferFull_TriggersAutomaticFlush`
+
+### 57. `LogRecord`
+- `Init_SetsLsnTypeAndPayloadData`
+- `Serialize_ConvertsRecordToByteArray`
+
+---
+
+## 7. Security & Access Control
+
+### 58. `SecurityManager`
+- `Authenticate_WhenValidCredentials_ReturnsSessionToken`
+- `Authenticate_WhenInvalidCredentials_ThrowsAuthException`
+- `Authorize_WhenUserHasRequiredRole_Succeeds`
+- `Authorize_WhenUserLacksPermission_ThrowsAccessException`
+
+### 59. `User`
+- `Init_SetsUsernameAndHashedPassword`
+- `AddRole_AssignsNewRoleToUser`
+
+### 60. `Role`
+- `Init_SetsRoleName`
+- `AddPermission_GrantsPermissionToRole`
+
+### 61. `Permission`
+- `Init_SetsResourceAndActionType`
+- `Matches_WhenActionAndResourceAlign_ReturnsTrue`
 
