@@ -1,12 +1,21 @@
 import unittest
 
 class TestHashIndex(unittest.TestCase):
-    def InsertKey_ComputesHashAndAddsToBucket(self):
+    def test_InsertKey_ComputesHashAndAddsToBucket(self):
         pass
 
-    def Search_WhenKeyExists_ResolvesHashToRowID(self):
+    def test_Search_WhenKeyExists_ResolvesHashToRowID(self):
         pass
 
-    def HandleCollision_CreatesLinkedListInBucket(self):
+    def test_HandleCollision_CreatesLinkedListInBucket(self):
+        pass
+
+    def test_Resize_ExpandsHashTableWhenLoadFactorExceeded(self):
+        pass
+
+    def test_DeleteKey_RemovesFromBucketLinkedList(self):
+        pass
+
+    def test_ComputeHash_DistributesKeysEvenly(self):
         pass
 

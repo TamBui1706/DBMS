@@ -1,9 +1,18 @@
 import unittest
 
 class TestQueryProcessor(unittest.TestCase):
-    def ProcessQuery_WhenValidSQL_ReturnsQueryResult(self):
+    def test_ProcessQuery_WhenValidSQL_ReturnsQueryResult(self):
         pass
 
-    def ProcessQuery_WhenExecutionFails_RollsBackAndThrows(self):
+    def test_ProcessQuery_WhenExecutionFails_RollsBackAndThrows(self):
+        pass
+
+    def test_ProcessQuery_WhenTimeoutReached_AbortsQuery(self):
+        pass
+
+    def test_Explain_ReturnsQueryExecutionPlanWithoutRunning(self):
+        pass
+
+    def test_PrepareStatement_CachesCompiledPlanForReuse(self):
         pass
 

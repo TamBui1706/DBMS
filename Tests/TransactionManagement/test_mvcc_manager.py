@@ -1,9 +1,18 @@
 import unittest
 
 class TestMVCCManager(unittest.TestCase):
-    def CreateVersion_AppendsNewRecordVersionToChain(self):
+    def test_CreateVersion_AppendsNewRecordVersionToChain(self):
         pass
 
-    def GarbageCollect_RemovesVersionsInvisibleToAllActiveTransactions(self):
+    def test_GarbageCollect_RemovesVersionsInvisibleToAllActiveTransactions(self):
+        pass
+
+    def test_ReadVersion_ReturnsCorrectDataBasedOnTxSnapshot(self):
+        pass
+
+    def test_DetectWriteConflict_WhenTwoTxUpdateSameRecord_ThrowsException(self):
+        pass
+
+    def test_ReadVersion_WhenNoVisibleVersion_ReturnsNull(self):
         pass
 

@@ -1,9 +1,18 @@
 import unittest
 
 class TestDataType(unittest.TestCase):
-    def EnumValues_IncludeIntVarcharDateBoolean(self):
+    def test_EnumValues_IncludeIntVarcharDateBoolean(self):
         pass
 
-    def ParseString_WhenValidFormat_ReturnsDataTypeInstance(self):
+    def test_ParseString_WhenValidFormat_ReturnsDataTypeInstance(self):
+        pass
+
+    def test_ParseString_WhenInvalidFormat_ThrowsParseException(self):
+        pass
+
+    def test_GetSize_ReturnsByteSizeForFixedTypes(self):
+        pass
+
+    def test_IsVariableLength_ReturnsTrueForVarchar(self):
         pass
 

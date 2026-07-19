@@ -1,6 +1,6 @@
 import unittest
 
 class TestIndex(unittest.TestCase):
-    def Instantiation_OfAbstractClass_FailsWithTypeError(self):
+    def test_Instantiation_OfAbstractClass_FailsWithTypeError(self):
         pass
 

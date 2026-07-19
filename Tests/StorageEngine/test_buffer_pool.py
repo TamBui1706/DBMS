@@ -1,15 +1,27 @@
 import unittest
 
 class TestBufferPool(unittest.TestCase):
-    def PinPage_IncrementsPinCountAndPreventsEviction(self):
+    def test_PinPage_IncrementsPinCountAndPreventsEviction(self):
         pass
 
-    def UnpinPage_DecrementsPinCount(self):
+    def test_UnpinPage_DecrementsPinCount(self):
         pass
 
-    def FlushPage_ForcesDirtyPageToDisk(self):
+    def test_FlushPage_ForcesDirtyPageToDisk(self):
         pass
 
-    def FetchPage_WhenPoolFull_EvictsUnpinnedPage(self):
+    def test_FetchPage_WhenPoolFull_EvictsUnpinnedPage(self):
+        pass
+
+    def test_FetchPage_WhenAllPagesPinned_ThrowsBufferFullException(self):
+        pass
+
+    def test_GetHitRate_ReturnsCacheHitRatioMetrics(self):
+        pass
+
+    def test_Clear_EvictsAllUnpinnedPages(self):
+        pass
+
+    def test_UnpinPage_WhenCountIsZero_ThrowsException(self):
         pass
 

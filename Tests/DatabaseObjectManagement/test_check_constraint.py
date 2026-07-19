@@ -1,9 +1,12 @@
 import unittest
 
 class TestCheckConstraint(unittest.TestCase):
-    def Validate_WhenExpressionEvaluatesToTrue_Succeeds(self):
+    def test_Validate_WhenExpressionEvaluatesToTrue_Succeeds(self):
         pass
 
-    def Validate_WhenExpressionEvaluatesToFalse_ThrowsCheckException(self):
+    def test_Validate_WhenExpressionEvaluatesToFalse_ThrowsCheckException(self):
+        pass
+
+    def test_Validate_WhenExpressionUsesInvalidColumn_ThrowsException(self):
         pass
 

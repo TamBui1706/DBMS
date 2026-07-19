@@ -1,6 +1,6 @@
 import unittest
 
 class TestTransactionState(unittest.TestCase):
-    def EnumValues_IncludeActiveCommittedAborted(self):
+    def test_EnumValues_IncludeActiveCommittedAborted(self):
         pass
 

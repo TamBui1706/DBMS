@@ -1,9 +1,21 @@
 import unittest
 
 class TestStorageEngine(unittest.TestCase):
-    def ReadPage_WhenPageNotInBuffer_LoadsFromDisk(self):
+    def test_ReadPage_WhenPageNotInBuffer_LoadsFromDisk(self):
         pass
 
-    def WritePage_WhenPageIsDirty_FlushesToDisk(self):
+    def test_WritePage_WhenPageIsDirty_FlushesToDisk(self):
+        pass
+
+    def test_AllocatePage_CreatesNewPageAndReturnsId(self):
+        pass
+
+    def test_DeallocatePage_FreesPageSpace(self):
+        pass
+
+    def test_Sync_ForcesAllDirtyPagesToDisk(self):
+        pass
+
+    def test_FormatDrive_InitializesDataDirectoryStructure(self):
         pass
 

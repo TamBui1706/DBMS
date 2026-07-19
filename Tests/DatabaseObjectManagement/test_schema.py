@@ -1,15 +1,27 @@
 import unittest
 
 class TestSchema(unittest.TestCase):
-    def Init_SetsSchemaName(self):
+    def test_Init_SetsSchemaName(self):
         pass
 
-    def CreateTable_WhenValidTable_RegistersInSchema(self):
+    def test_CreateTable_WhenValidTable_RegistersInSchema(self):
         pass
 
-    def CreateTable_WhenTableNameExists_ThrowsException(self):
+    def test_CreateTable_WhenTableNameExists_ThrowsException(self):
         pass
 
-    def DropTable_WhenExists_RemovesFromSchema(self):
+    def test_DropTable_WhenExists_RemovesFromSchema(self):
+        pass
+
+    def test_DropTable_WhenNotExists_ThrowsException(self):
+        pass
+
+    def test_GetTable_WhenExists_ReturnsTable(self):
+        pass
+
+    def test_ListTables_ReturnsAllRegisteredTables(self):
+        pass
+
+    def test_Validate_EnsuresSchemaNameIsAlphanumeric(self):
         pass
 

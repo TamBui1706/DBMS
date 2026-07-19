@@ -1,9 +1,18 @@
 import unittest
 
 class TestStatisticsManager(unittest.TestCase):
-    def Collect_UpdatesRowCountsAndCardinality(self):
+    def test_Collect_UpdatesRowCountsAndCardinality(self):
         pass
 
-    def GetStatistics_WhenCalled_ReturnsAccurateMetadata(self):
+    def test_GetStatistics_WhenCalled_ReturnsAccurateMetadata(self):
+        pass
+
+    def test_EstimateSelectivity_ReturnsPercentageOfRowsMatchingFilter(self):
+        pass
+
+    def test_BuildHistogram_ForSkewedDataDistribution(self):
+        pass
+
+    def test_InvalidateStats_WhenTableModifiedSignificantly(self):
         pass
 
