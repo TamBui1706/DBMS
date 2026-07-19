@@ -423,6 +423,520 @@ SecurityManager --> Role
 Role --> Permission
 ```
 
+### 🌟 Expanded Class Diagram (Full Properties & Methods)
+
+Below is the fully detailed class diagram incorporating all 300+ properties and methods identified during the Unit Testing phase. The layout and groupings mirror the original diagram perfectly for easy side-by-side comparison.
+
+```mermaid
+classDiagram
+direction LR
+
+%% 1. Core Server & Connections
+class DatabaseServer {
+    +serverId : UUID
+    +status : String
+    +start()
+    +stop()
+    +catalogManager
+    +config : Configuration
+    +connectionManager
+    +databaseManager
+    +healthCheck()
+    +restart()
+    +status()
+}
+class ConnectionManager {
+    +acceptConnection()
+    +closeConnection()
+    +MAX_LIMIT : Int
+    +activeConnections : List
+    +isPaused : Bool
+    +broadcastMessage()
+    +cleanup()
+    +getActiveSessions()
+    +killSession()
+}
+class ClientSession {
+    +sessionId : UUID
+    +connectTime : Date
+    +execute()
+    +TIMEOUT : Int
+    +connectTime : DateTime
+    +sessionVariables : Dict
+    +getSessionVariable()
+    +ping()
+    +setSessionVariable()
+}
+
+%% 2. Database & Schema
+class DatabaseManager {
+    +createDatabase()
+    +dropDatabase()
+    +getDatabase()
+    +listDatabases()
+    +renameDatabase()
+}
+class Database {
+    +name : String
+    +open()
+    +contextData
+    +schemaDict : Dict
+    +close()
+    +createSchema()
+    +getSchema()
+}
+class Schema {
+    +name : String
+    +createTable()
+    +tables : Dict
+    +dropTable()
+    +getTable()
+    +listTables()
+    +validate()
+}
+class CatalogManager {
+    +registerObject()
+    +findObject()
+    +catalogDict : Dict
+    +flushCatalog()
+    +loadCatalog()
+    +removeObject()
+    +updateObject()
+}
+
+%% 3. Objects
+class Table {
+    +name : String
+    +insert()
+    +update()
+    +delete()
+    +columns : List
+    +rows : List
+    +addColumn()
+    +dropColumn()
+    +getRowCount()
+    +renameColumn()
+    +truncate()
+}
+class View {
+    +queryDefinition : String
+    +materializedData : Cache
+    +compileView()
+    +materialize()
+    +refresh()
+}
+class StoredProcedure {
+    +execute()
+    +parameters : List
+    +compile()
+    +drop()
+}
+class Function {
+    +evaluate()
+    +arguments : List
+    +isDeterministic()
+}
+class Sequence {
+    +nextValue()
+    +currentValue : Int
+    +maxValue : Int
+    +step : Int
+    +currentValue()
+    +reset()
+}
+class Trigger {
+    +fire()
+    +action
+    +eventCondition
+    +isActive : Bool
+    +disable()
+    +enable()
+    +validate()
+}
+class Partition {
+    +partitionKey : String
+    +maxValue
+    +minValue
+    +partitionKey
+    +checkBoundary()
+    +merge()
+    +split()
+}
+
+%% 4. Table Internals
+class Column {
+    +name : String
+    +nullable : Boolean
+    +dataType
+    +defaultValue
+    +isNullable : Bool
+    +changeType()
+    +setDefaultValue()
+    +validateNullable()
+    +validateType()
+}
+class Row {
+    +rowId : UUID
+    +values : List
+    +deserialize()
+    +getSize()
+    +getValue()
+    +serialize()
+    +setValue()
+}
+class DataType {
+    <<enumeration>>
+    INT, VARCHAR, DATE, BOOLEAN
+    +getSize()
+    +isVariableLength()
+    +parseString()
+}
+
+%% 5. Constraints
+class Constraint {
+    <<abstract>>
+    +validate()
+}
+class PrimaryKey
+class ForeignKey {
+    +referenceTable : String
+    +onDeleteAction
+    +referenceColumn
+    +referenceTable
+    +onDeleteCascade()
+    +onDeleteRestrict()
+    +onUpdateCascade()
+    +validate()
+}
+class UniqueConstraint
+class CheckConstraint
+
+%% 6. Indexes
+class Index {
+    <<abstract>>
+    +search()
+    +insertKey()
+}
+class BTreeIndex
+class HashIndex
+class BitmapIndex
+
+%% 7. Query Processing
+class QueryProcessor {
+    +processQuery()
+    +explain()
+    +prepareStatement()
+}
+class SQLParser {
+    +parse()
+}
+class Lexer {
+    +tokenize()
+}
+class AST {
+    +rootNode
+    +clone()
+    +countNodes()
+    +toSQL()
+    +traverse()
+}
+class QueryOptimizer {
+    +optimize()
+}
+class CostModel {
+    +estimateCost()
+    +estimateMemoryUsage()
+    +updateStatistics()
+}
+class StatisticsManager {
+    +collect()
+    +cardinalities : Dict
+    +rowCounts : Dict
+    +buildHistogram()
+    +estimateSelectivity()
+    +getStatistics()
+    +invalidateStats()
+}
+class LogicalPlan
+class LogicalOperator {
+    <<abstract>>
+}
+class PhysicalPlan
+class PhysicalOperator {
+    <<abstract>>
+}
+class QueryExecutor {
+    +executePlan()
+    +memoryLimit : Int
+    +close()
+    +initialize()
+    +streamResults()
+}
+
+%% 8. Transactions
+class TransactionManager {
+    +beginTransaction()
+    +commit()
+    +rollback()
+    +activeTransactions : Dict
+    +walManager
+    +forceRollbackAll()
+    +getActiveTransactions()
+    +resumeTransaction()
+    +suspendTransaction()
+}
+class Transaction {
+    +transactionId : UUID
+    +heldLocks : List
+    +isolationLevel
+    +savepoints : List
+    +state
+    +transactionId
+    +addLock()
+    +releaseAllLocks()
+    +rollbackToSavepoint()
+    +setIsolationLevel()
+    +setSavepoint()
+}
+class IsolationLevel {
+    <<enumeration>>
+    READ_COMMITTED, SERIALIZABLE
+}
+class TransactionState {
+    <<enumeration>>
+    ACTIVE, COMMITTED, ABORTED
+}
+class LockManager {
+    +acquireLock()
+    +releaseLock()
+    +deadlockDetector
+    +lockTable
+    +downgradeLock()
+    +upgradeLock()
+}
+class LockTable {
+    +getLocks()
+    +locks : Dict
+    +addLock()
+    +clear()
+    +countLocks()
+    +removeLock()
+}
+class DeadlockDetector {
+    +detectAndResolve()
+    +timeout : Int
+    +waitForGraph
+    +buildWaitForGraph()
+    +chooseVictim()
+    +setTimeout()
+}
+class MVCCManager {
+    +createVersion()
+    +garbageCollect()
+    +versionChain : List
+    +detectWriteConflict()
+    +readVersion()
+}
+
+%% 9. Storage & Buffer
+class StorageEngine {
+    +readPage()
+    +writePage()
+    +allocatePage()
+    +deallocatePage()
+    +formatDrive()
+    +sync()
+}
+class BufferPool {
+    +pinPage()
+    +flushPage()
+    +maxSize : Int
+    +pages : Dict
+    +replacementAlgorithm
+    +clear()
+    +fetchPage()
+    +getHitRate()
+    +unpinPage()
+}
+class PageReplacementAlgorithm {
+    <<interface>>
+    +findVictim()
+}
+class Page {
+    +pageId : Int
+    +isDirty : Boolean
+    +isDirty : Bool
+    +pageId
+    +pinCount : Int
+    +compact()
+    +deleteTuple()
+    +hasSpace()
+    +markDirty()
+    +readTuple()
+    +writeTuple()
+}
+class FileManager {
+    +allocateSpace()
+    +freeBlocks : List
+    +checkSpace()
+    +closeAll()
+    +deallocateSpace()
+    +extendFile()
+    +getFileSize()
+}
+class DataFile
+class IndexFile
+
+%% 10. Recovery & Logging
+class RecoveryManager {
+    +recover()
+    +walManager
+    +analyzePhase()
+    +redoPhase()
+    +undoPhase()
+}
+class CheckpointManager {
+    +takeCheckpoint()
+    +bufferPool
+    +autoCheckpoint()
+    +getLastCheckpointLSN()
+}
+class WALManager {
+    +appendLog()
+    +flush()
+    +BUFFER_LIMIT : Int
+    +logBuffer : List
+    +readLog()
+    +switchLogFile()
+    +truncateLog()
+}
+class LogRecord {
+    +lsn : Int
+    +type : String
+    +lsn
+    +payload
+    +type
+    +deserialize()
+    +getTransactionId()
+    +getUndoInfo()
+    +serialize()
+}
+
+%% 11. Security
+class SecurityManager {
+    +authenticate()
+    +authorize()
+    +activeTokens : Set
+    +usersDict : Dict
+    +cleanupTokens()
+    +hashPassword()
+    +revokeToken()
+}
+class User {
+    +username : String
+    +isLocked : Bool
+    +roles : List
+    +addRole()
+    +hasRole()
+    +isLocked()
+    +lockAccount()
+    +removeRole()
+    +updatePassword()
+}
+class Role
+class Permission
+
+%% --- RELATIONSHIPS ---
+
+DatabaseServer --> ConnectionManager
+DatabaseServer --> DatabaseManager
+DatabaseServer --> QueryProcessor
+DatabaseServer --> TransactionManager
+DatabaseServer --> StorageEngine
+DatabaseServer --> SecurityManager
+DatabaseServer --> CatalogManager
+DatabaseServer --> RecoveryManager
+
+ConnectionManager --> ClientSession
+
+DatabaseManager --> Database
+Database --> Schema
+Schema --> Table
+Schema --> View
+Schema --> StoredProcedure
+Schema --> Function
+Schema --> Sequence
+
+Table --> Column
+Table --> Row
+Table --> Index
+Table --> Constraint
+Table --> Partition
+Table --> Trigger
+
+Column --> DataType
+
+Constraint <|-- PrimaryKey
+Constraint <|-- ForeignKey
+Constraint <|-- UniqueConstraint
+Constraint <|-- CheckConstraint
+
+Index <|-- BTreeIndex
+Index <|-- HashIndex
+Index <|-- BitmapIndex
+
+ForeignKey --> Table
+
+QueryProcessor --> SQLParser
+QueryProcessor --> QueryOptimizer
+QueryProcessor --> QueryExecutor
+
+SQLParser --> Lexer
+SQLParser --> AST
+AST --> LogicalPlan
+LogicalPlan --> LogicalOperator
+
+QueryOptimizer --> LogicalPlan
+QueryOptimizer --> CostModel
+QueryOptimizer --> StatisticsManager
+QueryOptimizer --> PhysicalPlan
+PhysicalPlan --> PhysicalOperator
+
+QueryExecutor --> PhysicalPlan
+QueryExecutor --> TransactionManager
+
+TransactionManager --> Transaction
+TransactionManager --> LockManager
+TransactionManager --> MVCCManager
+TransactionManager --> WALManager
+
+Transaction --> IsolationLevel
+Transaction --> TransactionState
+
+LockManager --> LockTable
+LockManager --> DeadlockDetector
+
+StorageEngine --> BufferPool
+StorageEngine --> FileManager
+BufferPool --> Page
+BufferPool --> PageReplacementAlgorithm
+FileManager --> DataFile
+FileManager --> IndexFile
+
+RecoveryManager --> WALManager
+RecoveryManager --> CheckpointManager
+
+WALManager --> LogRecord
+
+CatalogManager --> Schema
+CatalogManager --> StatisticsManager
+
+SecurityManager --> User
+SecurityManager --> Role
+Role --> Permission
+```
+
+
 
 
 ## 🔍 Subsystem Class Diagrams

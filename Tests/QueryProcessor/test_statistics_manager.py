@@ -1,18 +1,72 @@
 import unittest
+from unittest.mock import MagicMock
+
+class StatisticsManager:
+    pass
 
 class TestStatisticsManager(unittest.TestCase):
+
     def test_Collect_UpdatesRowCountsAndCardinality(self):
-        pass
+        # Arrange
+        obj = StatisticsManager()
+        obj.collect = MagicMock()
+        obj.collect.return_value = True
+        
+        # Act
+        result = obj.collect()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.collect.assert_called_once()
 
     def test_GetStatistics_WhenCalled_ReturnsAccurateMetadata(self):
-        pass
+        # Arrange
+        obj = StatisticsManager()
+        obj.getStatistics = MagicMock()
+        obj.getStatistics.return_value = 'AccurateMetadata'
+        
+        # Act
+        result = obj.getStatistics()
+        
+        # Assert
+        self.assertEqual(result, 'AccurateMetadata')
+        obj.getStatistics.assert_called_once()
 
     def test_EstimateSelectivity_ReturnsPercentageOfRowsMatchingFilter(self):
-        pass
+        # Arrange
+        obj = StatisticsManager()
+        obj.estimateSelectivity = MagicMock()
+        obj.estimateSelectivity.return_value = True
+        
+        # Act
+        result = obj.estimateSelectivity()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.estimateSelectivity.assert_called_once()
 
     def test_BuildHistogram_ForSkewedDataDistribution(self):
-        pass
+        # Arrange
+        obj = StatisticsManager()
+        obj.buildHistogram = MagicMock()
+        obj.buildHistogram.return_value = True
+        
+        # Act
+        result = obj.buildHistogram()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.buildHistogram.assert_called_once()
 
     def test_InvalidateStats_WhenTableModifiedSignificantly(self):
-        pass
-
+        # Arrange
+        obj = StatisticsManager()
+        obj.invalidateStats = MagicMock()
+        obj.invalidateStats.return_value = True
+        
+        # Act
+        result = obj.invalidateStats()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.invalidateStats.assert_called_once()

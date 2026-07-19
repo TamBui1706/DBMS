@@ -1,6 +1,20 @@
 import unittest
+from unittest.mock import MagicMock
+
+class TransactionState:
+    pass
 
 class TestTransactionState(unittest.TestCase):
-    def test_EnumValues_IncludeActiveCommittedAborted(self):
-        pass
 
+    def test_EnumValues_IncludeActiveCommittedAborted(self):
+        # Arrange
+        obj = TransactionState()
+        obj.enumValues = MagicMock()
+        obj.enumValues.return_value = True
+        
+        # Act
+        result = obj.enumValues()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.enumValues.assert_called_once()

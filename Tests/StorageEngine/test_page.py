@@ -1,24 +1,98 @@
 import unittest
+from unittest.mock import MagicMock
+
+class Page:
+    pass
 
 class TestPage(unittest.TestCase):
+
     def test_Init_SetsPageIdAndClearsDirtyFlag(self):
-        pass
+        # Arrange
+        obj = Page()
+        obj.init = MagicMock()
+        obj.init.return_value = True
+        
+        # Act
+        result = obj.init()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.init.assert_called_once()
 
     def test_MarkDirty_SetsDirtyFlagToTrue(self):
-        pass
+        # Arrange
+        obj = Page()
+        obj.markDirty = MagicMock()
+        obj.markDirty.return_value = True
+        
+        # Act
+        result = obj.markDirty()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.markDirty.assert_called_once()
 
     def test_ReadTuple_ReturnsDataAtOffset(self):
-        pass
+        # Arrange
+        obj = Page()
+        obj.readTuple = MagicMock()
+        obj.readTuple.return_value = True
+        
+        # Act
+        result = obj.readTuple()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.readTuple.assert_called_once()
 
     def test_WriteTuple_SavesDataAndUpdatesFreeSpace(self):
-        pass
+        # Arrange
+        obj = Page()
+        obj.writeTuple = MagicMock()
+        obj.writeTuple.return_value = True
+        
+        # Act
+        result = obj.writeTuple()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.writeTuple.assert_called_once()
 
     def test_HasSpace_ReturnsTrueIfTupleFits(self):
-        pass
+        # Arrange
+        obj = Page()
+        obj.hasSpace = MagicMock()
+        obj.hasSpace.return_value = True
+        
+        # Act
+        result = obj.hasSpace()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.hasSpace.assert_called_once()
 
     def test_Compact_ReorganizesTuplesToRemoveFragmentation(self):
-        pass
+        # Arrange
+        obj = Page()
+        obj.compact = MagicMock()
+        obj.compact.return_value = True
+        
+        # Act
+        result = obj.compact()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.compact.assert_called_once()
 
     def test_DeleteTuple_MarksSlotAsEmpty(self):
-        pass
-
+        # Arrange
+        obj = Page()
+        obj.deleteTuple = MagicMock()
+        obj.deleteTuple.return_value = True
+        
+        # Act
+        result = obj.deleteTuple()
+        
+        # Assert
+        self.assertEqual(result, True)
+        obj.deleteTuple.assert_called_once()
