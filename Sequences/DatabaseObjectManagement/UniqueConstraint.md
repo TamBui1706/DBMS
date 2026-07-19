@@ -1,37 +1,47 @@
 # Sequence Diagrams: UniqueConstraint
 
 ## 🆕 Added Properties & Methods for `UniqueConstraint`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `UniqueConstraint` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `UniqueConstraint` class in your Class Diagram with the following properties and methods:
 
-- **Method** added to `UniqueConstraint`: `checkGlobalUniqueness(value)` (Scans table for duplicate)
+- **Method** added to `UniqueConstraint`: `validate()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **UniqueConstraint** class in the Database Object Management subsystem.
+This file contains the detailed sequence diagrams for all 3 unit tests of the **UniqueConstraint** class.
 
 ## 1. Validate_WhenValueIsGloballyUnique_Succeeds
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant UniqueConstraint
-
-    Test->>UniqueConstraint: validate(value)
-    UniqueConstraint->>UniqueConstraint: checkGlobalUniqueness(value)
-    UniqueConstraint-->>UniqueConstraint: true
-    UniqueConstraint-->>Test: success
+    TestRunner->>UniqueConstraint: validate()
+    UniqueConstraint->>UniqueConstraint: validate WhenValueIsGloballyUnique
+    UniqueConstraint->>UniqueConstraint: process Validate
+    UniqueConstraint-->>TestRunner: return Succeeds
 ```
 
 ## 2. Validate_WhenValueExistsInAnotherRow_ThrowsException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant UniqueConstraint
+    TestRunner->>UniqueConstraint: validate()
+    UniqueConstraint->>UniqueConstraint: check WhenValueExistsInAnotherRow
+    UniqueConstraint-->>UniqueConstraint: condition failed
+    UniqueConstraint-->>TestRunner: throws Exception
+```
 
-    Test->>UniqueConstraint: validate(existingValue)
-    UniqueConstraint->>UniqueConstraint: checkGlobalUniqueness(existingValue)
-    UniqueConstraint-->>UniqueConstraint: false
-    UniqueConstraint-->>Test: throws ConstraintViolationException
+## 3. Validate_WhenValueIsNull_SucceedsIfNullable
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant UniqueConstraint
+    TestRunner->>UniqueConstraint: validate()
+    UniqueConstraint->>UniqueConstraint: validate WhenValueIsNull
+    UniqueConstraint->>UniqueConstraint: process Validate
+    UniqueConstraint-->>TestRunner: return SucceedsIfNullable
 ```
 

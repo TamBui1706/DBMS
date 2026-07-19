@@ -1,15 +1,23 @@
 # Sequence Diagrams: Constraint
 
-This file contains the detailed sequence diagrams for all unit tests of the **Constraint** class in the Database Object Management subsystem.
+## 🆕 Added Properties & Methods for `Constraint`
+To support the detailed sequence logic for unit testing, please update the `Constraint` class in your Class Diagram with the following properties and methods:
+
+- *(No major new structural properties required, logic handled internally)*
+
+---
+
+This file contains the detailed sequence diagrams for all 1 unit tests of the **Constraint** class.
 
 ## 1. Instantiation_OfAbstractClass_FailsWithTypeError
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Constraint
-
-    Test->>Constraint: new Constraint()
-    Constraint-->>Test: throws TypeError (Cannot instantiate abstract class)
+    TestRunner->>Constraint: instantiation()
+    Constraint->>Constraint: check OfAbstractClass
+    Constraint-->>Constraint: condition failed
+    Constraint-->>TestRunner: throws FailsWithTypeError
 ```
 

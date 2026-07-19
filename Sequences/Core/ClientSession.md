@@ -1,69 +1,129 @@
 # Sequence Diagrams: ClientSession
 
 ## 🆕 Added Properties & Methods for `ClientSession`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `ClientSession` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `ClientSession` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `ClientSession`: `TIMEOUT` (Constant for session expiration)
-- **Method** added to `ClientSession`: `close()` (Releases session resources, called by ConnectionManager)
-- **Method** added to `ClientSession`: `validateSession()` (Checks session expiration against `connectTime`)
+- **Property** added to `ClientSession`: `TIMEOUT (Int)`
+- **Property** added to `ClientSession`: `connectTime (DateTime)`
+- **Property** added to `ClientSession`: `sessionVariables (Dict)`
+- **Method** added to `ClientSession`: `execute()`
+- **Method** added to `ClientSession`: `getSessionVariable()`
+- **Method** added to `ClientSession`: `ping()`
+- **Method** added to `ClientSession`: `setSessionVariable()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **ClientSession** class in the Core Server & Connections subsystem.
+This file contains the detailed sequence diagrams for all 9 unit tests of the **ClientSession** class.
 
 ## 1. Init_SetsSessionIdAndTimestamp
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant ClientSession
-
-    Test->>ClientSession: new ClientSession()
-    ClientSession->>ClientSession: generate sessionId
-    ClientSession->>ClientSession: connectTime = now()
-    ClientSession-->>Test: return instance
+    TestRunner->>ClientSession: init()
+    ClientSession->>ClientSession: apply SetsSessionIdAndTimestamp
+    ClientSession->>Dependency: invoke logic
+    Dependency-->>ClientSession: success
+    ClientSession-->>TestRunner: Success
 ```
 
 ## 2. Execute_WhenValidQuery_ReturnsExecutionResult
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant ClientSession
-    participant QueryProcessor
-
-    Test->>ClientSession: execute(sqlQuery)
-    ClientSession->>ClientSession: validateSession()
-    ClientSession-->>ClientSession: active
-    ClientSession->>QueryProcessor: processQuery(sqlQuery)
-    QueryProcessor-->>ClientSession: resultData
-    ClientSession-->>Test: return resultData
+    TestRunner->>ClientSession: execute()
+    ClientSession->>ClientSession: validate WhenValidQuery
+    ClientSession->>ClientSession: process Execute
+    ClientSession-->>TestRunner: return ExecutionResult
 ```
 
 ## 3. Execute_WhenSessionExpired_ThrowsTimeoutException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant ClientSession
-
-    Test->>ClientSession: execute(sqlQuery)
-    ClientSession->>ClientSession: validateSession()
-    ClientSession->>ClientSession: check (now() - connectTime) > TIMEOUT
-    ClientSession-->>Test: throws SessionExpiredException
+    TestRunner->>ClientSession: execute()
+    ClientSession->>ClientSession: check WhenSessionExpired
+    ClientSession-->>ClientSession: condition failed
+    ClientSession-->>TestRunner: throws TimeoutException
 ```
 
 ## 4. Execute_WhenConnectionLost_FailsGracefully
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant ClientSession
-    participant ConnectionManager
+    TestRunner->>ClientSession: execute()
+    ClientSession->>ClientSession: check WhenConnectionLost
+    ClientSession-->>ClientSession: condition failed
+    ClientSession-->>TestRunner: throws FailsGracefully
+```
 
-    Test->>ClientSession: execute(sqlQuery)
-    ClientSession->>ConnectionManager: checkServerState()
-    ConnectionManager-->>ClientSession: DISCONNECTED
-    ClientSession-->>Test: throws ConnectionLostException
+## 5. SetSessionVariable_UpdatesInternalState
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant ClientSession
+    TestRunner->>ClientSession: setSessionVariable()
+    ClientSession->>ClientSession: apply UpdatesInternalState
+    ClientSession->>Dependency: invoke logic
+    Dependency-->>ClientSession: success
+    ClientSession-->>TestRunner: Success
+```
+
+## 6. GetSessionVariable_ReturnsSetValue
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant ClientSession
+    TestRunner->>ClientSession: getSessionVariable()
+    ClientSession->>ClientSession: apply ReturnsSetValue
+    ClientSession->>Dependency: invoke logic
+    Dependency-->>ClientSession: success
+    ClientSession-->>TestRunner: Success
+```
+
+## 7. Execute_WhenEmptyQuery_ReturnsEmptyResult
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant ClientSession
+    TestRunner->>ClientSession: execute()
+    ClientSession->>ClientSession: validate WhenEmptyQuery
+    ClientSession->>ClientSession: process Execute
+    ClientSession-->>TestRunner: return EmptyResult
+```
+
+## 8. GetSessionVariable_WhenKeyNotExists_ReturnsNull
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant ClientSession
+    TestRunner->>ClientSession: getSessionVariable()
+    ClientSession->>ClientSession: validate WhenKeyNotExists
+    ClientSession->>ClientSession: process GetSessionVariable
+    ClientSession-->>TestRunner: return Null
+```
+
+## 9. Ping_ResetsIdleTimer
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant ClientSession
+    TestRunner->>ClientSession: ping()
+    ClientSession->>ClientSession: apply ResetsIdleTimer
+    ClientSession->>Dependency: invoke logic
+    Dependency-->>ClientSession: success
+    ClientSession-->>TestRunner: Success
 ```
 

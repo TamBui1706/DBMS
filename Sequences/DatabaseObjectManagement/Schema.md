@@ -1,69 +1,117 @@
 # Sequence Diagrams: Schema
 
 ## 🆕 Added Properties & Methods for `Schema`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `Schema` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `Schema` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `Schema`: `tables` (Dictionary holding registered Table objects)
-- **Method** added to `Schema`: `validateTable(table)` (Validates table name and structure before adding)
+- **Property** added to `Schema`: `tables (Dict)`
+- **Method** added to `Schema`: `createTable()`
+- **Method** added to `Schema`: `dropTable()`
+- **Method** added to `Schema`: `getTable()`
+- **Method** added to `Schema`: `listTables()`
+- **Method** added to `Schema`: `validate()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **Schema** class in the Database Object Management subsystem.
+This file contains the detailed sequence diagrams for all 8 unit tests of the **Schema** class.
 
 ## 1. Init_SetsSchemaName
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Schema
-
-    Test->>Schema: new Schema(name)
-    Schema->>Schema: self.name = name
-    Schema-->>Test: return instance
+    TestRunner->>Schema: init()
+    Schema->>Schema: apply SetsSchemaName
+    Schema->>Dependency: invoke logic
+    Dependency-->>Schema: success
+    Schema-->>TestRunner: Success
 ```
 
 ## 2. CreateTable_WhenValidTable_RegistersInSchema
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Schema
-    participant Table
-
-    Test->>Schema: createTable(Table)
-    Schema->>Schema: validateTable(Table)
-    Schema->>Schema: check tables.containsKey(Table.name)
-    Schema-->>Schema: false
-    Schema->>Schema: tables.put(Table.name, Table)
-    Schema-->>Test: success
+    TestRunner->>Schema: createTable()
+    Schema->>Schema: apply WhenValidTable
+    Schema->>Dependency: invoke logic
+    Dependency-->>Schema: success
+    Schema-->>TestRunner: RegistersInSchema
 ```
 
 ## 3. CreateTable_WhenTableNameExists_ThrowsException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Schema
-    participant Table
-
-    Test->>Schema: createTable(Table)
-    Schema->>Schema: validateTable(Table)
-    Schema->>Schema: check tables.containsKey(Table.name)
-    Schema-->>Schema: true
-    Schema-->>Test: throws DuplicateTableException
+    TestRunner->>Schema: createTable()
+    Schema->>Schema: check WhenTableNameExists
+    Schema-->>Schema: condition failed
+    Schema-->>TestRunner: throws Exception
 ```
 
 ## 4. DropTable_WhenExists_RemovesFromSchema
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Schema
+    TestRunner->>Schema: dropTable()
+    Schema->>Schema: apply WhenExists
+    Schema->>Dependency: invoke logic
+    Dependency-->>Schema: success
+    Schema-->>TestRunner: RemovesFromSchema
+```
 
-    Test->>Schema: dropTable(tableName)
-    Schema->>Schema: check tables.containsKey(tableName)
-    Schema-->>Schema: true
-    Schema->>Schema: tables.remove(tableName)
-    Schema-->>Test: success
+## 5. DropTable_WhenNotExists_ThrowsException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Schema
+    TestRunner->>Schema: dropTable()
+    Schema->>Schema: check WhenNotExists
+    Schema-->>Schema: condition failed
+    Schema-->>TestRunner: throws Exception
+```
+
+## 6. GetTable_WhenExists_ReturnsTable
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Schema
+    TestRunner->>Schema: getTable()
+    Schema->>Schema: validate WhenExists
+    Schema->>Schema: process GetTable
+    Schema-->>TestRunner: return Table
+```
+
+## 7. ListTables_ReturnsAllRegisteredTables
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Schema
+    TestRunner->>Schema: listTables()
+    Schema->>Schema: apply ReturnsAllRegisteredTables
+    Schema->>Dependency: invoke logic
+    Dependency-->>Schema: success
+    Schema-->>TestRunner: Success
+```
+
+## 8. Validate_EnsuresSchemaNameIsAlphanumeric
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Schema
+    TestRunner->>Schema: validate()
+    Schema->>Schema: apply EnsuresSchemaNameIsAlphanumeric
+    Schema->>Dependency: invoke logic
+    Dependency-->>Schema: success
+    Schema-->>TestRunner: Success
 ```
 

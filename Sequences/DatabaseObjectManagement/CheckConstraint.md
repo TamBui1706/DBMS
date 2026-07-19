@@ -1,38 +1,48 @@
 # Sequence Diagrams: CheckConstraint
 
 ## 🆕 Added Properties & Methods for `CheckConstraint`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `CheckConstraint` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `CheckConstraint` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `CheckConstraint`: `expression` (The boolean logic to check)
-- **Method** added to `CheckConstraint`: `evaluate(row)` (Evaluates expression against row data)
+- **Property** added to `CheckConstraint`: `expression (String)`
+- **Method** added to `CheckConstraint`: `validate()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **CheckConstraint** class in the Database Object Management subsystem.
+This file contains the detailed sequence diagrams for all 3 unit tests of the **CheckConstraint** class.
 
 ## 1. Validate_WhenExpressionEvaluatesToTrue_Succeeds
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant CheckConstraint
-
-    Test->>CheckConstraint: validate(row)
-    CheckConstraint->>CheckConstraint: evaluate(self.expression, row)
-    CheckConstraint-->>CheckConstraint: true
-    CheckConstraint-->>Test: success
+    TestRunner->>CheckConstraint: validate()
+    CheckConstraint->>CheckConstraint: validate WhenExpressionEvaluatesToTrue
+    CheckConstraint->>CheckConstraint: process Validate
+    CheckConstraint-->>TestRunner: return Succeeds
 ```
 
 ## 2. Validate_WhenExpressionEvaluatesToFalse_ThrowsCheckException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant CheckConstraint
+    TestRunner->>CheckConstraint: validate()
+    CheckConstraint->>CheckConstraint: check WhenExpressionEvaluatesToFalse
+    CheckConstraint-->>CheckConstraint: condition failed
+    CheckConstraint-->>TestRunner: throws CheckException
+```
 
-    Test->>CheckConstraint: validate(row)
-    CheckConstraint->>CheckConstraint: evaluate(self.expression, row)
-    CheckConstraint-->>CheckConstraint: false
-    CheckConstraint-->>Test: throws CheckException
+## 3. Validate_WhenExpressionUsesInvalidColumn_ThrowsException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant CheckConstraint
+    TestRunner->>CheckConstraint: validate()
+    CheckConstraint->>CheckConstraint: check WhenExpressionUsesInvalidColumn
+    CheckConstraint-->>CheckConstraint: condition failed
+    CheckConstraint-->>TestRunner: throws Exception
 ```
 

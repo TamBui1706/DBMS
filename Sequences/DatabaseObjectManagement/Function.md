@@ -1,39 +1,74 @@
 # Sequence Diagrams: Function
 
 ## 🆕 Added Properties & Methods for `Function`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `Function` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `Function` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `Function`: `arguments` (List of expected function arguments)
-- **Method** added to `Function`: `validateArgs(args)` (Checks if all required arguments are present)
+- **Property** added to `Function`: `arguments (List)`
+- **Method** added to `Function`: `evaluate()`
+- **Method** added to `Function`: `isDeterministic()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **Function** class in the Database Object Management subsystem.
+This file contains the detailed sequence diagrams for all 5 unit tests of the **Function** class.
 
 ## 1. Evaluate_WhenValidArguments_ReturnsComputedValue
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Function
-
-    Test->>Function: evaluate(args)
-    Function->>Function: validateArgs(args)
-    Function-->>Function: valid
-    Function->>Function: compute(args)
-    Function-->>Test: return computedValue
+    TestRunner->>Function: evaluate()
+    Function->>Function: validate WhenValidArguments
+    Function->>Function: process Evaluate
+    Function-->>TestRunner: return ComputedValue
 ```
 
 ## 2. Evaluate_WhenMissingArguments_ThrowsArgumentException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Function
+    TestRunner->>Function: evaluate()
+    Function->>Function: check WhenMissingArguments
+    Function-->>Function: condition failed
+    Function-->>TestRunner: throws ArgumentException
+```
 
-    Test->>Function: evaluate(incompleteArgs)
-    Function->>Function: validateArgs(incompleteArgs)
-    Function-->>Function: missing args
-    Function-->>Test: throws ArgumentException
+## 3. Evaluate_WhenDivideByZero_ThrowsArithmeticException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Function
+    TestRunner->>Function: evaluate()
+    Function->>Function: check WhenDivideByZero
+    Function-->>Function: condition failed
+    Function-->>TestRunner: throws ArithmeticException
+```
+
+## 4. IsDeterministic_ReturnsTrueIfNoExternalStateUsed
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Function
+    TestRunner->>Function: isDeterministic()
+    Function->>Function: apply ReturnsTrueIfNoExternalStateUsed
+    Function->>Dependency: invoke logic
+    Dependency-->>Function: success
+    Function-->>TestRunner: Success
+```
+
+## 5. Evaluate_WhenNullPassedToStrictFunction_ReturnsNull
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Function
+    TestRunner->>Function: evaluate()
+    Function->>Function: validate WhenNullPassedToStrictFunction
+    Function->>Function: process Evaluate
+    Function-->>TestRunner: return Null
 ```
 

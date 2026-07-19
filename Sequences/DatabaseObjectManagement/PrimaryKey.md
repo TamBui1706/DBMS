@@ -1,53 +1,75 @@
 # Sequence Diagrams: PrimaryKey
 
 ## 🆕 Added Properties & Methods for `PrimaryKey`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `PrimaryKey` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `PrimaryKey` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `PrimaryKey`: `columns` (List of columns participating in PK)
-- **Method** added to `PrimaryKey`: `checkUniqueness(value)` (Validates global uniqueness in Table)
+- **Property** added to `PrimaryKey`: `columns (List)`
+- **Method** added to `PrimaryKey`: `drop()`
+- **Method** added to `PrimaryKey`: `validate()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **PrimaryKey** class in the Database Object Management subsystem.
+This file contains the detailed sequence diagrams for all 5 unit tests of the **PrimaryKey** class.
 
 ## 1. Validate_WhenValueIsUniqueAndNotNull_Succeeds
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant PrimaryKey
-
-    Test->>PrimaryKey: validate(value)
-    PrimaryKey->>PrimaryKey: check value != null
-    PrimaryKey->>PrimaryKey: checkUniqueness(value)
-    PrimaryKey-->>PrimaryKey: true
-    PrimaryKey-->>Test: success
+    TestRunner->>PrimaryKey: validate()
+    PrimaryKey->>PrimaryKey: validate WhenValueIsUniqueAndNotNull
+    PrimaryKey->>PrimaryKey: process Validate
+    PrimaryKey-->>TestRunner: return Succeeds
 ```
 
 ## 2. Validate_WhenValueIsNull_ThrowsNullException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant PrimaryKey
-
-    Test->>PrimaryKey: validate(null)
-    PrimaryKey->>PrimaryKey: check value != null
-    PrimaryKey-->>PrimaryKey: false
-    PrimaryKey-->>Test: throws NullException
+    TestRunner->>PrimaryKey: validate()
+    PrimaryKey->>PrimaryKey: check WhenValueIsNull
+    PrimaryKey-->>PrimaryKey: condition failed
+    PrimaryKey-->>TestRunner: throws NullException
 ```
 
 ## 3. Validate_WhenValueIsDuplicate_ThrowsDuplicateKeyException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant PrimaryKey
+    TestRunner->>PrimaryKey: validate()
+    PrimaryKey->>PrimaryKey: check WhenValueIsDuplicate
+    PrimaryKey-->>PrimaryKey: condition failed
+    PrimaryKey-->>TestRunner: throws DuplicateKeyException
+```
 
-    Test->>PrimaryKey: validate(duplicateValue)
-    PrimaryKey->>PrimaryKey: check value != null
-    PrimaryKey->>PrimaryKey: checkUniqueness(duplicateValue)
-    PrimaryKey-->>PrimaryKey: false
-    PrimaryKey-->>Test: throws DuplicateKeyException
+## 4. Validate_WithCompositeKey_ChecksAllColumns
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant PrimaryKey
+    TestRunner->>PrimaryKey: validate()
+    PrimaryKey->>PrimaryKey: apply WithCompositeKey
+    PrimaryKey->>Dependency: invoke logic
+    Dependency-->>PrimaryKey: success
+    PrimaryKey-->>TestRunner: ChecksAllColumns
+```
+
+## 5. Drop_RemovesIndexFromStorage
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant PrimaryKey
+    TestRunner->>PrimaryKey: drop()
+    PrimaryKey->>PrimaryKey: apply RemovesIndexFromStorage
+    PrimaryKey->>Dependency: invoke logic
+    Dependency-->>PrimaryKey: success
+    PrimaryKey-->>TestRunner: Success
 ```
 

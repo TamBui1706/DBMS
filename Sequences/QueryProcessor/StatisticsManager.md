@@ -1,40 +1,81 @@
 # Sequence Diagrams: StatisticsManager
 
 ## 🆕 Added Properties & Methods for `StatisticsManager`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `StatisticsManager` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `StatisticsManager` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `StatisticsManager`: `rowCounts`, `cardinalities` (HashMaps for tables/columns)
-- **Method** added to `StatisticsManager`: `updateStats(tableName)` (Recalculates metrics)
+- **Property** added to `StatisticsManager`: `rowCounts (Dict)`
+- **Property** added to `StatisticsManager`: `cardinalities (Dict)`
+- **Method** added to `StatisticsManager`: `buildHistogram()`
+- **Method** added to `StatisticsManager`: `collect()`
+- **Method** added to `StatisticsManager`: `estimateSelectivity()`
+- **Method** added to `StatisticsManager`: `getStatistics()`
+- **Method** added to `StatisticsManager`: `invalidateStats()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **StatisticsManager** class in the Query Processor subsystem.
+This file contains the detailed sequence diagrams for all 5 unit tests of the **StatisticsManager** class.
 
 ## 1. Collect_UpdatesRowCountsAndCardinality
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant StatisticsManager
-    participant StorageEngine
-
-    Test->>StatisticsManager: collect(table)
-    StatisticsManager->>StorageEngine: scanMetadata(table)
-    StorageEngine-->>StatisticsManager: rawData
-    StatisticsManager->>StatisticsManager: updateStats(table)
-    StatisticsManager->>StatisticsManager: self.rowCounts[table] = ...
-    StatisticsManager-->>Test: success
+    TestRunner->>StatisticsManager: collect()
+    StatisticsManager->>StatisticsManager: apply UpdatesRowCountsAndCardinality
+    StatisticsManager->>Dependency: invoke logic
+    Dependency-->>StatisticsManager: success
+    StatisticsManager-->>TestRunner: Success
 ```
 
 ## 2. GetStatistics_WhenCalled_ReturnsAccurateMetadata
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant StatisticsManager
+    TestRunner->>StatisticsManager: getStatistics()
+    StatisticsManager->>StatisticsManager: validate WhenCalled
+    StatisticsManager->>StatisticsManager: process GetStatistics
+    StatisticsManager-->>TestRunner: return AccurateMetadata
+```
 
-    Test->>StatisticsManager: getStatistics(table)
-    StatisticsManager->>StatisticsManager: self.rowCounts.get(table)
-    StatisticsManager-->>Test: return MetadataStats
+## 3. EstimateSelectivity_ReturnsPercentageOfRowsMatchingFilter
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant StatisticsManager
+    TestRunner->>StatisticsManager: estimateSelectivity()
+    StatisticsManager->>StatisticsManager: apply ReturnsPercentageOfRowsMatchingFilter
+    StatisticsManager->>Dependency: invoke logic
+    Dependency-->>StatisticsManager: success
+    StatisticsManager-->>TestRunner: Success
+```
+
+## 4. BuildHistogram_ForSkewedDataDistribution
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant StatisticsManager
+    TestRunner->>StatisticsManager: buildHistogram()
+    StatisticsManager->>StatisticsManager: apply ForSkewedDataDistribution
+    StatisticsManager->>Dependency: invoke logic
+    Dependency-->>StatisticsManager: success
+    StatisticsManager-->>TestRunner: Success
+```
+
+## 5. InvalidateStats_WhenTableModifiedSignificantly
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant StatisticsManager
+    TestRunner->>StatisticsManager: invalidateStats()
+    StatisticsManager->>StatisticsManager: apply WhenTableModifiedSignificantly
+    StatisticsManager->>Dependency: invoke logic
+    Dependency-->>StatisticsManager: success
+    StatisticsManager-->>TestRunner: Success
 ```
 

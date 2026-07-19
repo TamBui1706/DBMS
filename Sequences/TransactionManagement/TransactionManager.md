@@ -1,79 +1,123 @@
 # Sequence Diagrams: TransactionManager
 
 ## 🆕 Added Properties & Methods for `TransactionManager`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `TransactionManager` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `TransactionManager` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `TransactionManager`: `activeTransactions` (Dictionary mapping TxId to Transaction)
-- **Property** added to `TransactionManager`: `walManager` (Reference to Write-Ahead Log manager)
-- **Method** added to `TransactionManager`: `validateTransaction(txId)` (Checks constraints before commit)
+- **Property** added to `TransactionManager`: `activeTransactions (Dict)`
+- **Property** added to `TransactionManager`: `walManager`
+- **Method** added to `TransactionManager`: `beginTransaction()`
+- **Method** added to `TransactionManager`: `commit()`
+- **Method** added to `TransactionManager`: `forceRollbackAll()`
+- **Method** added to `TransactionManager`: `getActiveTransactions()`
+- **Method** added to `TransactionManager`: `resumeTransaction()`
+- **Method** added to `TransactionManager`: `rollback()`
+- **Method** added to `TransactionManager`: `suspendTransaction()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **TransactionManager** class in the Transaction Management subsystem.
+This file contains the detailed sequence diagrams for all 8 unit tests of the **TransactionManager** class.
 
 ## 1. BeginTransaction_CreatesAndRegistersNewActiveTransaction
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant TransactionManager
-    participant Transaction
-
-    Test->>TransactionManager: beginTransaction()
-    TransactionManager->>Transaction: new Transaction()
-    Transaction-->>TransactionManager: txInstance (state=ACTIVE)
-    TransactionManager->>TransactionManager: activeTransactions.put(txInstance.id, txInstance)
-    TransactionManager-->>Test: return txInstance
+    TestRunner->>TransactionManager: beginTransaction()
+    TransactionManager->>TransactionManager: apply CreatesAndRegistersNewActiveTransaction
+    TransactionManager->>Dependency: invoke logic
+    Dependency-->>TransactionManager: success
+    TransactionManager-->>TestRunner: Success
 ```
 
 ## 2. Commit_WhenSuccessful_WritesToLogAndChangesState
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant TransactionManager
-    participant WALManager
-
-    Test->>TransactionManager: commit(txId)
-    TransactionManager->>TransactionManager: validateTransaction(txId)
-    TransactionManager-->>TransactionManager: valid
-    TransactionManager->>WALManager: flushLog(txId)
-    WALManager-->>TransactionManager: success
-    TransactionManager->>TransactionManager: update tx.state = COMMITTED
-    TransactionManager->>TransactionManager: activeTransactions.remove(txId)
-    TransactionManager-->>Test: success
+    TestRunner->>TransactionManager: commit()
+    TransactionManager->>TransactionManager: apply WhenSuccessful
+    TransactionManager->>Dependency: invoke logic
+    Dependency-->>TransactionManager: success
+    TransactionManager-->>TestRunner: WritesToLogAndChangesState
 ```
 
 ## 3. Rollback_WhenCalled_RevertsAllModifications
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant TransactionManager
-    participant WALManager
-
-    Test->>TransactionManager: rollback(txId)
-    TransactionManager->>WALManager: undoLogs(txId)
-    WALManager-->>TransactionManager: success
-    TransactionManager->>TransactionManager: update tx.state = ABORTED
-    TransactionManager->>TransactionManager: activeTransactions.remove(txId)
-    TransactionManager-->>Test: success
+    TestRunner->>TransactionManager: rollback()
+    TransactionManager->>TransactionManager: apply WhenCalled
+    TransactionManager->>Dependency: invoke logic
+    Dependency-->>TransactionManager: success
+    TransactionManager-->>TestRunner: RevertsAllModifications
 ```
 
 ## 4. Commit_WhenValidationFails_ForcesRollback
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant TransactionManager
-    participant WALManager
+    TestRunner->>TransactionManager: commit()
+    TransactionManager->>TransactionManager: apply WhenValidationFails
+    TransactionManager->>Dependency: invoke logic
+    Dependency-->>TransactionManager: success
+    TransactionManager-->>TestRunner: ForcesRollback
+```
 
-    Test->>TransactionManager: commit(txId)
-    TransactionManager->>TransactionManager: validateTransaction(txId)
-    TransactionManager-->>TransactionManager: conflict detected
-    TransactionManager->>WALManager: undoLogs(txId)
-    WALManager-->>TransactionManager: success
-    TransactionManager->>TransactionManager: update tx.state = ABORTED
-    TransactionManager-->>Test: throws ValidationFailedException (forced rollback)
+## 5. GetActiveTransactions_ReturnsListOfCurrentlyRunningTx
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant TransactionManager
+    TestRunner->>TransactionManager: getActiveTransactions()
+    TransactionManager->>TransactionManager: apply ReturnsListOfCurrentlyRunningTx
+    TransactionManager->>Dependency: invoke logic
+    Dependency-->>TransactionManager: success
+    TransactionManager-->>TestRunner: Success
+```
+
+## 6. SuspendTransaction_TemporarilyHaltsExecution
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant TransactionManager
+    TestRunner->>TransactionManager: suspendTransaction()
+    TransactionManager->>TransactionManager: apply TemporarilyHaltsExecution
+    TransactionManager->>Dependency: invoke logic
+    Dependency-->>TransactionManager: success
+    TransactionManager-->>TestRunner: Success
+```
+
+## 7. ResumeTransaction_ContinuesSuspendedExecution
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant TransactionManager
+    TestRunner->>TransactionManager: resumeTransaction()
+    TransactionManager->>TransactionManager: apply ContinuesSuspendedExecution
+    TransactionManager->>Dependency: invoke logic
+    Dependency-->>TransactionManager: success
+    TransactionManager-->>TestRunner: Success
+```
+
+## 8. ForceRollbackAll_UsedDuringServerShutdown
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant TransactionManager
+    TestRunner->>TransactionManager: forceRollbackAll()
+    TransactionManager->>TransactionManager: apply UsedDuringServerShutdown
+    TransactionManager->>Dependency: invoke logic
+    Dependency-->>TransactionManager: success
+    TransactionManager-->>TestRunner: Success
 ```
 

@@ -1,46 +1,76 @@
 # Sequence Diagrams: QueryProcessor
 
 ## 🆕 Added Properties & Methods for `QueryProcessor`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `QueryProcessor` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `QueryProcessor` class in your Class Diagram with the following properties and methods:
 
-- **Method** added to `QueryProcessor`: `parseQuery()`, `optimizeQuery()`, `executeQuery()` (Internal pipeline orchestration)
+- **Method** added to `QueryProcessor`: `explain()`
+- **Method** added to `QueryProcessor`: `prepareStatement()`
+- **Method** added to `QueryProcessor`: `processQuery()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **QueryProcessor** class in the Query Processor subsystem.
+This file contains the detailed sequence diagrams for all 5 unit tests of the **QueryProcessor** class.
 
 ## 1. ProcessQuery_WhenValidSQL_ReturnsQueryResult
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant QueryProcessor
-    participant SQLParser
-    participant QueryOptimizer
-    participant QueryExecutor
-
-    Test->>QueryProcessor: processQuery(sql)
-    QueryProcessor->>SQLParser: parse(sql)
-    SQLParser-->>QueryProcessor: ast
-    QueryProcessor->>QueryOptimizer: optimize(ast)
-    QueryOptimizer-->>QueryProcessor: physicalPlan
-    QueryProcessor->>QueryExecutor: executePlan(physicalPlan)
-    QueryExecutor-->>QueryProcessor: resultData
-    QueryProcessor-->>Test: return resultData
+    TestRunner->>QueryProcessor: processQuery()
+    QueryProcessor->>QueryProcessor: validate WhenValidSQL
+    QueryProcessor->>QueryProcessor: process ProcessQuery
+    QueryProcessor-->>TestRunner: return QueryResult
 ```
 
 ## 2. ProcessQuery_WhenExecutionFails_RollsBackAndThrows
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant QueryProcessor
-    participant QueryExecutor
+    TestRunner->>QueryProcessor: processQuery()
+    QueryProcessor->>QueryProcessor: check WhenExecutionFails
+    QueryProcessor-->>QueryProcessor: condition failed
+    QueryProcessor-->>TestRunner: throws RollsBackAnd
+```
 
-    Test->>QueryProcessor: processQuery(sql)
-    QueryProcessor->>QueryExecutor: executePlan(physicalPlan)
-    QueryExecutor-->>QueryProcessor: throws ExecutionException
-    QueryProcessor->>QueryProcessor: rollback transaction context
-    QueryProcessor-->>Test: throws ExecutionException
+## 3. ProcessQuery_WhenTimeoutReached_AbortsQuery
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant QueryProcessor
+    TestRunner->>QueryProcessor: processQuery()
+    QueryProcessor->>QueryProcessor: apply WhenTimeoutReached
+    QueryProcessor->>Dependency: invoke logic
+    Dependency-->>QueryProcessor: success
+    QueryProcessor-->>TestRunner: AbortsQuery
+```
+
+## 4. Explain_ReturnsQueryExecutionPlanWithoutRunning
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant QueryProcessor
+    TestRunner->>QueryProcessor: explain()
+    QueryProcessor->>QueryProcessor: apply ReturnsQueryExecutionPlanWithoutRunning
+    QueryProcessor->>Dependency: invoke logic
+    Dependency-->>QueryProcessor: success
+    QueryProcessor-->>TestRunner: Success
+```
+
+## 5. PrepareStatement_CachesCompiledPlanForReuse
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant QueryProcessor
+    TestRunner->>QueryProcessor: prepareStatement()
+    QueryProcessor->>QueryProcessor: apply CachesCompiledPlanForReuse
+    QueryProcessor->>Dependency: invoke logic
+    Dependency-->>QueryProcessor: success
+    QueryProcessor-->>TestRunner: Success
 ```
 

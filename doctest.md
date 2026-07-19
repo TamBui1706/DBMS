@@ -1,6 +1,6 @@
-# Unit Tests cho Hệ quản trị Cơ sở dữ liệu (DBMS)
+# Unit Tests for Database Management System (DBMS)
 
-Dưới đây là danh sách toàn diện và mở rộng các Unit Tests (bao gồm cả positive, negative, boundary và concurrency tests) cho 61 class trong sơ đồ kiến trúc.
+Below is a comprehensive and expanded list of Unit Tests (including positive, negative, boundary, and concurrency tests) for the 61 classes in the architectural diagram.
 
 ## 1. Core Server & Connections
 

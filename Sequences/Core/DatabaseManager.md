@@ -1,98 +1,161 @@
 # Sequence Diagrams: DatabaseManager
 
 ## 🆕 Added Properties & Methods for `DatabaseManager`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `DatabaseManager` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `DatabaseManager` class in your Class Diagram with the following properties and methods:
 
-- **Method** added to `DatabaseManager`: `validateName(name: String)` (Checks for invalid characters in the DB name before creation)
+- **Method** added to `DatabaseManager`: `createDatabase()`
+- **Method** added to `DatabaseManager`: `dropDatabase()`
+- **Method** added to `DatabaseManager`: `getDatabase()`
+- **Method** added to `DatabaseManager`: `listDatabases()`
+- **Method** added to `DatabaseManager`: `renameDatabase()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **DatabaseManager** class in the Core Server & Connections subsystem.
+This file contains the detailed sequence diagrams for all 12 unit tests of the **DatabaseManager** class.
 
 ## 1. CreateDatabase_WhenNameIsValid_CreatesMetadataAndFiles
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant DatabaseManager
-    participant CatalogManager
-    participant StorageEngine
-    participant Database
-
-    Test->>DatabaseManager: createDatabase(dbName)
-    DatabaseManager->>DatabaseManager: validateName(dbName)
-    DatabaseManager->>CatalogManager: checkExists(dbName)
-    CatalogManager-->>DatabaseManager: false
-    DatabaseManager->>StorageEngine: allocateSpaceForDB(dbName)
-    StorageEngine-->>DatabaseManager: blockId
-    DatabaseManager->>Database: new Database(dbName)
-    Database-->>DatabaseManager: dbInstance
-    DatabaseManager->>CatalogManager: registerObject(dbInstance)
-    CatalogManager-->>DatabaseManager: success
-    DatabaseManager-->>Test: return dbInstance
+    TestRunner->>DatabaseManager: createDatabase()
+    DatabaseManager->>DatabaseManager: validate WhenNameIsValid
+    DatabaseManager->>DatabaseManager: process CreateDatabase
+    DatabaseManager-->>TestRunner: return CreatesMetadataAndFiles
 ```
 
 ## 2. CreateDatabase_WhenNameExists_ThrowsDuplicateDatabaseException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant DatabaseManager
-    participant CatalogManager
-
-    Test->>DatabaseManager: createDatabase(dbName)
-    DatabaseManager->>DatabaseManager: validateName(dbName)
-    DatabaseManager->>CatalogManager: checkExists(dbName)
-    CatalogManager-->>DatabaseManager: true
-    DatabaseManager-->>Test: throws DuplicateDatabaseException
+    TestRunner->>DatabaseManager: createDatabase()
+    DatabaseManager->>DatabaseManager: check WhenNameExists
+    DatabaseManager-->>DatabaseManager: condition failed
+    DatabaseManager-->>TestRunner: throws DuplicateDatabaseException
 ```
 
 ## 3. CreateDatabase_WhenInvalidCharacters_ThrowsValidationException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant DatabaseManager
-
-    Test->>DatabaseManager: createDatabase(invalidDbName)
-    DatabaseManager->>DatabaseManager: validateName(invalidDbName)
-    DatabaseManager-->>DatabaseManager: invalid
-    DatabaseManager-->>Test: throws ValidationException
+    TestRunner->>DatabaseManager: createDatabase()
+    DatabaseManager->>DatabaseManager: check WhenInvalidCharacters
+    DatabaseManager-->>DatabaseManager: condition failed
+    DatabaseManager-->>TestRunner: throws ValidationException
 ```
 
 ## 4. DropDatabase_WhenExists_RemovesAllAssociatedData
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant DatabaseManager
-    participant ConnectionManager
-    participant CatalogManager
-    participant StorageEngine
-
-    Test->>DatabaseManager: dropDatabase(dbName)
-    DatabaseManager->>ConnectionManager: getActiveSessions(dbName)
-    ConnectionManager-->>DatabaseManager: empty
-    DatabaseManager->>CatalogManager: checkExists(dbName)
-    CatalogManager-->>DatabaseManager: true
-    DatabaseManager->>CatalogManager: removeObject(dbName)
-    CatalogManager-->>DatabaseManager: success
-    DatabaseManager->>StorageEngine: deallocateSpace(dbName)
-    StorageEngine-->>DatabaseManager: success
-    DatabaseManager-->>Test: return success
+    TestRunner->>DatabaseManager: dropDatabase()
+    DatabaseManager->>DatabaseManager: apply WhenExists
+    DatabaseManager->>Dependency: invoke logic
+    Dependency-->>DatabaseManager: success
+    DatabaseManager-->>TestRunner: RemovesAllAssociatedData
 ```
 
 ## 5. DropDatabase_WhenInUse_ThrowsConcurrencyException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant DatabaseManager
-    participant ConnectionManager
+    TestRunner->>DatabaseManager: dropDatabase()
+    DatabaseManager->>DatabaseManager: check WhenInUse
+    DatabaseManager-->>DatabaseManager: condition failed
+    DatabaseManager-->>TestRunner: throws ConcurrencyException
+```
 
-    Test->>DatabaseManager: dropDatabase(dbName)
-    DatabaseManager->>ConnectionManager: getActiveSessions(dbName)
-    ConnectionManager-->>DatabaseManager: [session1, session2]
-    DatabaseManager-->>Test: throws ConcurrencyException
+## 6. GetDatabase_WhenExists_ReturnsDatabaseInstance
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DatabaseManager
+    TestRunner->>DatabaseManager: getDatabase()
+    DatabaseManager->>DatabaseManager: validate WhenExists
+    DatabaseManager->>DatabaseManager: process GetDatabase
+    DatabaseManager-->>TestRunner: return DatabaseInstance
+```
+
+## 7. GetDatabase_WhenNotExists_ThrowsDatabaseNotFoundException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DatabaseManager
+    TestRunner->>DatabaseManager: getDatabase()
+    DatabaseManager->>DatabaseManager: check WhenNotExists
+    DatabaseManager-->>DatabaseManager: condition failed
+    DatabaseManager-->>TestRunner: throws DatabaseNotFoundException
+```
+
+## 8. ListDatabases_ReturnsAllRegisteredDatabases
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DatabaseManager
+    TestRunner->>DatabaseManager: listDatabases()
+    DatabaseManager->>DatabaseManager: apply ReturnsAllRegisteredDatabases
+    DatabaseManager->>Dependency: invoke logic
+    Dependency-->>DatabaseManager: success
+    DatabaseManager-->>TestRunner: Success
+```
+
+## 9. RenameDatabase_WhenNewNameValid_UpdatesMetadata
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DatabaseManager
+    TestRunner->>DatabaseManager: renameDatabase()
+    DatabaseManager->>DatabaseManager: validate WhenNewNameValid
+    DatabaseManager->>DatabaseManager: process RenameDatabase
+    DatabaseManager-->>TestRunner: return UpdatesMetadata
+```
+
+## 10. CreateDatabase_WhenDiskFull_ThrowsInsufficientStorageException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DatabaseManager
+    TestRunner->>DatabaseManager: createDatabase()
+    DatabaseManager->>DatabaseManager: check WhenDiskFull
+    DatabaseManager-->>DatabaseManager: condition failed
+    DatabaseManager-->>TestRunner: throws InsufficientStorageException
+```
+
+## 11. CreateDatabase_WhenNameTooLong_ThrowsValidationException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DatabaseManager
+    TestRunner->>DatabaseManager: createDatabase()
+    DatabaseManager->>DatabaseManager: check WhenNameTooLong
+    DatabaseManager-->>DatabaseManager: condition failed
+    DatabaseManager-->>TestRunner: throws ValidationException
+```
+
+## 12. DropDatabase_WhenPermissionDenied_ThrowsSecurityException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DatabaseManager
+    TestRunner->>DatabaseManager: dropDatabase()
+    DatabaseManager->>DatabaseManager: check WhenPermissionDenied
+    DatabaseManager-->>DatabaseManager: condition failed
+    DatabaseManager-->>TestRunner: throws SecurityException
 ```
 

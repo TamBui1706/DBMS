@@ -1,49 +1,94 @@
 # Sequence Diagrams: StorageEngine
 
 ## 🆕 Added Properties & Methods for `StorageEngine`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `StorageEngine` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `StorageEngine` class in your Class Diagram with the following properties and methods:
 
-- **Method** added to `StorageEngine`: `checkBuffer(pageId)` (Checks BufferPool before disk access)
+- **Method** added to `StorageEngine`: `allocatePage()`
+- **Method** added to `StorageEngine`: `deallocatePage()`
+- **Method** added to `StorageEngine`: `formatDrive()`
+- **Method** added to `StorageEngine`: `readPage()`
+- **Method** added to `StorageEngine`: `sync()`
+- **Method** added to `StorageEngine`: `writePage()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **StorageEngine** class in the Storage Engine subsystem.
+This file contains the detailed sequence diagrams for all 6 unit tests of the **StorageEngine** class.
 
 ## 1. ReadPage_WhenPageNotInBuffer_LoadsFromDisk
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant StorageEngine
-    participant BufferPool
-    participant FileManager
-
-    Test->>StorageEngine: readPage(pageId)
-    StorageEngine->>BufferPool: checkBuffer(pageId)
-    BufferPool-->>StorageEngine: not found
-    StorageEngine->>FileManager: readBlock(pageId)
-    FileManager-->>StorageEngine: rawBytes
-    StorageEngine->>BufferPool: addPage(rawBytes)
-    BufferPool-->>StorageEngine: pageObject
-    StorageEngine-->>Test: return pageObject
+    TestRunner->>StorageEngine: readPage()
+    StorageEngine->>StorageEngine: apply WhenPageNotInBuffer
+    StorageEngine->>Dependency: invoke logic
+    Dependency-->>StorageEngine: success
+    StorageEngine-->>TestRunner: LoadsFromDisk
 ```
 
 ## 2. WritePage_WhenPageIsDirty_FlushesToDisk
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant StorageEngine
-    participant BufferPool
-    participant FileManager
+    TestRunner->>StorageEngine: writePage()
+    StorageEngine->>StorageEngine: apply WhenPageIsDirty
+    StorageEngine->>Dependency: invoke logic
+    Dependency-->>StorageEngine: success
+    StorageEngine-->>TestRunner: FlushesToDisk
+```
 
-    Test->>StorageEngine: writePage(pageId)
-    StorageEngine->>BufferPool: checkBuffer(pageId)
-    BufferPool-->>StorageEngine: page (isDirty=true)
-    StorageEngine->>FileManager: writeBlock(pageId, page.data)
-    FileManager-->>StorageEngine: success
-    StorageEngine->>BufferPool: markClean(pageId)
-    BufferPool-->>StorageEngine: success
-    StorageEngine-->>Test: success
+## 3. AllocatePage_CreatesNewPageAndReturnsId
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant StorageEngine
+    TestRunner->>StorageEngine: allocatePage()
+    StorageEngine->>StorageEngine: apply CreatesNewPageAndReturnsId
+    StorageEngine->>Dependency: invoke logic
+    Dependency-->>StorageEngine: success
+    StorageEngine-->>TestRunner: Success
+```
+
+## 4. DeallocatePage_FreesPageSpace
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant StorageEngine
+    TestRunner->>StorageEngine: deallocatePage()
+    StorageEngine->>StorageEngine: apply FreesPageSpace
+    StorageEngine->>Dependency: invoke logic
+    Dependency-->>StorageEngine: success
+    StorageEngine-->>TestRunner: Success
+```
+
+## 5. Sync_ForcesAllDirtyPagesToDisk
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant StorageEngine
+    TestRunner->>StorageEngine: sync()
+    StorageEngine->>StorageEngine: apply ForcesAllDirtyPagesToDisk
+    StorageEngine->>Dependency: invoke logic
+    Dependency-->>StorageEngine: success
+    StorageEngine-->>TestRunner: Success
+```
+
+## 6. FormatDrive_InitializesDataDirectoryStructure
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant StorageEngine
+    TestRunner->>StorageEngine: formatDrive()
+    StorageEngine->>StorageEngine: apply InitializesDataDirectoryStructure
+    StorageEngine->>Dependency: invoke logic
+    Dependency-->>StorageEngine: success
+    StorageEngine-->>TestRunner: Success
 ```
 

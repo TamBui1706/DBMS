@@ -1,39 +1,74 @@
 # Sequence Diagrams: Lexer
 
 ## 🆕 Added Properties & Methods for `Lexer`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `Lexer` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `Lexer` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `Lexer`: `tokens` (List of generated string tokens)
-- **Method** added to `Lexer`: `scan(sqlString)` (Internal parsing loop ignoring whitespaces/comments)
+- **Method** added to `Lexer`: `tokenize()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **Lexer** class in the Query Processor subsystem.
+This file contains the detailed sequence diagrams for all 5 unit tests of the **Lexer** class.
 
 ## 1. Tokenize_WhenValidString_ReturnsListOfTokens
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Lexer
-
-    Test->>Lexer: tokenize(sqlString)
-    Lexer->>Lexer: scan(sqlString)
-    Lexer->>Lexer: identify keywords and literals
-    Lexer-->>Test: return [Token1, Token2, ...]
+    TestRunner->>Lexer: tokenize()
+    Lexer->>Lexer: validate WhenValidString
+    Lexer->>Lexer: process Tokenize
+    Lexer-->>TestRunner: return ListOfTokens
 ```
 
 ## 2. Tokenize_IgnoresWhitespaceAndComments
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Lexer
+    TestRunner->>Lexer: tokenize()
+    Lexer->>Lexer: apply IgnoresWhitespaceAndComments
+    Lexer->>Dependency: invoke logic
+    Dependency-->>Lexer: success
+    Lexer-->>TestRunner: Success
+```
 
-    Test->>Lexer: tokenize("SELECT * --comment \n FROM t")
-    Lexer->>Lexer: scan(sqlString)
-    Lexer->>Lexer: skip whitespaces
-    Lexer->>Lexer: skip '--comment'
-    Lexer-->>Test: return [SELECT, *, FROM, t]
+## 3. Tokenize_WhenUnclosedStringLiteral_ThrowsLexerException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Lexer
+    TestRunner->>Lexer: tokenize()
+    Lexer->>Lexer: check WhenUnclosedStringLiteral
+    Lexer-->>Lexer: condition failed
+    Lexer-->>TestRunner: throws LexerException
+```
+
+## 4. Tokenize_IdentifiesOperatorsAndPunctuationCorrectly
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Lexer
+    TestRunner->>Lexer: tokenize()
+    Lexer->>Lexer: apply IdentifiesOperatorsAndPunctuationCorrectly
+    Lexer->>Dependency: invoke logic
+    Dependency-->>Lexer: success
+    Lexer-->>TestRunner: Success
+```
+
+## 5. Tokenize_HandlesEscapedCharactersInStrings
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Lexer
+    TestRunner->>Lexer: tokenize()
+    Lexer->>Lexer: apply HandlesEscapedCharactersInStrings
+    Lexer->>Dependency: invoke logic
+    Dependency-->>Lexer: success
+    Lexer-->>TestRunner: Success
 ```
 

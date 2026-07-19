@@ -1,34 +1,23 @@
 # Sequence Diagrams: PageReplacementAlgorithm
 
 ## 🆕 Added Properties & Methods for `PageReplacementAlgorithm`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `PageReplacementAlgorithm` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `PageReplacementAlgorithm` class in your Class Diagram with the following properties and methods:
 
-- **Method** added to `PageReplacementAlgorithm`: `findVictim()` (Identifies least recently used/unpinned page)
+- *(No major new structural properties required, logic handled internally)*
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **PageReplacementAlgorithm** class in the Storage Engine subsystem.
+This file contains the detailed sequence diagrams for all 1 unit tests of the **PageReplacementAlgorithm** class.
 
 ## 1. Instantiation_OfInterface_FailsWithTypeError
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant PageReplacementAlgorithm
-
-    Test->>PageReplacementAlgorithm: new PageReplacementAlgorithm()
-    PageReplacementAlgorithm-->>Test: throws TypeError (Cannot instantiate interface)
-```
-
-## 2. FindVictim_Implementation_ReturnsUnpinnedPageId
-
-```mermaid
-sequenceDiagram
-    actor Test
-    participant PageReplacementAlgorithm
-
-    Test->>PageReplacementAlgorithm: findVictim(pagesDict)
-    PageReplacementAlgorithm->>PageReplacementAlgorithm: scan for pinCount == 0
-    PageReplacementAlgorithm-->>Test: return victimPageId
+    TestRunner->>PageReplacementAlgorithm: instantiation()
+    PageReplacementAlgorithm->>PageReplacementAlgorithm: check OfInterface
+    PageReplacementAlgorithm-->>PageReplacementAlgorithm: condition failed
+    PageReplacementAlgorithm-->>TestRunner: throws FailsWithTypeError
 ```
 

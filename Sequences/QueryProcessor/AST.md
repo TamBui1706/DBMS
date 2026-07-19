@@ -1,36 +1,80 @@
 # Sequence Diagrams: AST
 
 ## 🆕 Added Properties & Methods for `AST`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `AST` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `AST` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `AST`: `rootNode` (Entry point for abstract syntax tree)
-- **Method** added to `AST`: `traverseNodes()` (Depth-first traversal)
+- **Property** added to `AST`: `rootNode`
+- **Method** added to `AST`: `clone()`
+- **Method** added to `AST`: `countNodes()`
+- **Method** added to `AST`: `toSQL()`
+- **Method** added to `AST`: `traverse()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **AST** class in the Query Processor subsystem.
+This file contains the detailed sequence diagrams for all 5 unit tests of the **AST** class.
 
 ## 1. Init_SetsRootNode
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant AST
-
-    Test->>AST: new AST(rootNode)
-    AST->>AST: self.rootNode = rootNode
-    AST-->>Test: return instance
+    TestRunner->>AST: init()
+    AST->>AST: apply SetsRootNode
+    AST->>Dependency: invoke logic
+    Dependency-->>AST: success
+    AST-->>TestRunner: Success
 ```
 
 ## 2. Traverse_VisitsAllNodesInCorrectOrder
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant AST
+    TestRunner->>AST: traverse()
+    AST->>AST: apply VisitsAllNodesInCorrectOrder
+    AST->>Dependency: invoke logic
+    Dependency-->>AST: success
+    AST-->>TestRunner: Success
+```
 
-    Test->>AST: traverse()
-    AST->>AST: traverseNodes(self.rootNode)
-    AST-->>Test: return list of visited nodes
+## 3. ToSQL_ReconstructsSQLStringFromTree
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant AST
+    TestRunner->>AST: toSQL()
+    AST->>AST: apply ReconstructsSQLStringFromTree
+    AST->>Dependency: invoke logic
+    Dependency-->>AST: success
+    AST-->>TestRunner: Success
+```
+
+## 4. Clone_CreatesDeepCopyOfTree
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant AST
+    TestRunner->>AST: clone()
+    AST->>AST: apply CreatesDeepCopyOfTree
+    AST->>Dependency: invoke logic
+    Dependency-->>AST: success
+    AST-->>TestRunner: Success
+```
+
+## 5. CountNodes_ReturnsTotalSizeOfTree
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant AST
+    TestRunner->>AST: countNodes()
+    AST->>AST: apply ReturnsTotalSizeOfTree
+    AST->>Dependency: invoke logic
+    Dependency-->>AST: success
+    AST-->>TestRunner: Success
 ```
 

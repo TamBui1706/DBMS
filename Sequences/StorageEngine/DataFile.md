@@ -1,36 +1,78 @@
 # Sequence Diagrams: DataFile
 
 ## 🆕 Added Properties & Methods for `DataFile`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `DataFile` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `DataFile` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `DataFile`: `fileStream` (IO stream handle)
+- **Property** added to `DataFile`: `fileStream`
+- **Method** added to `DataFile`: `deleteFile()`
+- **Method** added to `DataFile`: `readBlock()`
+- **Method** added to `DataFile`: `writeBlock()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **DataFile** class in the Storage Engine subsystem.
+This file contains the detailed sequence diagrams for all 5 unit tests of the **DataFile** class.
 
 ## 1. Init_OpensFileStreamForDataBlocks
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant DataFile
-
-    Test->>DataFile: new DataFile(path)
-    DataFile->>DataFile: open fileStream(path, 'rb+')
-    DataFile-->>Test: return instance
+    TestRunner->>DataFile: init()
+    DataFile->>DataFile: apply OpensFileStreamForDataBlocks
+    DataFile->>Dependency: invoke logic
+    Dependency-->>DataFile: success
+    DataFile-->>TestRunner: Success
 ```
 
 ## 2. ReadBlock_LoadsBytesFromDisk
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant DataFile
+    TestRunner->>DataFile: readBlock()
+    DataFile->>DataFile: apply LoadsBytesFromDisk
+    DataFile->>Dependency: invoke logic
+    Dependency-->>DataFile: success
+    DataFile-->>TestRunner: Success
+```
 
-    Test->>DataFile: readBlock(blockId)
-    DataFile->>DataFile: fileStream.seek(offset)
-    DataFile->>DataFile: fileStream.read(pageSize)
-    DataFile-->>Test: return rawBytes
+## 3. WriteBlock_SavesBytesToDisk
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DataFile
+    TestRunner->>DataFile: writeBlock()
+    DataFile->>DataFile: apply SavesBytesToDisk
+    DataFile->>Dependency: invoke logic
+    Dependency-->>DataFile: success
+    DataFile-->>TestRunner: Success
+```
+
+## 4. DeleteFile_RemovesFromOS
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DataFile
+    TestRunner->>DataFile: deleteFile()
+    DataFile->>DataFile: apply RemovesFromOS
+    DataFile->>Dependency: invoke logic
+    Dependency-->>DataFile: success
+    DataFile-->>TestRunner: Success
+```
+
+## 5. Init_WhenFileLockedByOS_ThrowsIOException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant DataFile
+    TestRunner->>DataFile: init()
+    DataFile->>DataFile: check WhenFileLockedByOS
+    DataFile-->>DataFile: condition failed
+    DataFile-->>TestRunner: throws IOException
 ```
 

@@ -1,51 +1,95 @@
 # Sequence Diagrams: HashIndex
 
 ## 🆕 Added Properties & Methods for `HashIndex`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `HashIndex` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `HashIndex` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `HashIndex`: `hashTable` (Buckets for hashes)
-- **Method** added to `HashIndex`: `computeHash(key)` (Hashing algorithm)
+- **Property** added to `HashIndex`: `hashTable (Dict)`
+- **Method** added to `HashIndex`: `computeHash()`
+- **Method** added to `HashIndex`: `deleteKey()`
+- **Method** added to `HashIndex`: `handleCollision()`
+- **Method** added to `HashIndex`: `insertKey()`
+- **Method** added to `HashIndex`: `resize()`
+- **Method** added to `HashIndex`: `search()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **HashIndex** class in the Database Object Management subsystem.
+This file contains the detailed sequence diagrams for all 6 unit tests of the **HashIndex** class.
 
 ## 1. InsertKey_ComputesHashAndAddsToBucket
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant HashIndex
-
-    Test->>HashIndex: insertKey(key, rowId)
-    HashIndex->>HashIndex: computeHash(key)
-    HashIndex->>HashIndex: addToBucket(hash, rowId)
-    HashIndex-->>Test: success
+    TestRunner->>HashIndex: insertKey()
+    HashIndex->>HashIndex: apply ComputesHashAndAddsToBucket
+    HashIndex->>Dependency: invoke logic
+    Dependency-->>HashIndex: success
+    HashIndex-->>TestRunner: Success
 ```
 
 ## 2. Search_WhenKeyExists_ResolvesHashToRowID
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant HashIndex
-
-    Test->>HashIndex: search(key)
-    HashIndex->>HashIndex: computeHash(key)
-    HashIndex->>HashIndex: retrieveFromBucket(hash)
-    HashIndex-->>Test: return rowId
+    TestRunner->>HashIndex: search()
+    HashIndex->>HashIndex: apply WhenKeyExists
+    HashIndex->>Dependency: invoke logic
+    Dependency-->>HashIndex: success
+    HashIndex-->>TestRunner: ResolvesHashToRowID
 ```
 
 ## 3. HandleCollision_CreatesLinkedListInBucket
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant HashIndex
+    TestRunner->>HashIndex: handleCollision()
+    HashIndex->>HashIndex: apply CreatesLinkedListInBucket
+    HashIndex->>Dependency: invoke logic
+    Dependency-->>HashIndex: success
+    HashIndex-->>TestRunner: Success
+```
 
-    Test->>HashIndex: insertKey(collidingKey, rowId2)
-    HashIndex->>HashIndex: computeHash(collidingKey)
-    HashIndex->>HashIndex: appendToBucketLinkedList(hash, rowId2)
-    HashIndex-->>Test: success
+## 4. Resize_ExpandsHashTableWhenLoadFactorExceeded
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant HashIndex
+    TestRunner->>HashIndex: resize()
+    HashIndex->>HashIndex: apply ExpandsHashTableWhenLoadFactorExceeded
+    HashIndex->>Dependency: invoke logic
+    Dependency-->>HashIndex: success
+    HashIndex-->>TestRunner: Success
+```
+
+## 5. DeleteKey_RemovesFromBucketLinkedList
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant HashIndex
+    TestRunner->>HashIndex: deleteKey()
+    HashIndex->>HashIndex: apply RemovesFromBucketLinkedList
+    HashIndex->>Dependency: invoke logic
+    Dependency-->>HashIndex: success
+    HashIndex-->>TestRunner: Success
+```
+
+## 6. ComputeHash_DistributesKeysEvenly
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant HashIndex
+    TestRunner->>HashIndex: computeHash()
+    HashIndex->>HashIndex: apply DistributesKeysEvenly
+    HashIndex->>Dependency: invoke logic
+    Dependency-->>HashIndex: success
+    HashIndex-->>TestRunner: Success
 ```
 

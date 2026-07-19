@@ -1,63 +1,117 @@
 # Sequence Diagrams: Database
 
 ## 🆕 Added Properties & Methods for `Database`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `Database` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `Database` class in your Class Diagram with the following properties and methods:
 
-- **Method** added to `Database`: `loadContext(pageData)` (Parses metadata loaded from StorageEngine)
-- **Method** added to `Database`: `validateChecksum(pageData)` (Checks for data corruption before loading)
+- **Property** added to `Database`: `schemaDict (Dict)`
+- **Property** added to `Database`: `contextData`
+- **Method** added to `Database`: `close()`
+- **Method** added to `Database`: `createSchema()`
+- **Method** added to `Database`: `getSchema()`
+- **Method** added to `Database`: `open()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **Database** class in the Core Server & Connections subsystem.
+This file contains the detailed sequence diagrams for all 8 unit tests of the **Database** class.
 
 ## 1. Init_SetsDatabaseNameCorrectly
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Database
-
-    Test->>Database: new Database(name)
-    Database->>Database: name = name
-    Database-->>Test: return instance
+    TestRunner->>Database: init()
+    Database->>Database: apply SetsDatabaseNameCorrectly
+    Database->>Dependency: invoke logic
+    Dependency-->>Database: success
+    Database-->>TestRunner: Success
 ```
 
 ## 2. Open_WhenValidMetadata_LoadsDatabaseContext
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Database
-    participant StorageEngine
-    participant BufferPool
-
-    Test->>Database: open()
-    Database->>StorageEngine: readMetadataPage(name)
-    StorageEngine-->>Database: metadataPageId
-    Database->>BufferPool: pinPage(metadataPageId)
-    BufferPool-->>Database: pageData
-    Database->>Database: validateChecksum(pageData)
-    Database-->>Database: valid
-    Database->>Database: loadContext(pageData)
-    Database-->>Test: success
+    TestRunner->>Database: open()
+    Database->>Database: apply WhenValidMetadata
+    Database->>Dependency: invoke logic
+    Dependency-->>Database: success
+    Database-->>TestRunner: LoadsDatabaseContext
 ```
 
 ## 3. Open_WhenCorruptedMetadata_ThrowsCorruptionException
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant Database
-    participant StorageEngine
-    participant BufferPool
+    TestRunner->>Database: open()
+    Database->>Database: check WhenCorruptedMetadata
+    Database-->>Database: condition failed
+    Database-->>TestRunner: throws CorruptionException
+```
 
-    Test->>Database: open()
-    Database->>StorageEngine: readMetadataPage(name)
-    StorageEngine-->>Database: metadataPageId
-    Database->>BufferPool: pinPage(metadataPageId)
-    BufferPool-->>Database: corruptedPageData
-    Database->>Database: validateChecksum(corruptedPageData)
-    Database-->>Database: invalid
-    Database-->>Test: throws CorruptionException
+## 4. Close_FlushesUnsavedChangesAndReleasesLocks
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Database
+    TestRunner->>Database: close()
+    Database->>Database: apply FlushesUnsavedChangesAndReleasesLocks
+    Database->>Dependency: invoke logic
+    Dependency-->>Database: success
+    Database-->>TestRunner: Success
+```
+
+## 5. GetSchema_WhenSchemaExists_ReturnsSchema
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Database
+    TestRunner->>Database: getSchema()
+    Database->>Database: validate WhenSchemaExists
+    Database->>Database: process GetSchema
+    Database-->>TestRunner: return Schema
+```
+
+## 6. CreateSchema_WhenNameValid_AddsToDatabase
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Database
+    TestRunner->>Database: createSchema()
+    Database->>Database: apply WhenNameValid
+    Database->>Dependency: invoke logic
+    Dependency-->>Database: success
+    Database-->>TestRunner: AddsToDatabase
+```
+
+## 7. Close_WhenAlreadyClosed_DoesNothing
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Database
+    TestRunner->>Database: close()
+    Database->>Database: apply WhenAlreadyClosed
+    Database->>Dependency: invoke logic
+    Dependency-->>Database: success
+    Database-->>TestRunner: DoesNothing
+```
+
+## 8. Open_WhenMissingDataFiles_ThrowsFileNotFoundException
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant Database
+    TestRunner->>Database: open()
+    Database->>Database: check WhenMissingDataFiles
+    Database-->>Database: condition failed
+    Database-->>TestRunner: throws FileNotFoundException
 ```
 

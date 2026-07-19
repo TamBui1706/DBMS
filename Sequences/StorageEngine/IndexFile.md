@@ -1,36 +1,80 @@
 # Sequence Diagrams: IndexFile
 
 ## 🆕 Added Properties & Methods for `IndexFile`
-To support the detailed sequence logic for unit testing, the following missing properties/methods have been introduced. **Please update the `IndexFile` class in your Class Diagram with these:**
+To support the detailed sequence logic for unit testing, please update the `IndexFile` class in your Class Diagram with the following properties and methods:
 
-- **Property** added to `IndexFile`: `fileStream` (IO stream handle)
+- **Property** added to `IndexFile`: `fileStream`
+- **Method** added to `IndexFile`: `readBlock()`
+- **Method** added to `IndexFile`: `rebuild()`
+- **Method** added to `IndexFile`: `verifyChecksum()`
+- **Method** added to `IndexFile`: `writeBlock()`
 
 ---
 
-This file contains the detailed sequence diagrams for all unit tests of the **IndexFile** class in the Storage Engine subsystem.
+This file contains the detailed sequence diagrams for all 5 unit tests of the **IndexFile** class.
 
 ## 1. Init_OpensFileStreamForIndexBlocks
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant IndexFile
-
-    Test->>IndexFile: new IndexFile(path)
-    IndexFile->>IndexFile: open fileStream(path, 'rb+')
-    IndexFile-->>Test: return instance
+    TestRunner->>IndexFile: init()
+    IndexFile->>IndexFile: apply OpensFileStreamForIndexBlocks
+    IndexFile->>Dependency: invoke logic
+    Dependency-->>IndexFile: success
+    IndexFile-->>TestRunner: Success
 ```
 
 ## 2. WriteBlock_SavesBytesToDisk
 
 ```mermaid
 sequenceDiagram
-    actor Test
+    actor TestRunner
     participant IndexFile
+    TestRunner->>IndexFile: writeBlock()
+    IndexFile->>IndexFile: apply SavesBytesToDisk
+    IndexFile->>Dependency: invoke logic
+    Dependency-->>IndexFile: success
+    IndexFile-->>TestRunner: Success
+```
 
-    Test->>IndexFile: writeBlock(blockId, data)
-    IndexFile->>IndexFile: fileStream.seek(offset)
-    IndexFile->>IndexFile: fileStream.write(data)
-    IndexFile-->>Test: success
+## 3. ReadBlock_LoadsBytesFromDisk
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant IndexFile
+    TestRunner->>IndexFile: readBlock()
+    IndexFile->>IndexFile: apply LoadsBytesFromDisk
+    IndexFile->>Dependency: invoke logic
+    Dependency-->>IndexFile: success
+    IndexFile-->>TestRunner: Success
+```
+
+## 4. Rebuild_CompactsIndexData
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant IndexFile
+    TestRunner->>IndexFile: rebuild()
+    IndexFile->>IndexFile: apply CompactsIndexData
+    IndexFile->>Dependency: invoke logic
+    Dependency-->>IndexFile: success
+    IndexFile-->>TestRunner: Success
+```
+
+## 5. VerifyChecksum_DetectsCorruption
+
+```mermaid
+sequenceDiagram
+    actor TestRunner
+    participant IndexFile
+    TestRunner->>IndexFile: verifyChecksum()
+    IndexFile->>IndexFile: apply DetectsCorruption
+    IndexFile->>Dependency: invoke logic
+    Dependency-->>IndexFile: success
+    IndexFile-->>TestRunner: Success
 ```
 
