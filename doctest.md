@@ -4,7 +4,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 
 ## 1. Core Server & Connections
 
-### 1. `DatabaseServer`
+### 1. `DatabaseServer` (Done)
 - `Start_WhenConfigValid_InitializesAllSubsystems`
 - `Start_WhenAlreadyRunning_ThrowsIllegalStateException`
 - `Stop_WhenRunning_ShutsDownGracefully`
@@ -16,7 +16,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `Init_WithMissingConfigFilePath_ThrowsConfigurationException`
 - `HealthCheck_ReturnsTrueIfAllSubsystemsAreRunning`
 
-### 2. `ConnectionManager`
+### 2. `ConnectionManager` (Done)
 - `AcceptConnection_WhenUnderMaxLimit_CreatesClientSession`
 - `AcceptConnection_WhenAtMaxLimit_RejectsConnection`
 - `AcceptConnection_WhenServerPaused_QueuesOrRejects`
@@ -39,7 +39,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `GetSessionVariable_WhenKeyNotExists_ReturnsNull`
 - `Ping_ResetsIdleTimer`
 
-### 4. `DatabaseManager`
+### 4. `DatabaseManager` (Done)
 - `CreateDatabase_WhenNameIsValid_CreatesMetadataAndFiles`
 - `CreateDatabase_WhenNameExists_ThrowsDuplicateDatabaseException`
 - `CreateDatabase_WhenInvalidCharacters_ThrowsValidationException`
@@ -53,7 +53,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `CreateDatabase_WhenNameTooLong_ThrowsValidationException`
 - `DropDatabase_WhenPermissionDenied_ThrowsSecurityException`
 
-### 5. `Database`
+### 5. `Database` (Done)
 - `Init_SetsDatabaseNameCorrectly`
 - `Open_WhenValidMetadata_LoadsDatabaseContext`
 - `Open_WhenCorruptedMetadata_ThrowsCorruptionException`
@@ -79,7 +79,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 
 ## 2. Database Object Management
 
-### 7. `Schema`
+### 7. `Schema` (Done)
 - `Init_SetsSchemaName`
 - `CreateTable_WhenValidTable_RegistersInSchema`
 - `CreateTable_WhenTableNameExists_ThrowsException`
@@ -89,7 +89,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `ListTables_ReturnsAllRegisteredTables`
 - `Validate_EnsuresSchemaNameIsAlphanumeric`
 
-### 8. `Table`
+### 8. `Table` (Done)
 - `Insert_WhenValidRowAndConstraintsMet_AppendsRow`
 - `Insert_WhenPrimaryKeyViolated_ThrowsConstraintException`
 - `Update_WhenRowExists_ModifiesValues`
@@ -103,7 +103,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `GetRowCount_ReturnsAccurateCount`
 - `RenameColumn_WhenExists_UpdatesMetadataAndViews`
 
-### 9. `View`
+### 9. `View` (Done)
 - `Init_SetsQueryDefinition`
 - `CompileView_WhenUnderlyingTablesExist_Succeeds`
 - `CompileView_WhenTableDropped_ThrowsInvalidViewException`
@@ -119,7 +119,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `Drop_RemovesProcedureFromCatalog`
 - `Execute_WhenProcedureTimesOut_KillsExecution`
 
-### 11. `Function`
+### 11. `Function` (Done)
 - `Evaluate_WhenValidArguments_ReturnsComputedValue`
 - `Evaluate_WhenMissingArguments_ThrowsArgumentException`
 - `Evaluate_WhenDivideByZero_ThrowsArithmeticException`
@@ -149,7 +149,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `Merge_CombinesTwoAdjacentPartitions`
 - `Split_DividesPartitionAtGivenValue`
 
-### 15. `Column`
+### 15. `Column` (Done)
 - `Init_SetsNameAndNullableFlags`
 - `ValidateType_WhenDataMatchesColumnType_Succeeds`
 - `ValidateType_WhenDataIsStringForIntColumn_ThrowsTypeException`
@@ -158,7 +158,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `ChangeType_WhenCompatible_Succeeds`
 - `ChangeType_WhenIncompatible_ThrowsException`
 
-### 16. `Row`
+### 16. `Row` (Done)
 - `Init_GeneratesRowIdAndInitializesValueList`
 - `GetValue_WhenIndexValid_ReturnsData`
 - `GetValue_WhenIndexOutOfBounds_ThrowsIndexException`
@@ -167,24 +167,24 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `Deserialize_ReadsFromByteArray`
 - `GetSize_ReturnsByteSizeOfAllValues`
 
-### 17. `DataType`
+### 17. `DataType` (Done)
 - `EnumValues_IncludeIntVarcharDateBoolean`
 - `ParseString_WhenValidFormat_ReturnsDataTypeInstance`
 - `ParseString_WhenInvalidFormat_ThrowsParseException`
 - `GetSize_ReturnsByteSizeForFixedTypes`
 - `IsVariableLength_ReturnsTrueForVarchar`
 
-### 18. `Constraint`
+### 18. `Constraint` (Done)
 - `Instantiation_OfAbstractClass_FailsWithTypeError`
 
-### 19. `PrimaryKey`
+### 19. `PrimaryKey` (Done)
 - `Validate_WhenValueIsUniqueAndNotNull_Succeeds`
 - `Validate_WhenValueIsNull_ThrowsNullException`
 - `Validate_WhenValueIsDuplicate_ThrowsDuplicateKeyException`
 - `Validate_WithCompositeKey_ChecksAllColumns`
 - `Drop_RemovesIndexFromStorage`
 
-### 20. `ForeignKey`
+### 20. `ForeignKey` (Done)
 - `Validate_WhenReferencedRowExists_Succeeds`
 - `Validate_WhenReferencedRowDoesNotExist_ThrowsForeignKeyException`
 - `Init_SetsReferenceTableCorrectly`
@@ -192,12 +192,12 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `OnDeleteRestrict_ThrowsExceptionWhenParentDeleted`
 - `OnUpdateCascade_ModifiesChildRowsWhenParentKeyChanges`
 
-### 21. `UniqueConstraint`
+### 21. `UniqueConstraint` (Done)
 - `Validate_WhenValueIsGloballyUnique_Succeeds`
 - `Validate_WhenValueExistsInAnotherRow_ThrowsException`
 - `Validate_WhenValueIsNull_SucceedsIfNullable`
 
-### 22. `CheckConstraint`
+### 22. `CheckConstraint` (Done)
 - `Validate_WhenExpressionEvaluatesToTrue_Succeeds`
 - `Validate_WhenExpressionEvaluatesToFalse_ThrowsCheckException`
 - `Validate_WhenExpressionUsesInvalidColumn_ThrowsException`

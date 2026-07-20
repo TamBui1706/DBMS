@@ -1,31 +1,31 @@
 # DBMS Unit Tests Statistics
 
 ## Core Server & Connections (Total: 59 tests)
-- `DatabaseServer`: 10 tests
-- `ConnectionManager`: 10 tests
+- `DatabaseServer`: 10 tests (Done)
+- `ConnectionManager`: 10 tests (Done)
 - `ClientSession`: 9 tests
-- `DatabaseManager`: 12 tests
-- `Database`: 8 tests
+- `DatabaseManager`: 12 tests (Done)
+- `Database`: 8 tests (Done)
 - `CatalogManager`: 10 tests
 
 ## Database Object Management (Total: 112 tests)
-- `Schema`: 8 tests
-- `Table`: 12 tests
-- `View`: 6 tests
+- `Schema`: 8 tests (Done)
+- `Table`: 12 tests (Done)
+- `View`: 6 tests  (Done)
 - `StoredProcedure`: 6 tests
-- `Function`: 5 tests
+- `Function`: 5 tests (Done)
 - `Sequence`: 6 tests
 - `Trigger`: 6 tests
 - `Partition`: 5 tests
-- `Column`: 7 tests
-- `Row`: 7 tests
-- `DataType`: 5 tests
-- `Constraint`: 1 tests
-- `PrimaryKey`: 5 tests
-- `ForeignKey`: 6 tests
-- `UniqueConstraint`: 3 tests
-- `CheckConstraint`: 3 tests
-- `Index`: 1 tests
+- `Column`: 7 tests (Done)
+- `Row`: 7 tests (Done)
+- `DataType`: 5 tests (Done)
+- `Constraint`: 1 tests (Done)
+- `PrimaryKey`: 5 tests (Done)
+- `ForeignKey`: 6 tests (Done)
+- `UniqueConstraint`: 3 tests (Done)
+- `CheckConstraint`: 3 tests (Done)
+- `Index`: 1 tests (Done)
 - `BTreeIndex`: 8 tests
 - `HashIndex`: 6 tests
 - `BitmapIndex`: 6 tests
