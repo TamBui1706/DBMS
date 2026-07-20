@@ -1,18 +1,14 @@
-# 📊 Unit Test Implementation Status
+#  Unit Test Implementation Status
 
-## 📈 Summary Statistics
+##  Summary Statistics
 
-### Classes
-- **Total Classes:** 61
-- **✅ Done:** 12 (19.7%)
-- **⏳ Not Done (Pending):** 49 (80.3%)
 
 ### Test Cases
 - **Total Test Cases:** 354
-- **✅ Done Test Cases:** 75 (21.2%)
-- **⏳ Not Done Test Cases:** 279 (78.8%)
+- ** Done Test Cases:** 75 (21.2%)
+- ** Not Done Test Cases:** 279 (78.8%)
 
-## 🚀 Implementation Plan (Priority List)
+##  Implementation Plan (Priority List)
 
 This section suggests the prioritized order for implementing the remaining Unit Tests (TDD Logic). You can tick off individual tests as you implement them.
 
