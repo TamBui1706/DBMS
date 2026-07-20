@@ -1290,6 +1290,55 @@ graph LR
     C0_5 --> T0_5_7["FlushCatalog_WritesToStorageSuccessfully"]
     C0_5 --> T0_5_8["LoadCatalog_PopulatesMemoryFromDisk"]
     C0_5 --> T0_5_9["LoadCatalog_WhenCorruptFile_TriggersRecoveryMode"]
+
+
+    %% -----------------------------------------
+    %% HIGHLIGHT DONE ITEMS
+    %% -----------------------------------------
+    style C0_0 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T0_0_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_0_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_0_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_0_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_0_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_0_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_0_6 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_0_7 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_0_8 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_0_9 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C0_1 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T0_1_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_1_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_1_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_1_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_1_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_1_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_1_6 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_1_7 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_1_8 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_1_9 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C0_3 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T0_3_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_6 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_7 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_8 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_9 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_10 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_3_11 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C0_4 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T0_4_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_4_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_4_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_4_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_4_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_4_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_4_6 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T0_4_7 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
 ```
 
 ### Database Object Management Unit Tests
@@ -1429,6 +1478,91 @@ graph LR
     C1_19 --> T1_19_3["BitwiseOR_CombinesTwoBitmapsForOrQuery"]
     C1_19 --> T1_19_4["Compress_ReducesMemoryFootprintOfSparseBitmap"]
     C1_19 --> T1_19_5["DeleteKey_ClearsBitForDeletedRow"]
+
+
+    %% -----------------------------------------
+    %% HIGHLIGHT DONE ITEMS
+    %% -----------------------------------------
+    style C1_0 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_0_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_0_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_0_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_0_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_0_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_0_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_0_6 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_0_7 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_1 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_1_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_6 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_7 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_8 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_9 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_10 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_1_11 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_2 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_2_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_2_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_2_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_2_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_2_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_2_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_4 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_4_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_4_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_4_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_4_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_4_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_8 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_8_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_8_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_8_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_8_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_8_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_8_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_8_6 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_9 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_9_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_9_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_9_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_9_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_9_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_9_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_9_6 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_10 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_10_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_10_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_10_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_10_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_10_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_11 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_11_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_12 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_12_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_12_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_12_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_12_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_12_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_13 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_13_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_14 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_14_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_14_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_14_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_15 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_15_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_15_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_15_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
 ```
 
 ### Query Processor Unit Tests
