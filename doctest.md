@@ -174,17 +174,17 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `GetSize_ReturnsByteSizeForFixedTypes`
 - `IsVariableLength_ReturnsTrueForVarchar`
 
-### 18. `Constraint` 
+### 18. `Constraint` (Done) 
 - `Instantiation_OfAbstractClass_FailsWithTypeError`
 
-### 19. `PrimaryKey` 
+### 19. `PrimaryKey` (Done) 
 - `Validate_WhenValueIsUniqueAndNotNull_Succeeds`
 - `Validate_WhenValueIsNull_ThrowsNullException`
 - `Validate_WhenValueIsDuplicate_ThrowsDuplicateKeyException`
 - `Validate_WithCompositeKey_ChecksAllColumns`
 - `Drop_RemovesIndexFromStorage`
 
-### 20. `ForeignKey` 
+### 20. `ForeignKey` (Done) 
 - `Validate_WhenReferencedRowExists_Succeeds`
 - `Validate_WhenReferencedRowDoesNotExist_ThrowsForeignKeyException`
 - `Init_SetsReferenceTableCorrectly`
@@ -192,12 +192,12 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `OnDeleteRestrict_ThrowsExceptionWhenParentDeleted`
 - `OnUpdateCascade_ModifiesChildRowsWhenParentKeyChanges`
 
-### 21. `UniqueConstraint` 
+### 21. `UniqueConstraint` (Done) 
 - `Validate_WhenValueIsGloballyUnique_Succeeds`
 - `Validate_WhenValueExistsInAnotherRow_ThrowsException`
 - `Validate_WhenValueIsNull_SucceedsIfNullable`
 
-### 22. `CheckConstraint` 
+### 22. `CheckConstraint` (Done) 
 - `Validate_WhenExpressionEvaluatesToTrue_Succeeds`
 - `Validate_WhenExpressionEvaluatesToFalse_ThrowsCheckException`
 - `Validate_WhenExpressionUsesInvalidColumn_ThrowsException`

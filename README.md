@@ -1292,6 +1292,7 @@ graph LR
 
 
 
+
     %% -----------------------------------------
     %% HIGHLIGHT DONE ITEMS
     %% -----------------------------------------
@@ -1457,6 +1458,7 @@ graph LR
 
 
 
+
     %% -----------------------------------------
     %% HIGHLIGHT DONE ITEMS
     %% -----------------------------------------
@@ -1504,6 +1506,29 @@ graph LR
     style T1_10_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
     style T1_10_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
     style T1_10_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_11 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_11_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_12 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_12_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_12_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_12_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_12_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_12_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_13 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_13_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_3 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_4 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_13_5 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_14 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_14_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_14_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_14_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style C1_15 fill:#1f2937,color:#ffffff,stroke:#3b82f6,stroke-width:3px
+    style T1_15_0 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_15_1 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
+    style T1_15_2 fill:#93c5fd,color:#000000,stroke:#2563eb,stroke-width:2px
 ```
 
 ### Query Processor Unit Tests

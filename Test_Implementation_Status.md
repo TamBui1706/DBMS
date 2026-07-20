@@ -1,23 +1,23 @@
-#  Unit Test Implementation Status
+# 📊 Unit Test Implementation Status
 
-##  Summary Statistics
+## 📈 Summary Statistics
 
 ### Classes
 - **Total Classes:** 61
-- ** Done:** 7 (11.5%)
-- ** Not Done (Pending):** 54 (88.5%)
+- **✅ Done:** 12 (19.7%)
+- **⏳ Not Done (Pending):** 49 (80.3%)
 
 ### Test Cases
 - **Total Test Cases:** 354
-- ** Done Test Cases:** 57 (16.1%)
-- ** Not Done Test Cases:** 297 (83.9%)
+- **✅ Done Test Cases:** 75 (21.2%)
+- **⏳ Not Done Test Cases:** 279 (78.8%)
 
-##  Implementation Plan (Priority List)
+## 🚀 Implementation Plan (Priority List)
 
 This section suggests the prioritized order for implementing the remaining Unit Tests (TDD Logic). You can tick off individual tests as you implement them.
 
 ### Priority 1: 1. Core Server & Connections
-####  `ConnectionManager`
+#### ⏳ `ConnectionManager`
   - [ ] AcceptConnection_WhenUnderMaxLimit_CreatesClientSession
   - [ ] AcceptConnection_WhenAtMaxLimit_RejectsConnection
   - [ ] AcceptConnection_WhenServerPaused_QueuesOrRejects
@@ -112,34 +112,6 @@ This section suggests the prioritized order for implementing the remaining Unit 
   - [ ] CheckBoundary_WhenValueOutOfRange_ReturnsFalse
   - [ ] Merge_CombinesTwoAdjacentPartitions
   - [ ] Split_DividesPartitionAtGivenValue
-
-#### ⏳ `Constraint`
-  - [ ] Instantiation_OfAbstractClass_FailsWithTypeError
-
-#### ⏳ `PrimaryKey`
-  - [ ] Validate_WhenValueIsUniqueAndNotNull_Succeeds
-  - [ ] Validate_WhenValueIsNull_ThrowsNullException
-  - [ ] Validate_WhenValueIsDuplicate_ThrowsDuplicateKeyException
-  - [ ] Validate_WithCompositeKey_ChecksAllColumns
-  - [ ] Drop_RemovesIndexFromStorage
-
-#### ⏳ `ForeignKey`
-  - [ ] Validate_WhenReferencedRowExists_Succeeds
-  - [ ] Validate_WhenReferencedRowDoesNotExist_ThrowsForeignKeyException
-  - [ ] Init_SetsReferenceTableCorrectly
-  - [ ] OnDeleteCascade_RemovesChildRowsWhenParentDeleted
-  - [ ] OnDeleteRestrict_ThrowsExceptionWhenParentDeleted
-  - [ ] OnUpdateCascade_ModifiesChildRowsWhenParentKeyChanges
-
-#### ⏳ `UniqueConstraint`
-  - [ ] Validate_WhenValueIsGloballyUnique_Succeeds
-  - [ ] Validate_WhenValueExistsInAnotherRow_ThrowsException
-  - [ ] Validate_WhenValueIsNull_SucceedsIfNullable
-
-#### ⏳ `CheckConstraint`
-  - [ ] Validate_WhenExpressionEvaluatesToTrue_Succeeds
-  - [ ] Validate_WhenExpressionEvaluatesToFalse_ThrowsCheckException
-  - [ ] Validate_WhenExpressionUsesInvalidColumn_ThrowsException
 
 #### ⏳ `Index`
   - [ ] Instantiation_OfAbstractClass_FailsWithTypeError
@@ -504,3 +476,31 @@ The following classes have had their sequence diagrams mapped completely to thei
   - [x] ParseString_WhenInvalidFormat_ThrowsParseException
   - [x] GetSize_ReturnsByteSizeForFixedTypes
   - [x] IsVariableLength_ReturnsTrueForVarchar
+
+#### ✅ `Constraint`
+  - [x] Instantiation_OfAbstractClass_FailsWithTypeError
+
+#### ✅ `PrimaryKey`
+  - [x] Validate_WhenValueIsUniqueAndNotNull_Succeeds
+  - [x] Validate_WhenValueIsNull_ThrowsNullException
+  - [x] Validate_WhenValueIsDuplicate_ThrowsDuplicateKeyException
+  - [x] Validate_WithCompositeKey_ChecksAllColumns
+  - [x] Drop_RemovesIndexFromStorage
+
+#### ✅ `ForeignKey`
+  - [x] Validate_WhenReferencedRowExists_Succeeds
+  - [x] Validate_WhenReferencedRowDoesNotExist_ThrowsForeignKeyException
+  - [x] Init_SetsReferenceTableCorrectly
+  - [x] OnDeleteCascade_RemovesChildRowsWhenParentDeleted
+  - [x] OnDeleteRestrict_ThrowsExceptionWhenParentDeleted
+  - [x] OnUpdateCascade_ModifiesChildRowsWhenParentKeyChanges
+
+#### ✅ `UniqueConstraint`
+  - [x] Validate_WhenValueIsGloballyUnique_Succeeds
+  - [x] Validate_WhenValueExistsInAnotherRow_ThrowsException
+  - [x] Validate_WhenValueIsNull_SucceedsIfNullable
+
+#### ✅ `CheckConstraint`
+  - [x] Validate_WhenExpressionEvaluatesToTrue_Succeeds
+  - [x] Validate_WhenExpressionEvaluatesToFalse_ThrowsCheckException
+  - [x] Validate_WhenExpressionUsesInvalidColumn_ThrowsException
