@@ -1,30 +1,47 @@
-# 📐 Bảng Tổng Hợp Design Patterns cho Kiến Trúc DBMS
+# 📐 Phân tích Design Patterns cho Kiến Trúc DBMS
 
-Dưới đây là bảng tổng hợp các Design Patterns được **sắp xếp theo độ quan trọng của tính năng (Feature ưu tiên làm trước)**. 
-
-> [!NOTE] 
-> **Một Feature có áp dụng được nhiều Design Pattern không?**
-> CÂU TRẢ LỜI LÀ CÓ! Đây gọi là **Compound Patterns** (Mẫu thiết kế kết hợp). Một tính năng lớn thường là sự giao thoa của 2-3 Pattern cùng lúc. Ví dụ cụ thể nhất nằm ở mục **Quản lý Database (Core)** bên dưới.
-
-## 📊 Tóm tắt trực quan
-
-| Feature (Ưu tiên giảm dần) | Vấn đề cần giải quyết | Pattern kết hợp | Ý tưởng |
-| :--- | :--- | :--- | :--- |
-| **1. Database & Catalog Management**<br/>*(Quản lý Database cốt lõi)* | 1. Hệ thống chỉ được có 1 sổ cái duy nhất để ghi chép.<br/>2. Lệnh tạo DB quá rườm rà (phải cấp ổ cứng, cấp quyền...).<br/>3. Xóa DB phải xóa sạch Schema, Table, Column bên trong. | **Singleton** + **Facade** + **Composite** | - **Singleton:** Dùng cho `CatalogManager` để làm cuốn sổ cái duy nhất.<br/>- **Facade:** Dùng cho `DatabaseManager` để gom hết các lệnh cấp đĩa, cấp quyền phức tạp thành 1 hàm `CreateDatabase()` đơn giản.<br/>- **Composite:** Cấu trúc DB -> Schema -> Table -> Column thành 1 cây phả hệ. Khi gọi `DB.get_size()`, nó sẽ đệ quy tự cộng dồn dung lượng của các con. |
-| **2. Query Execution**<br/>*(Xử lý truy vấn)* | Làm sao duyệt bảng có 1 tỷ dòng mà không bị tràn bộ nhớ RAM? | **Iterator**<br/>*(Volcano Model)* | Ép tất cả toán tử (Scan, Filter, Join) giao tiếp với nhau bằng hàm `next()`. Dữ liệu sẽ nhích lên từng dòng một giống như băng chuyền. |
-| **3. Transaction Commit/Rollback**<br/>*(Quản lý giao dịch)* | Khi một giao dịch (TX) kết thúc, làm sao báo cho LockManager nhả khóa và BufferPool ghi Log mà không bị dính code chéo? | **Observer** | Cho LockManager và BufferPool "đăng ký theo dõi" TransactionManager. Khi TX chốt xong, nó chỉ cần hô to "Sự kiện Commit", những người kia tự động làm việc của mình. |
-| **4. Cache Eviction**<br/>*(Quản lý Buffer Pool)* | Khi RAM đầy, thuật toán đuổi trang (Page) ra khỏi RAM có thể thay đổi liên tục (LRU, Clock, MRU) tùy cấu hình. | **Strategy** | Đóng gói từng thuật toán đuổi trang thành các Strategy riêng. Khởi tạo BufferPool với Strategy nào thì nó xài thuật toán đó. |
-| **5. Create Table**<br/>*(Định nghĩa cấu trúc)* | Object Table có rất nhiều thành phần phức tạp (Column, PK, FK, Check Constraint...) làm constructor quá dài và rối. | **Builder** | Xây dựng Table từng bước một thông qua các hàm dây chuyền (Fluent API) thay vì ném một cục tham số vào constructor. |
-| **6. Index Creation**<br/>*(Tạo chỉ mục)* | DBMS hỗ trợ nhiều loại Index khác nhau. Làm sao giấu đi sự phức tạp khi đẻ ra `BTreeIndex`, `HashIndex` hay `BitmapIndex`? | **Factory Method** | Đẩy việc tạo Object cho `IndexFactory` quyết định, dựa trên tham số đầu vào (ví dụ: DataType hoặc Cấu hình từ user). |
+Dưới đây là tài liệu tổng hợp **duy nhất** về cách áp dụng Design Patterns vào DBMS. Tài liệu đi từ **Bảng tóm tắt trực quan** đến **Sơ đồ tương tác (Sequence)** và **Code minh họa (TDD)** để bạn dễ dàng nắm bắt.
 
 ---
 
-## 💻 Ví dụ Code TDD (Minh họa Kết hợp Patterns)
+## 📊 1. Bảng Tóm Tắt (Độ ưu tiên giảm dần)
 
-### 1. Sự kết hợp hoàn hảo (Singleton + Facade + Composite) trong Database
-Tính năng tạo và cấu trúc Database.
+| Feature (Tính năng) | Pattern áp dụng | Vấn đề cần giải quyết | Giải pháp cốt lõi (Ý tưởng) |
+| :--- | :--- | :--- | :--- |
+| **1. Database & Catalog**<br/>*(Quản lý hệ thống)* | **Facade** + **Singleton** + **Composite** | 1. Chỉ được có 1 sổ cái duy nhất.<br/>2. Lệnh tạo DB quá phức tạp (cấp đĩa, quyền).<br/>3. Xóa DB phải xóa đệ quy con cháu. | - **Singleton:** Giữ `CatalogManager` độc bản.<br/>- **Facade:** Dùng `DatabaseManager` làm mặt tiền che giấu sự phức tạp.<br/>- **Composite:** Tổ chức DB -> Schema -> Table thành cấu trúc cây. |
+| **2. Query Execution**<br/>*(Xử lý truy vấn)* | **Iterator**<br/>*(Volcano Model)* | Làm sao duyệt bảng có 1 tỷ dòng mà không bị tràn bộ nhớ RAM (OOM)? | Ép tất cả toán tử (Scan, Filter, Join) giao tiếp với nhau bằng hàm `next()`. Dữ liệu sẽ nhích lên từng dòng một giống như băng chuyền. |
+| **3. Transaction**<br/>*(Quản lý giao dịch)* | **Observer** | Làm sao báo cho LockManager nhả khóa và BufferPool ghi Log ngay khi Commit mà không bị dính mã (Coupling)? | Cho LockManager và BufferPool "đăng ký theo dõi" TransactionManager. Khi TX chốt xong, nó hô to "Sự kiện Commit", Observers tự động phản ứng. |
+| **4. Cache Eviction**<br/>*(Quản lý Buffer Pool)* | **Strategy** | Khi RAM đầy, thuật toán đuổi trang ra khỏi RAM có thể thay đổi liên tục (LRU, Clock) tùy cấu hình máy. | Đóng gói từng thuật toán đuổi trang thành các Strategy riêng. Khởi tạo BufferPool với Strategy nào thì nó xài thuật toán đó. |
+| **5. Create Table**<br/>*(Định nghĩa cấu trúc)* | **Builder** | Object Table có rất nhiều thành phần phức tạp (Column, PK, FK...) làm constructor quá dài và dễ nhầm lẫn. | Xây dựng Table từng bước một thông qua các hàm dây chuyền (Fluent API) thay vì ném một cục tham số vào constructor. |
+
+---
+
+## 🔍 2. Phân tích chi tiết từng Pattern (Sơ đồ & Code)
+
+### 🧩 2.1. Mẫu Facade + Singleton (Quản lý Database)
+**Mục đích:** Khi người dùng muốn tạo Database, họ chỉ giao tiếp với `DatabaseManager` (Facade). Facade sẽ đi gọi Storage Engine cấp ổ cứng, và gọi `CatalogManager` (Singleton) để ghi vào sổ cái.
+
+**Sơ đồ Tương tác (Sequence):**
+```mermaid
+sequenceDiagram
+    actor Client
+    participant Facade as DatabaseManager (Facade)
+    participant Storage as StorageEngine
+    participant Catalog as CatalogManager (Singleton)
+
+    Client->>Facade: create_database("mydb")
+    activate Facade
+    Facade->>Storage: allocate_files("mydb")
+    Storage-->>Facade: Success
+    Facade->>Catalog: get_instance().register("mydb")
+    Catalog-->>Facade: Success
+    Facade-->>Client: Return Database Object
+    deactivate Facade
+```
+
+**Code Minh họa:**
 ```python
-# 1. SINGLETON: Cuốn sổ cái duy nhất của Server
+# SINGLETON: Cuốn sổ cái duy nhất của Server
 class CatalogManager:
     _instance = None
     def __new__(cls):
@@ -33,57 +50,160 @@ class CatalogManager:
             cls._instance.databases = {}
         return cls._instance
 
-# 2. COMPOSITE: Cấu trúc cây (Database -> Schema -> Table -> Column)
-class Database(Node):
-    def __init__(self):
-        self.schemas = []
-    
-    def get_size(self):
-        # Đệ quy hỏi các node con (Schema -> Table) để tính tổng dung lượng
-        return sum(schema.get_size() for schema in self.schemas)
-
-# 3. FACADE: Giấu đi sự phức tạp khi tạo mới DB
+# FACADE: Che giấu sự phức tạp
 class DatabaseManager:
     def create_database(self, name):
-        # Người dùng chỉ gọi hàm này, Facade sẽ tự đi liên hệ các bộ phận khác:
         db = Database(name)
-        StorageEngine.allocate_files_for(name)  # Cấp ổ cứng
-        SecurityManager.grant_owner_rights()    # Phân quyền
-        CatalogManager().register(db)           # Đăng ký vào sổ cái
+        StorageEngine.allocate_files_for(name)  
+        CatalogManager().register(db)           
         return db
 ```
 
-### 2. Iterator Pattern (Volcano Model - Xử lý tỷ dòng)
+---
+
+### 🧩 2.2. Mẫu Iterator / Volcano (Thực thi Truy vấn)
+**Mục đích:** Xử lý Big Data. Dữ liệu chảy ngược lên giống như hiệu ứng Domino mà không cần nạp toàn bộ Bảng vào danh sách (List).
+
+**Sơ đồ Tương tác (Sequence):**
+```mermaid
+sequenceDiagram
+    participant Exec as QueryExecutor
+    participant Filter as FilterOperator (Iterator)
+    participant Scan as TableScanOperator (Iterator)
+    participant Disk as StorageEngine
+
+    Exec->>Filter: next()
+    activate Filter
+    loop Until Match Found
+        Filter->>Scan: next()
+        Scan->>Disk: read_row()
+        Disk-->>Scan: row_data
+        Scan-->>Filter: row_data
+        Filter->>Filter: evaluate(row_data) (WHERE clause)
+    end
+    Filter-->>Exec: Return row_data
+    deactivate Filter
+```
+
+**Code Minh họa:**
 ```python
 class FilterOperator(PhysicalOperator):
-    def __init__(self, child_operator, condition):
-        self.child = child_operator
-        self.condition = condition
-
     def next(self):
         while True:
-            # Nhích băng chuyền lên 1 dòng
-            row = self.child.next()
+            # Nhích băng chuyền lên 1 dòng từ toán tử bên dưới
+            row = self.child_operator.next()
             if row is None: 
-                return None # Đã cạn dữ liệu
-            
-            # Chỉ trả về khi thỏa mãn WHERE
+                return None # Hết dữ liệu
+            # Trả về cho Executor nếu thỏa mãn điều kiện
             if self.condition.evaluate(row): 
                 return row
 ```
 
-### 3. Observer Pattern (Quản lý Giao dịch)
+---
+
+### 🧩 2.3. Mẫu Observer (Quản lý Giao dịch)
+**Mục đích:** Đảm bảo hệ thống phản ứng nhanh nhạy khi Transaction Commit/Rollback mà không bị hard-code gọi vòng vo.
+
+**Sơ đồ Tương tác (Sequence):**
+```mermaid
+sequenceDiagram
+    actor Client
+    participant TM as TransactionManager (Publisher)
+    participant LM as LockManager (Observer)
+    participant WAL as WALManager (Observer)
+
+    Client->>TM: commit(tx_id)
+    activate TM
+    TM->>TM: change_state(COMMITTED)
+    Note over TM,WAL: Tín hiệu Bất đồng bộ (Broadcast Event)
+    TM-)LM: on_commit(tx_id)
+    TM-)WAL: on_commit(tx_id)
+    LM->>LM: release_all_locks()
+    WAL->>WAL: flush_logs_to_disk()
+    TM-->>Client: Success
+    deactivate TM
+```
+
+**Code Minh họa:**
 ```python
 class TransactionManager:
     def commit_tx(self, tx_id):
-        # 1. Ghi log thành công...
-        
-        # 2. Phóng sự kiện (Broadcast) cho tất cả những người đang theo dõi
+        # ... xử lý dữ liệu ...
+        # Phóng sự kiện (Broadcast) cho tất cả Observers đã đăng ký
         for observer in self.observers:
             observer.on_transaction_committed(tx_id)
             
 class LockManager(TransactionObserver):
     def on_transaction_committed(self, tx_id):
-        # Tự động nhả khóa khi nghe thấy tín hiệu Commit
+        # Tự động nhả khóa khi nghe thấy tín hiệu
         self.release_all_locks(tx_id) 
+```
+
+---
+
+### 🧩 2.4. Mẫu Strategy (Quản lý Cache)
+**Mục đích:** Tách biệt thuật toán tìm "Trang rác" (LRU, LFU, Clock) khỏi logic tương tác ổ cứng của Buffer Pool.
+
+**Sơ đồ Tương tác (Sequence):**
+```mermaid
+sequenceDiagram
+    actor Client
+    participant BP as BufferPool
+    participant Strategy as LRUStrategy (Strategy)
+
+    Client->>BP: fetch_page(99)
+    activate BP
+    BP->>BP: check_is_full() == True
+    BP->>Strategy: find_victim()
+    Strategy-->>BP: Return page_id = 15 (Trang rác)
+    BP->>BP: evict(15)
+    BP-->>Client: Return page_data(99)
+    deactivate BP
+```
+
+**Code Minh họa:**
+```python
+class BufferPool:
+    def __init__(self, strategy: PageReplacementStrategy):
+        self.strategy = strategy # Tiêm chiến lược vào (vd: LRUStrategy)
+        
+    def fetch_page(self, page_id):
+        if self.is_full():
+            # Delegate (Ủy quyền) cho Strategy tìm trang cần đuổi
+            victim_page = self.strategy.find_victim() 
+            self.evict(victim_page)
+```
+
+---
+
+### 🧩 2.5. Mẫu Builder (Khởi tạo Cấu trúc Bảng)
+**Mục đích:** Khởi tạo bảng sạch sẽ và an toàn bằng các hàm xâu chuỗi (Fluent API) thay vì ném hàng chục tham số vào hàm `__init__`.
+
+**Sơ đồ Tương tác (Sequence):**
+```mermaid
+sequenceDiagram
+    actor Client
+    participant Builder as TableBuilder
+    participant Table as Table (Product)
+
+    Client->>Builder: TableBuilder("Users")
+    Client->>Builder: add_column("ID", INT)
+    Client->>Builder: add_primary_key("ID")
+    Client->>Builder: build()
+    activate Builder
+    Builder->>Table: new Table(columns, constraints)
+    Table-->>Builder: Table Instance
+    Builder-->>Client: Return Table
+    deactivate Builder
+```
+
+**Code Minh họa:**
+```python
+# Thay vì viết: Table("Users", [col1, col2], [pk], [fk])
+# Sử dụng Builder Pattern:
+table = (TableBuilder("Users")
+            .add_column("id", DataType.INT)
+            .add_column("name", DataType.VARCHAR)
+            .add_primary_key("id")
+            .build())
 ```
