@@ -48,13 +48,13 @@ class TestClientSession(unittest.TestCase):
         # Arrange
         obj = ClientSession()
         obj.execute = MagicMock()
-        obj.execute.side_effect = Exception('Exception')
+        obj.execute.side_effect = Exception('FailsGracefully')
         
         # Act & Assert
         with self.assertRaises(Exception) as context:
             obj.execute()
             
-        self.assertTrue('Exception' in str(context.exception))
+        self.assertTrue('FailsGracefully' in str(context.exception))
 
     def test_SetSessionVariable_UpdatesInternalState(self):
         # Arrange

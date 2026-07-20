@@ -47,13 +47,13 @@ class TestSQLParser(unittest.TestCase):
         # Arrange
         obj = SQLParser()
         obj.parse = MagicMock()
-        obj.parse.side_effect = Exception('Exception')
+        obj.parse.side_effect = Exception('SucceedsOrBasedOnDialect')
         
         # Act & Assert
         with self.assertRaises(Exception) as context:
             obj.parse()
             
-        self.assertTrue('Exception' in str(context.exception))
+        self.assertTrue('SucceedsOrBasedOnDialect' in str(context.exception))
 
     def test_Parse_ComplexJoinAndGroupBy_ConstructsCorrectTree(self):
         # Arrange

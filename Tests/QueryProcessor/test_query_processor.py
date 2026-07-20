@@ -23,13 +23,13 @@ class TestQueryProcessor(unittest.TestCase):
         # Arrange
         obj = QueryProcessor()
         obj.processQuery = MagicMock()
-        obj.processQuery.side_effect = Exception('Exception')
+        obj.processQuery.side_effect = Exception('RollsBackAnd')
         
         # Act & Assert
         with self.assertRaises(Exception) as context:
             obj.processQuery()
             
-        self.assertTrue('Exception' in str(context.exception))
+        self.assertTrue('RollsBackAnd' in str(context.exception))
 
     def test_ProcessQuery_WhenTimeoutReached_AbortsQuery(self):
         # Arrange

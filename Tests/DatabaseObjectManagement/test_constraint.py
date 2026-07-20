@@ -10,10 +10,10 @@ class TestConstraint(unittest.TestCase):
         # Arrange
         obj = Constraint()
         obj.instantiation = MagicMock()
-        obj.instantiation.side_effect = Exception('Exception')
+        obj.instantiation.side_effect = Exception('FailsWithTypeError')
         
         # Act & Assert
         with self.assertRaises(Exception) as context:
             obj.instantiation()
             
-        self.assertTrue('Exception' in str(context.exception))
+        self.assertTrue('FailsWithTypeError' in str(context.exception))

@@ -23,13 +23,13 @@ class TestQueryExecutor(unittest.TestCase):
         # Arrange
         obj = QueryExecutor()
         obj.executePlan = MagicMock()
-        obj.executePlan.side_effect = Exception('Exception')
+        obj.executePlan.side_effect = Exception('SpillsToDiskOr')
         
         # Act & Assert
         with self.assertRaises(Exception) as context:
             obj.executePlan()
             
-        self.assertTrue('Exception' in str(context.exception))
+        self.assertTrue('SpillsToDiskOr' in str(context.exception))
 
     def test_ExecutePlan_WhenCanceledByUser_AbortsImmediately(self):
         # Arrange

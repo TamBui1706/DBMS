@@ -23,13 +23,13 @@ class TestLockManager(unittest.TestCase):
         # Arrange
         obj = LockManager()
         obj.acquireLock = MagicMock()
-        obj.acquireLock.side_effect = Exception('Exception')
+        obj.acquireLock.side_effect = Exception('BlocksOrTimeout')
         
         # Act & Assert
         with self.assertRaises(Exception) as context:
             obj.acquireLock()
             
-        self.assertTrue('Exception' in str(context.exception))
+        self.assertTrue('BlocksOrTimeout' in str(context.exception))
 
     def test_ReleaseLock_WhenHoldingLock_FreesResourceAndWakesWaiters(self):
         # Arrange

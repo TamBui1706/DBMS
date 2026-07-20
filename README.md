@@ -423,9 +423,8 @@ SecurityManager --> Role
 Role --> Permission
 ```
 
-### 🌟 Expanded Class Diagram (Full Properties & Methods)
+### 🌟 Expanded Class Diagram 
 
-Below is the fully detailed class diagram incorporating all 300+ properties and methods identified during the Unit Testing phase. The layout and groupings mirror the original diagram perfectly for easy side-by-side comparison.
 
 ```mermaid
 classDiagram
