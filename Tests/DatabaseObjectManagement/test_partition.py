@@ -10,13 +10,13 @@ class TestPartition(unittest.TestCase):
         # Arrange
         obj = Partition()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_CheckBoundary_WhenValueInRange_ReturnsTrue(self):
@@ -49,24 +49,24 @@ class TestPartition(unittest.TestCase):
         # Arrange
         obj = Partition()
         obj.merge = MagicMock()
-        obj.merge.return_value = True
+        obj.merge.return_value = 'Success'
         
         # Act
         result = obj.merge()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.merge.assert_called_once()
 
     def test_Split_DividesPartitionAtGivenValue(self):
         # Arrange
         obj = Partition()
         obj.split = MagicMock()
-        obj.split.return_value = True
+        obj.split.return_value = 'Success'
         
         # Act
         result = obj.split()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.split.assert_called_once()

@@ -10,13 +10,13 @@ class TestBTreeIndex(unittest.TestCase):
         # Arrange
         obj = BTreeIndex()
         obj.insertKey = MagicMock()
-        obj.insertKey.return_value = True
+        obj.insertKey.return_value = 'AddsNodeToTreeBalancing'
         
         # Act
         result = obj.insertKey()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'AddsNodeToTreeBalancing')
         obj.insertKey.assert_called_once()
 
     def test_Search_WhenKeyExists_ReturnsCorrespondingRowID(self):
@@ -49,39 +49,39 @@ class TestBTreeIndex(unittest.TestCase):
         # Arrange
         obj = BTreeIndex()
         obj.deleteKey = MagicMock()
-        obj.deleteKey.return_value = True
+        obj.deleteKey.return_value = 'RemovesNodeAndRebalances'
         
         # Act
         result = obj.deleteKey()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'RemovesNodeAndRebalances')
         obj.deleteKey.assert_called_once()
 
     def test_RangeSearch_ReturnsAllRowIDsInRange(self):
         # Arrange
         obj = BTreeIndex()
         obj.rangeSearch = MagicMock()
-        obj.rangeSearch.return_value = True
+        obj.rangeSearch.return_value = 'Success'
         
         # Act
         result = obj.rangeSearch()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.rangeSearch.assert_called_once()
 
     def test_BulkLoad_BuildsTreeEfficientlyFromSortedData(self):
         # Arrange
         obj = BTreeIndex()
         obj.bulkLoad = MagicMock()
-        obj.bulkLoad.return_value = True
+        obj.bulkLoad.return_value = 'Success'
         
         # Act
         result = obj.bulkLoad()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.bulkLoad.assert_called_once()
 
     def test_SplitNode_WhenFull_CreatesSibling(self):
@@ -101,11 +101,11 @@ class TestBTreeIndex(unittest.TestCase):
         # Arrange
         obj = BTreeIndex()
         obj.mergeNodes = MagicMock()
-        obj.mergeNodes.return_value = True
+        obj.mergeNodes.return_value = 'CombinesSiblings'
         
         # Act
         result = obj.mergeNodes()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'CombinesSiblings')
         obj.mergeNodes.assert_called_once()

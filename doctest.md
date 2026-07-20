@@ -16,7 +16,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `Init_WithMissingConfigFilePath_ThrowsConfigurationException`
 - `HealthCheck_ReturnsTrueIfAllSubsystemsAreRunning`
 
-### 2. `ConnectionManager` (Done)
+### 2. `ConnectionManager` 
 - `AcceptConnection_WhenUnderMaxLimit_CreatesClientSession`
 - `AcceptConnection_WhenAtMaxLimit_RejectsConnection`
 - `AcceptConnection_WhenServerPaused_QueuesOrRejects`
@@ -39,7 +39,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `GetSessionVariable_WhenKeyNotExists_ReturnsNull`
 - `Ping_ResetsIdleTimer`
 
-### 4. `DatabaseManager` (Done)
+### 4. `DatabaseManager` 
 - `CreateDatabase_WhenNameIsValid_CreatesMetadataAndFiles`
 - `CreateDatabase_WhenNameExists_ThrowsDuplicateDatabaseException`
 - `CreateDatabase_WhenInvalidCharacters_ThrowsValidationException`
@@ -103,7 +103,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `GetRowCount_ReturnsAccurateCount`
 - `RenameColumn_WhenExists_UpdatesMetadataAndViews`
 
-### 9. `View` (Done)
+### 9. `View` 
 - `Init_SetsQueryDefinition`
 - `CompileView_WhenUnderlyingTablesExist_Succeeds`
 - `CompileView_WhenTableDropped_ThrowsInvalidViewException`
@@ -119,7 +119,7 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `Drop_RemovesProcedureFromCatalog`
 - `Execute_WhenProcedureTimesOut_KillsExecution`
 
-### 11. `Function` (Done)
+### 11. `Function` 
 - `Evaluate_WhenValidArguments_ReturnsComputedValue`
 - `Evaluate_WhenMissingArguments_ThrowsArgumentException`
 - `Evaluate_WhenDivideByZero_ThrowsArithmeticException`
@@ -174,17 +174,17 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `GetSize_ReturnsByteSizeForFixedTypes`
 - `IsVariableLength_ReturnsTrueForVarchar`
 
-### 18. `Constraint` (Done)
+### 18. `Constraint` 
 - `Instantiation_OfAbstractClass_FailsWithTypeError`
 
-### 19. `PrimaryKey` (Done)
+### 19. `PrimaryKey` 
 - `Validate_WhenValueIsUniqueAndNotNull_Succeeds`
 - `Validate_WhenValueIsNull_ThrowsNullException`
 - `Validate_WhenValueIsDuplicate_ThrowsDuplicateKeyException`
 - `Validate_WithCompositeKey_ChecksAllColumns`
 - `Drop_RemovesIndexFromStorage`
 
-### 20. `ForeignKey` (Done)
+### 20. `ForeignKey` 
 - `Validate_WhenReferencedRowExists_Succeeds`
 - `Validate_WhenReferencedRowDoesNotExist_ThrowsForeignKeyException`
 - `Init_SetsReferenceTableCorrectly`
@@ -192,12 +192,12 @@ Below is a comprehensive and expanded list of Unit Tests (including positive, ne
 - `OnDeleteRestrict_ThrowsExceptionWhenParentDeleted`
 - `OnUpdateCascade_ModifiesChildRowsWhenParentKeyChanges`
 
-### 21. `UniqueConstraint` (Done)
+### 21. `UniqueConstraint` 
 - `Validate_WhenValueIsGloballyUnique_Succeeds`
 - `Validate_WhenValueExistsInAnotherRow_ThrowsException`
 - `Validate_WhenValueIsNull_SucceedsIfNullable`
 
-### 22. `CheckConstraint` (Done)
+### 22. `CheckConstraint` 
 - `Validate_WhenExpressionEvaluatesToTrue_Succeeds`
 - `Validate_WhenExpressionEvaluatesToFalse_ThrowsCheckException`
 - `Validate_WhenExpressionUsesInvalidColumn_ThrowsException`

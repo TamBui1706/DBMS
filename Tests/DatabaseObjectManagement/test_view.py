@@ -10,13 +10,13 @@ class TestView(unittest.TestCase):
         # Arrange
         obj = View()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_CompileView_WhenUnderlyingTablesExist_Succeeds(self):
@@ -48,26 +48,26 @@ class TestView(unittest.TestCase):
         # Arrange
         obj = View()
         obj.materialize = MagicMock()
-        obj.materialize.return_value = True
+        obj.materialize.return_value = 'Success'
         
         # Act
         result = obj.materialize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.materialize.assert_called_once()
 
     def test_Refresh_UpdatesMaterializedData(self):
         # Arrange
         obj = View()
         obj.refresh = MagicMock()
-        obj.refresh.return_value = True
+        obj.refresh.return_value = 'Success'
         
         # Act
         result = obj.refresh()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.refresh.assert_called_once()
 
     def test_CompileView_WhenCircularDependencyDetected_ThrowsException(self):

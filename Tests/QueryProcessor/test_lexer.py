@@ -23,13 +23,13 @@ class TestLexer(unittest.TestCase):
         # Arrange
         obj = Lexer()
         obj.tokenize = MagicMock()
-        obj.tokenize.return_value = True
+        obj.tokenize.return_value = 'Success'
         
         # Act
         result = obj.tokenize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.tokenize.assert_called_once()
 
     def test_Tokenize_WhenUnclosedStringLiteral_ThrowsLexerException(self):
@@ -48,24 +48,24 @@ class TestLexer(unittest.TestCase):
         # Arrange
         obj = Lexer()
         obj.tokenize = MagicMock()
-        obj.tokenize.return_value = True
+        obj.tokenize.return_value = 'Success'
         
         # Act
         result = obj.tokenize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.tokenize.assert_called_once()
 
     def test_Tokenize_HandlesEscapedCharactersInStrings(self):
         # Arrange
         obj = Lexer()
         obj.tokenize = MagicMock()
-        obj.tokenize.return_value = True
+        obj.tokenize.return_value = 'Success'
         
         # Act
         result = obj.tokenize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.tokenize.assert_called_once()

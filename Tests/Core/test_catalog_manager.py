@@ -61,13 +61,13 @@ class TestCatalogManager(unittest.TestCase):
         # Arrange
         obj = CatalogManager()
         obj.removeObject = MagicMock()
-        obj.removeObject.return_value = True
+        obj.removeObject.return_value = 'DeletesFromCatalog'
         
         # Act
         result = obj.removeObject()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'DeletesFromCatalog')
         obj.removeObject.assert_called_once()
 
     def test_RemoveObject_WhenNotExists_ThrowsNotFoundException(self):
@@ -86,50 +86,50 @@ class TestCatalogManager(unittest.TestCase):
         # Arrange
         obj = CatalogManager()
         obj.updateObject = MagicMock()
-        obj.updateObject.return_value = True
+        obj.updateObject.return_value = 'RefreshesMetadata'
         
         # Act
         result = obj.updateObject()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'RefreshesMetadata')
         obj.updateObject.assert_called_once()
 
     def test_FlushCatalog_WritesToStorageSuccessfully(self):
         # Arrange
         obj = CatalogManager()
         obj.flushCatalog = MagicMock()
-        obj.flushCatalog.return_value = True
+        obj.flushCatalog.return_value = 'Success'
         
         # Act
         result = obj.flushCatalog()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.flushCatalog.assert_called_once()
 
     def test_LoadCatalog_PopulatesMemoryFromDisk(self):
         # Arrange
         obj = CatalogManager()
         obj.loadCatalog = MagicMock()
-        obj.loadCatalog.return_value = True
+        obj.loadCatalog.return_value = 'Success'
         
         # Act
         result = obj.loadCatalog()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.loadCatalog.assert_called_once()
 
     def test_LoadCatalog_WhenCorruptFile_TriggersRecoveryMode(self):
         # Arrange
         obj = CatalogManager()
         obj.loadCatalog = MagicMock()
-        obj.loadCatalog.return_value = True
+        obj.loadCatalog.return_value = 'TriggersRecoveryMode'
         
         # Act
         result = obj.loadCatalog()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'TriggersRecoveryMode')
         obj.loadCatalog.assert_called_once()

@@ -10,13 +10,13 @@ class TestDatabaseServer(unittest.TestCase):
         # Arrange
         obj = DatabaseServer()
         obj.start = MagicMock()
-        obj.start.return_value = True
+        obj.start.return_value = 'InitializesAllSubsystems'
         
         # Act
         result = obj.start()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'InitializesAllSubsystems')
         obj.start.assert_called_once()
 
     def test_Start_WhenAlreadyRunning_ThrowsIllegalStateException(self):
@@ -35,39 +35,39 @@ class TestDatabaseServer(unittest.TestCase):
         # Arrange
         obj = DatabaseServer()
         obj.stop = MagicMock()
-        obj.stop.return_value = True
+        obj.stop.return_value = 'ShutsDownGracefully'
         
         # Act
         result = obj.stop()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'ShutsDownGracefully')
         obj.stop.assert_called_once()
 
     def test_Stop_WhenAlreadyStopped_DoesNothing(self):
         # Arrange
         obj = DatabaseServer()
         obj.stop = MagicMock()
-        obj.stop.return_value = True
+        obj.stop.return_value = 'DoesNothing'
         
         # Act
         result = obj.stop()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'DoesNothing')
         obj.stop.assert_called_once()
 
     def test_Status_ReturnsCurrentOperationalState(self):
         # Arrange
         obj = DatabaseServer()
         obj.status = MagicMock()
-        obj.status.return_value = True
+        obj.status.return_value = 'Success'
         
         # Act
         result = obj.status()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.status.assert_called_once()
 
     def test_Start_WhenPortAlreadyInUse_ThrowsBindException(self):
@@ -86,26 +86,26 @@ class TestDatabaseServer(unittest.TestCase):
         # Arrange
         obj = DatabaseServer()
         obj.stop = MagicMock()
-        obj.stop.return_value = True
+        obj.stop.return_value = 'WaitsForCompletionOrTimeout'
         
         # Act
         result = obj.stop()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'WaitsForCompletionOrTimeout')
         obj.stop.assert_called_once()
 
     def test_Restart_GracefullyStopsAndStartsSystem(self):
         # Arrange
         obj = DatabaseServer()
         obj.restart = MagicMock()
-        obj.restart.return_value = True
+        obj.restart.return_value = 'Success'
         
         # Act
         result = obj.restart()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.restart.assert_called_once()
 
     def test_Init_WithMissingConfigFilePath_ThrowsConfigurationException(self):
@@ -124,11 +124,11 @@ class TestDatabaseServer(unittest.TestCase):
         # Arrange
         obj = DatabaseServer()
         obj.healthCheck = MagicMock()
-        obj.healthCheck.return_value = True
+        obj.healthCheck.return_value = 'Success'
         
         # Act
         result = obj.healthCheck()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.healthCheck.assert_called_once()

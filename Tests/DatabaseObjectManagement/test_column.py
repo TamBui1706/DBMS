@@ -7,16 +7,16 @@ class Column:
 class TestColumn(unittest.TestCase):
 
     def test_Init_SetsNameAndNullableFlags(self):
-        # Arrange
+     # Arrange
         obj = Column()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_ValidateType_WhenDataMatchesColumnType_Succeeds(self):
@@ -60,13 +60,13 @@ class TestColumn(unittest.TestCase):
         # Arrange
         obj = Column()
         obj.setDefaultValue = MagicMock()
-        obj.setDefaultValue.return_value = True
+        obj.setDefaultValue.return_value = 'Success'
         
         # Act
         result = obj.setDefaultValue()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.setDefaultValue.assert_called_once()
 
     def test_ChangeType_WhenCompatible_Succeeds(self):

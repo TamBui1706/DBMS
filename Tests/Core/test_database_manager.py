@@ -47,13 +47,13 @@ class TestDatabaseManager(unittest.TestCase):
         # Arrange
         obj = DatabaseManager()
         obj.dropDatabase = MagicMock()
-        obj.dropDatabase.return_value = True
+        obj.dropDatabase.return_value = 'RemovesAllAssociatedData'
         
         # Act
         result = obj.dropDatabase()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'RemovesAllAssociatedData')
         obj.dropDatabase.assert_called_once()
 
     def test_DropDatabase_WhenInUse_ThrowsConcurrencyException(self):
@@ -97,13 +97,13 @@ class TestDatabaseManager(unittest.TestCase):
         # Arrange
         obj = DatabaseManager()
         obj.listDatabases = MagicMock()
-        obj.listDatabases.return_value = True
+        obj.listDatabases.return_value = 'Success'
         
         # Act
         result = obj.listDatabases()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.listDatabases.assert_called_once()
 
     def test_RenameDatabase_WhenNewNameValid_UpdatesMetadata(self):

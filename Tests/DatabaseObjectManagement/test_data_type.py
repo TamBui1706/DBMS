@@ -10,13 +10,13 @@ class TestDataType(unittest.TestCase):
         # Arrange
         obj = DataType()
         obj.enumValues = MagicMock()
-        obj.enumValues.return_value = True
+        obj.enumValues.return_value = 'Success'
         
         # Act
         result = obj.enumValues()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.enumValues.assert_called_once()
 
     def test_ParseString_WhenValidFormat_ReturnsDataTypeInstance(self):
@@ -48,24 +48,24 @@ class TestDataType(unittest.TestCase):
         # Arrange
         obj = DataType()
         obj.getSize = MagicMock()
-        obj.getSize.return_value = True
+        obj.getSize.return_value = 'Success'
         
         # Act
         result = obj.getSize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.getSize.assert_called_once()
 
     def test_IsVariableLength_ReturnsTrueForVarchar(self):
         # Arrange
         obj = DataType()
         obj.isVariableLength = MagicMock()
-        obj.isVariableLength.return_value = True
+        obj.isVariableLength.return_value = 'Success'
         
         # Act
         result = obj.isVariableLength()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.isVariableLength.assert_called_once()

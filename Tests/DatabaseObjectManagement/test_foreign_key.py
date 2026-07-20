@@ -35,26 +35,26 @@ class TestForeignKey(unittest.TestCase):
         # Arrange
         obj = ForeignKey()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_OnDeleteCascade_RemovesChildRowsWhenParentDeleted(self):
         # Arrange
         obj = ForeignKey()
         obj.onDeleteCascade = MagicMock()
-        obj.onDeleteCascade.return_value = True
+        obj.onDeleteCascade.return_value = 'Success'
         
         # Act
         result = obj.onDeleteCascade()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.onDeleteCascade.assert_called_once()
 
     def test_OnDeleteRestrict_ThrowsExceptionWhenParentDeleted(self):
@@ -73,11 +73,11 @@ class TestForeignKey(unittest.TestCase):
         # Arrange
         obj = ForeignKey()
         obj.onUpdateCascade = MagicMock()
-        obj.onUpdateCascade.return_value = True
+        obj.onUpdateCascade.return_value = 'Success'
         
         # Act
         result = obj.onUpdateCascade()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.onUpdateCascade.assert_called_once()

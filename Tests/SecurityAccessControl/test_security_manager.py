@@ -60,26 +60,26 @@ class TestSecurityManager(unittest.TestCase):
         # Arrange
         obj = SecurityManager()
         obj.revokeToken = MagicMock()
-        obj.revokeToken.return_value = True
+        obj.revokeToken.return_value = 'Success'
         
         # Act
         result = obj.revokeToken()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.revokeToken.assert_called_once()
 
     def test_HashPassword_UsesStrongCryptography(self):
         # Arrange
         obj = SecurityManager()
         obj.hashPassword = MagicMock()
-        obj.hashPassword.return_value = True
+        obj.hashPassword.return_value = 'Success'
         
         # Act
         result = obj.hashPassword()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.hashPassword.assert_called_once()
 
     def test_Authenticate_WhenAccountLocked_ThrowsLockedException(self):
@@ -98,11 +98,11 @@ class TestSecurityManager(unittest.TestCase):
         # Arrange
         obj = SecurityManager()
         obj.cleanupTokens = MagicMock()
-        obj.cleanupTokens.return_value = True
+        obj.cleanupTokens.return_value = 'Success'
         
         # Act
         result = obj.cleanupTokens()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.cleanupTokens.assert_called_once()

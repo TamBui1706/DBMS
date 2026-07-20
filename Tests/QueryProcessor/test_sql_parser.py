@@ -10,13 +10,13 @@ class TestSQLParser(unittest.TestCase):
         # Arrange
         obj = SQLParser()
         obj.parse = MagicMock()
-        obj.parse.return_value = True
+        obj.parse.return_value = 'GeneratesAST'
         
         # Act
         result = obj.parse()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'GeneratesAST')
         obj.parse.assert_called_once()
 
     def test_Parse_WhenInvalidSyntax_ThrowsSyntaxErrorException(self):
@@ -59,26 +59,26 @@ class TestSQLParser(unittest.TestCase):
         # Arrange
         obj = SQLParser()
         obj.parse = MagicMock()
-        obj.parse.return_value = True
+        obj.parse.return_value = 'ConstructsCorrectTree'
         
         # Act
         result = obj.parse()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'ConstructsCorrectTree')
         obj.parse.assert_called_once()
 
     def test_Parse_NestedSubqueries_HandlesDepthLimits(self):
         # Arrange
         obj = SQLParser()
         obj.parse = MagicMock()
-        obj.parse.return_value = True
+        obj.parse.return_value = 'HandlesDepthLimits'
         
         # Act
         result = obj.parse()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'HandlesDepthLimits')
         obj.parse.assert_called_once()
 
     def test_Parse_WhenMalformedDateLiteral_ThrowsException(self):

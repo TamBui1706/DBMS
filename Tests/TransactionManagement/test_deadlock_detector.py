@@ -10,63 +10,63 @@ class TestDeadlockDetector(unittest.TestCase):
         # Arrange
         obj = DeadlockDetector()
         obj.detectAndResolve = MagicMock()
-        obj.detectAndResolve.return_value = True
+        obj.detectAndResolve.return_value = 'AbortsVictimTransaction'
         
         # Act
         result = obj.detectAndResolve()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'AbortsVictimTransaction')
         obj.detectAndResolve.assert_called_once()
 
     def test_DetectAndResolve_WhenNoCycleFound_DoesNothing(self):
         # Arrange
         obj = DeadlockDetector()
         obj.detectAndResolve = MagicMock()
-        obj.detectAndResolve.return_value = True
+        obj.detectAndResolve.return_value = 'DoesNothing'
         
         # Act
         result = obj.detectAndResolve()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'DoesNothing')
         obj.detectAndResolve.assert_called_once()
 
     def test_BuildWaitForGraph_CorrectlyMapsDependencies(self):
         # Arrange
         obj = DeadlockDetector()
         obj.buildWaitForGraph = MagicMock()
-        obj.buildWaitForGraph.return_value = True
+        obj.buildWaitForGraph.return_value = 'Success'
         
         # Act
         result = obj.buildWaitForGraph()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.buildWaitForGraph.assert_called_once()
 
     def test_ChooseVictim_SelectsTransactionWithLeastWorkDone(self):
         # Arrange
         obj = DeadlockDetector()
         obj.chooseVictim = MagicMock()
-        obj.chooseVictim.return_value = True
+        obj.chooseVictim.return_value = 'Success'
         
         # Act
         result = obj.chooseVictim()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.chooseVictim.assert_called_once()
 
     def test_SetTimeout_ControlsBackgroundDetectionInterval(self):
         # Arrange
         obj = DeadlockDetector()
         obj.setTimeout = MagicMock()
-        obj.setTimeout.return_value = True
+        obj.setTimeout.return_value = 'Success'
         
         # Act
         result = obj.setTimeout()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.setTimeout.assert_called_once()

@@ -10,13 +10,13 @@ class TestStatisticsManager(unittest.TestCase):
         # Arrange
         obj = StatisticsManager()
         obj.collect = MagicMock()
-        obj.collect.return_value = True
+        obj.collect.return_value = 'Success'
         
         # Act
         result = obj.collect()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.collect.assert_called_once()
 
     def test_GetStatistics_WhenCalled_ReturnsAccurateMetadata(self):
@@ -36,37 +36,37 @@ class TestStatisticsManager(unittest.TestCase):
         # Arrange
         obj = StatisticsManager()
         obj.estimateSelectivity = MagicMock()
-        obj.estimateSelectivity.return_value = True
+        obj.estimateSelectivity.return_value = 'Success'
         
         # Act
         result = obj.estimateSelectivity()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.estimateSelectivity.assert_called_once()
 
     def test_BuildHistogram_ForSkewedDataDistribution(self):
         # Arrange
         obj = StatisticsManager()
         obj.buildHistogram = MagicMock()
-        obj.buildHistogram.return_value = True
+        obj.buildHistogram.return_value = 'Success'
         
         # Act
         result = obj.buildHistogram()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.buildHistogram.assert_called_once()
 
     def test_InvalidateStats_WhenTableModifiedSignificantly(self):
         # Arrange
         obj = StatisticsManager()
         obj.invalidateStats = MagicMock()
-        obj.invalidateStats.return_value = True
+        obj.invalidateStats.return_value = 'Success'
         
         # Act
         result = obj.invalidateStats()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.invalidateStats.assert_called_once()

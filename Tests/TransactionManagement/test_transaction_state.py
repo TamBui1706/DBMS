@@ -10,11 +10,11 @@ class TestTransactionState(unittest.TestCase):
         # Arrange
         obj = TransactionState()
         obj.enumValues = MagicMock()
-        obj.enumValues.return_value = True
+        obj.enumValues.return_value = 'Success'
         
         # Act
         result = obj.enumValues()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.enumValues.assert_called_once()

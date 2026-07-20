@@ -10,89 +10,89 @@ class TestUser(unittest.TestCase):
         # Arrange
         obj = User()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_AddRole_AssignsNewRoleToUser(self):
         # Arrange
         obj = User()
         obj.addRole = MagicMock()
-        obj.addRole.return_value = True
+        obj.addRole.return_value = 'Success'
         
         # Act
         result = obj.addRole()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.addRole.assert_called_once()
 
     def test_RemoveRole_TakesAwayPermissions(self):
         # Arrange
         obj = User()
         obj.removeRole = MagicMock()
-        obj.removeRole.return_value = True
+        obj.removeRole.return_value = 'Success'
         
         # Act
         result = obj.removeRole()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.removeRole.assert_called_once()
 
     def test_UpdatePassword_HashesAndSavesNewPassword(self):
         # Arrange
         obj = User()
         obj.updatePassword = MagicMock()
-        obj.updatePassword.return_value = True
+        obj.updatePassword.return_value = 'Success'
         
         # Act
         result = obj.updatePassword()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.updatePassword.assert_called_once()
 
     def test_LockAccount_PreventsLoginAfterFailedAttempts(self):
         # Arrange
         obj = User()
         obj.lockAccount = MagicMock()
-        obj.lockAccount.return_value = True
+        obj.lockAccount.return_value = 'Success'
         
         # Act
         result = obj.lockAccount()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.lockAccount.assert_called_once()
 
     def test_IsLocked_ReturnsStatus(self):
         # Arrange
         obj = User()
         obj.isLocked = MagicMock()
-        obj.isLocked.return_value = True
+        obj.isLocked.return_value = 'Success'
         
         # Act
         result = obj.isLocked()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.isLocked.assert_called_once()
 
     def test_HasRole_ReturnsTrueIfAssigned(self):
         # Arrange
         obj = User()
         obj.hasRole = MagicMock()
-        obj.hasRole.return_value = True
+        obj.hasRole.return_value = 'Success'
         
         # Act
         result = obj.hasRole()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.hasRole.assert_called_once()

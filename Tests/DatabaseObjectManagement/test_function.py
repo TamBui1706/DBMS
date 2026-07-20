@@ -47,13 +47,13 @@ class TestFunction(unittest.TestCase):
         # Arrange
         obj = Function()
         obj.isDeterministic = MagicMock()
-        obj.isDeterministic.return_value = True
+        obj.isDeterministic.return_value = 'Success'
         
         # Act
         result = obj.isDeterministic()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.isDeterministic.assert_called_once()
 
     def test_Evaluate_WhenNullPassedToStrictFunction_ReturnsNull(self):

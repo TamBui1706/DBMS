@@ -10,13 +10,13 @@ class TestClientSession(unittest.TestCase):
         # Arrange
         obj = ClientSession()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_Execute_WhenValidQuery_ReturnsExecutionResult(self):
@@ -60,26 +60,26 @@ class TestClientSession(unittest.TestCase):
         # Arrange
         obj = ClientSession()
         obj.setSessionVariable = MagicMock()
-        obj.setSessionVariable.return_value = True
+        obj.setSessionVariable.return_value = 'Success'
         
         # Act
         result = obj.setSessionVariable()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.setSessionVariable.assert_called_once()
 
     def test_GetSessionVariable_ReturnsSetValue(self):
         # Arrange
         obj = ClientSession()
         obj.getSessionVariable = MagicMock()
-        obj.getSessionVariable.return_value = True
+        obj.getSessionVariable.return_value = 'Success'
         
         # Act
         result = obj.getSessionVariable()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.getSessionVariable.assert_called_once()
 
     def test_Execute_WhenEmptyQuery_ReturnsEmptyResult(self):
@@ -112,11 +112,11 @@ class TestClientSession(unittest.TestCase):
         # Arrange
         obj = ClientSession()
         obj.ping = MagicMock()
-        obj.ping.return_value = True
+        obj.ping.return_value = 'Success'
         
         # Act
         result = obj.ping()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.ping.assert_called_once()

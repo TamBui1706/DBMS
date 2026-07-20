@@ -10,52 +10,52 @@ class TestDataFile(unittest.TestCase):
         # Arrange
         obj = DataFile()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_ReadBlock_LoadsBytesFromDisk(self):
         # Arrange
         obj = DataFile()
         obj.readBlock = MagicMock()
-        obj.readBlock.return_value = True
+        obj.readBlock.return_value = 'Success'
         
         # Act
         result = obj.readBlock()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.readBlock.assert_called_once()
 
     def test_WriteBlock_SavesBytesToDisk(self):
         # Arrange
         obj = DataFile()
         obj.writeBlock = MagicMock()
-        obj.writeBlock.return_value = True
+        obj.writeBlock.return_value = 'Success'
         
         # Act
         result = obj.writeBlock()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.writeBlock.assert_called_once()
 
     def test_DeleteFile_RemovesFromOS(self):
         # Arrange
         obj = DataFile()
         obj.deleteFile = MagicMock()
-        obj.deleteFile.return_value = True
+        obj.deleteFile.return_value = 'Success'
         
         # Act
         result = obj.deleteFile()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.deleteFile.assert_called_once()
 
     def test_Init_WhenFileLockedByOS_ThrowsIOException(self):

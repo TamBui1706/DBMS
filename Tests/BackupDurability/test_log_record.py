@@ -10,63 +10,63 @@ class TestLogRecord(unittest.TestCase):
         # Arrange
         obj = LogRecord()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_Serialize_ConvertsRecordToByteArray(self):
         # Arrange
         obj = LogRecord()
         obj.serialize = MagicMock()
-        obj.serialize.return_value = True
+        obj.serialize.return_value = 'Success'
         
         # Act
         result = obj.serialize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.serialize.assert_called_once()
 
     def test_Deserialize_ReconstructsRecordFromBytes(self):
         # Arrange
         obj = LogRecord()
         obj.deserialize = MagicMock()
-        obj.deserialize.return_value = True
+        obj.deserialize.return_value = 'Success'
         
         # Act
         result = obj.deserialize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.deserialize.assert_called_once()
 
     def test_GetTransactionId_ReturnsAssociatedTx(self):
         # Arrange
         obj = LogRecord()
         obj.getTransactionId = MagicMock()
-        obj.getTransactionId.return_value = True
+        obj.getTransactionId.return_value = 'Success'
         
         # Act
         result = obj.getTransactionId()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.getTransactionId.assert_called_once()
 
     def test_GetUndoInfo_ReturnsBeforeImageForRollback(self):
         # Arrange
         obj = LogRecord()
         obj.getUndoInfo = MagicMock()
-        obj.getUndoInfo.return_value = True
+        obj.getUndoInfo.return_value = 'Success'
         
         # Act
         result = obj.getUndoInfo()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.getUndoInfo.assert_called_once()

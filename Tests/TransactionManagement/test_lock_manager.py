@@ -10,13 +10,13 @@ class TestLockManager(unittest.TestCase):
         # Arrange
         obj = LockManager()
         obj.acquireLock = MagicMock()
-        obj.acquireLock.return_value = True
+        obj.acquireLock.return_value = 'GrantsLockInstantly'
         
         # Act
         result = obj.acquireLock()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'GrantsLockInstantly')
         obj.acquireLock.assert_called_once()
 
     def test_AcquireLock_WhenResourceLocked_BlocksOrThrowsTimeout(self):
@@ -35,65 +35,65 @@ class TestLockManager(unittest.TestCase):
         # Arrange
         obj = LockManager()
         obj.releaseLock = MagicMock()
-        obj.releaseLock.return_value = True
+        obj.releaseLock.return_value = 'FreesResourceAndWakesWaiters'
         
         # Act
         result = obj.releaseLock()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'FreesResourceAndWakesWaiters')
         obj.releaseLock.assert_called_once()
 
     def test_AcquireLock_WhenSharedLockExists_GrantsAnotherSharedLock(self):
         # Arrange
         obj = LockManager()
         obj.acquireLock = MagicMock()
-        obj.acquireLock.return_value = True
+        obj.acquireLock.return_value = 'GrantsAnotherSharedLock'
         
         # Act
         result = obj.acquireLock()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'GrantsAnotherSharedLock')
         obj.acquireLock.assert_called_once()
 
     def test_AcquireLock_WhenSharedLockExists_BlocksExclusiveLock(self):
         # Arrange
         obj = LockManager()
         obj.acquireLock = MagicMock()
-        obj.acquireLock.return_value = True
+        obj.acquireLock.return_value = 'BlocksExclusiveLock'
         
         # Act
         result = obj.acquireLock()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'BlocksExclusiveLock')
         obj.acquireLock.assert_called_once()
 
     def test_UpgradeLock_ConvertsSharedToExclusiveIfPossible(self):
         # Arrange
         obj = LockManager()
         obj.upgradeLock = MagicMock()
-        obj.upgradeLock.return_value = True
+        obj.upgradeLock.return_value = 'Success'
         
         # Act
         result = obj.upgradeLock()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.upgradeLock.assert_called_once()
 
     def test_DowngradeLock_ConvertsExclusiveToShared(self):
         # Arrange
         obj = LockManager()
         obj.downgradeLock = MagicMock()
-        obj.downgradeLock.return_value = True
+        obj.downgradeLock.return_value = 'Success'
         
         # Act
         result = obj.downgradeLock()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.downgradeLock.assert_called_once()
 
     def test_ReleaseLock_WhenNotHoldingLock_ThrowsException(self):

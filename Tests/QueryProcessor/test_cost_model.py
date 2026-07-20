@@ -10,13 +10,13 @@ class TestCostModel(unittest.TestCase):
         # Arrange
         obj = CostModel()
         obj.estimateCost = MagicMock()
-        obj.estimateCost.return_value = True
+        obj.estimateCost.return_value = 'Success'
         
         # Act
         result = obj.estimateCost()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.estimateCost.assert_called_once()
 
     def test_EstimateCost_WhenUsingIndex_ReturnsLowerCostThanSeqScan(self):
@@ -36,26 +36,26 @@ class TestCostModel(unittest.TestCase):
         # Arrange
         obj = CostModel()
         obj.estimateCost = MagicMock()
-        obj.estimateCost.return_value = True
+        obj.estimateCost.return_value = 'IsHigherThanHashJoinForLargeTables'
         
         # Act
         result = obj.estimateCost()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'IsHigherThanHashJoinForLargeTables')
         obj.estimateCost.assert_called_once()
 
     def test_UpdateStatistics_AdjustsInternalWeightsBasedOnFeedback(self):
         # Arrange
         obj = CostModel()
         obj.updateStatistics = MagicMock()
-        obj.updateStatistics.return_value = True
+        obj.updateStatistics.return_value = 'Success'
         
         # Act
         result = obj.updateStatistics()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.updateStatistics.assert_called_once()
 
     def test_EstimateMemoryUsage_ForSortOperator_ReturnsExpectedBytes(self):

@@ -10,13 +10,13 @@ class TestPermission(unittest.TestCase):
         # Arrange
         obj = Permission()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_Matches_WhenActionAndResourceAlign_ReturnsTrue(self):
@@ -49,24 +49,24 @@ class TestPermission(unittest.TestCase):
         # Arrange
         obj = Permission()
         obj.toString = MagicMock()
-        obj.toString.return_value = True
+        obj.toString.return_value = 'Success'
         
         # Act
         result = obj.toString()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.toString.assert_called_once()
 
     def test_Matches_WhenActionIsDeny_OverridesGrant(self):
         # Arrange
         obj = Permission()
         obj.matches = MagicMock()
-        obj.matches.return_value = True
+        obj.matches.return_value = 'OverridesGrant'
         
         # Act
         result = obj.matches()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'OverridesGrant')
         obj.matches.assert_called_once()

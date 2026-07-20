@@ -47,24 +47,24 @@ class TestPrimaryKey(unittest.TestCase):
         # Arrange
         obj = PrimaryKey()
         obj.validate = MagicMock()
-        obj.validate.return_value = True
+        obj.validate.return_value = 'ChecksAllColumns'
         
         # Act
         result = obj.validate()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'ChecksAllColumns')
         obj.validate.assert_called_once()
 
     def test_Drop_RemovesIndexFromStorage(self):
         # Arrange
         obj = PrimaryKey()
         obj.drop = MagicMock()
-        obj.drop.return_value = True
+        obj.drop.return_value = 'Success'
         
         # Act
         result = obj.drop()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.drop.assert_called_once()

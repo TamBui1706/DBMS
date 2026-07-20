@@ -10,39 +10,39 @@ class TestMVCCManager(unittest.TestCase):
         # Arrange
         obj = MVCCManager()
         obj.createVersion = MagicMock()
-        obj.createVersion.return_value = True
+        obj.createVersion.return_value = 'Success'
         
         # Act
         result = obj.createVersion()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.createVersion.assert_called_once()
 
     def test_GarbageCollect_RemovesVersionsInvisibleToAllActiveTransactions(self):
         # Arrange
         obj = MVCCManager()
         obj.garbageCollect = MagicMock()
-        obj.garbageCollect.return_value = True
+        obj.garbageCollect.return_value = 'Success'
         
         # Act
         result = obj.garbageCollect()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.garbageCollect.assert_called_once()
 
     def test_ReadVersion_ReturnsCorrectDataBasedOnTxSnapshot(self):
         # Arrange
         obj = MVCCManager()
         obj.readVersion = MagicMock()
-        obj.readVersion.return_value = True
+        obj.readVersion.return_value = 'Success'
         
         # Act
         result = obj.readVersion()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.readVersion.assert_called_once()
 
     def test_DetectWriteConflict_WhenTwoTxUpdateSameRecord_ThrowsException(self):

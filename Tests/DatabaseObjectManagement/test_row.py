@@ -10,13 +10,13 @@ class TestRow(unittest.TestCase):
         # Arrange
         obj = Row()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_GetValue_WhenIndexValid_ReturnsData(self):
@@ -48,50 +48,50 @@ class TestRow(unittest.TestCase):
         # Arrange
         obj = Row()
         obj.setValue = MagicMock()
-        obj.setValue.return_value = True
+        obj.setValue.return_value = 'Success'
         
         # Act
         result = obj.setValue()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.setValue.assert_called_once()
 
     def test_Serialize_ConvertsToByteArray(self):
         # Arrange
         obj = Row()
         obj.serialize = MagicMock()
-        obj.serialize.return_value = True
+        obj.serialize.return_value = 'Success'
         
         # Act
         result = obj.serialize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.serialize.assert_called_once()
 
     def test_Deserialize_ReadsFromByteArray(self):
         # Arrange
         obj = Row()
         obj.deserialize = MagicMock()
-        obj.deserialize.return_value = True
+        obj.deserialize.return_value = 'Success'
         
         # Act
         result = obj.deserialize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.deserialize.assert_called_once()
 
     def test_GetSize_ReturnsByteSizeOfAllValues(self):
         # Arrange
         obj = Row()
         obj.getSize = MagicMock()
-        obj.getSize.return_value = True
+        obj.getSize.return_value = 'Success'
         
         # Act
         result = obj.getSize()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.getSize.assert_called_once()

@@ -10,13 +10,13 @@ class TestStoredProcedure(unittest.TestCase):
         # Arrange
         obj = StoredProcedure()
         obj.execute = MagicMock()
-        obj.execute.return_value = True
+        obj.execute.return_value = 'RunsLogic'
         
         # Act
         result = obj.execute()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'RunsLogic')
         obj.execute.assert_called_once()
 
     def test_Execute_WhenTypeMismatchInParams_ThrowsException(self):
@@ -47,37 +47,37 @@ class TestStoredProcedure(unittest.TestCase):
         # Arrange
         obj = StoredProcedure()
         obj.compile = MagicMock()
-        obj.compile.return_value = True
+        obj.compile.return_value = 'Success'
         
         # Act
         result = obj.compile()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.compile.assert_called_once()
 
     def test_Drop_RemovesProcedureFromCatalog(self):
         # Arrange
         obj = StoredProcedure()
         obj.drop = MagicMock()
-        obj.drop.return_value = True
+        obj.drop.return_value = 'Success'
         
         # Act
         result = obj.drop()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.drop.assert_called_once()
 
     def test_Execute_WhenProcedureTimesOut_KillsExecution(self):
         # Arrange
         obj = StoredProcedure()
         obj.execute = MagicMock()
-        obj.execute.return_value = True
+        obj.execute.return_value = 'KillsExecution'
         
         # Act
         result = obj.execute()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'KillsExecution')
         obj.execute.assert_called_once()

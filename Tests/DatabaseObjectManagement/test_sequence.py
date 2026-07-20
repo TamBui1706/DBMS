@@ -10,13 +10,13 @@ class TestSequence(unittest.TestCase):
         # Arrange
         obj = Sequence()
         obj.nextValue = MagicMock()
-        obj.nextValue.return_value = True
+        obj.nextValue.return_value = 'Success'
         
         # Act
         result = obj.nextValue()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.nextValue.assert_called_once()
 
     def test_NextValue_WhenMaxLimitReached_ThrowsOverflowException(self):
@@ -35,50 +35,50 @@ class TestSequence(unittest.TestCase):
         # Arrange
         obj = Sequence()
         obj.reset = MagicMock()
-        obj.reset.return_value = True
+        obj.reset.return_value = 'Success'
         
         # Act
         result = obj.reset()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.reset.assert_called_once()
 
     def test_Init_SetsStartStepAndMaxLimit(self):
         # Arrange
         obj = Sequence()
         obj.init = MagicMock()
-        obj.init.return_value = True
+        obj.init.return_value = 'Success'
         
         # Act
         result = obj.init()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.init.assert_called_once()
 
     def test_CurrentValue_ReturnsCurrentWithoutIncrementing(self):
         # Arrange
         obj = Sequence()
         obj.currentValue = MagicMock()
-        obj.currentValue.return_value = True
+        obj.currentValue.return_value = 'Success'
         
         # Act
         result = obj.currentValue()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'Success')
         obj.currentValue.assert_called_once()
 
     def test_NextValue_WhenStepIsNegative_DecrementsCorrectly(self):
         # Arrange
         obj = Sequence()
         obj.nextValue = MagicMock()
-        obj.nextValue.return_value = True
+        obj.nextValue.return_value = 'DecrementsCorrectly'
         
         # Act
         result = obj.nextValue()
         
         # Assert
-        self.assertEqual(result, True)
+        self.assertEqual(result, 'DecrementsCorrectly')
         obj.nextValue.assert_called_once()
