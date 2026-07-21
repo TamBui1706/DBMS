@@ -49,19 +49,19 @@ This group provides the external interface and manages the database lifecycle.
 
 # Deep Dive Analysis (Class Diagrams & Sequence Diagrams)
 
-Below is a detailed analysis for the deeply evaluated features mentioned above. The structure covers the Reason for choosing the Pattern, static Class Diagrams, dynamic Sequence Diagrams, and TDD Code examples.
+Below is a detailed analysis for 3 heavily evaluated features. Each feature is broken down thoroughly with precise technical explanations, comprehensive UML diagrams, and robust Python TDD code.
 
 ## 1. Composite Pattern: Database Objects (Highest Priority)
 
 *   **Why choose Composite instead of discrete `Lists` or rigid hierarchies?**
-    In a DBMS, metadata is naturally hierarchical: A Database contains multiple Schemas, a Schema contains multiple Tables, and a Table contains multiple Columns. If we model this using rigid, separate lists (e.g., Database managing `List<Schema>`, Schema managing `List<Table>`), we face significant challenges when performing system-wide operations like calculating total storage size, generating a comprehensive DDL export, or traversing the object tree.
+    In a DBMS, metadata is naturally hierarchical: A Database contains multiple Schemas, a Schema contains multiple Tables/Views, and a Table contains multiple Columns and Constraints. If we model this using rigid, separate lists (e.g., `List<Table>`, `List<View>`, `List<Constraint>`), we face significant challenges when performing system-wide operations like calculating total storage size, generating a comprehensive DDL export, or traversing the object tree.
     
     Without the Composite pattern, traversing this hierarchy requires tightly coupled code with multiple nested `for` loops and type-checking (e.g., `if (obj instanceof Table)`). 
     
     **The Composite Pattern Solves This By:**
-    1. **Uniformity:** It introduces a common interface (`MetadataNode`) for both leaf nodes (Columns, which have no children) and composite branches (Database, Schema, Table, which contain children).
-    2. **Recursive Traversal:** Operations like `get_metadata()` are delegated down the tree. The client only needs to call `get_metadata()` on the root `Database` object, and the request automatically propagates down to the lowest `Column` level via recursion.
-    3. **Extensibility:** If we later introduce new metadata objects like `View` or `Index` inside a Schema, we simply implement the `MetadataNode` interface. The core traversal logic remains entirely untouched, adhering perfectly to the Open/Closed Principle (OCP).
+    1. **Uniformity:** It introduces a common interface (`MetadataNode`) for both leaf nodes (Columns, Constraints - which have no children) and composite branches (Database, Schema, Table - which contain children).
+    2. **Recursive Traversal:** Operations like `get_metadata()` are delegated down the tree. The client only needs to call `get_metadata()` on the root `Database` object, and the request automatically propagates down to the lowest `Column` or `Constraint` level via recursion.
+    3. **Extensibility:** If we later introduce new metadata objects like `Trigger` or `Index`, we simply implement the `MetadataNode` interface. The core traversal logic remains entirely untouched, adhering perfectly to the Open/Closed Principle (OCP).
 
 ### Class Diagram
 ```mermaid
@@ -72,20 +72,25 @@ classDiagram
     }
     
     class Database {
-        -List schemas
-        +add_schema(s: MetadataNode)
+        -List~MetadataNode~ schemas
+        +add_child(s: MetadataNode)
         +get_metadata() dict
     }
     
     class Schema {
-        -List tables
-        +add_table(t: MetadataNode)
+        -List~MetadataNode~ objects
+        +add_child(o: MetadataNode)
         +get_metadata() dict
     }
     
     class Table {
-        -List columns
-        +add_column(c: MetadataNode)
+        -List~MetadataNode~ elements
+        +add_child(e: MetadataNode)
+        +get_metadata() dict
+    }
+    
+    class View {
+        -String query
         +get_metadata() dict
     }
     
@@ -94,15 +99,24 @@ classDiagram
         -String type
         +get_metadata() dict
     }
+    
+    class Constraint {
+        -String rule
+        +get_metadata() dict
+    }
 
     MetadataNode <|.. Database
     MetadataNode <|.. Schema
     MetadataNode <|.. Table
+    MetadataNode <|.. View
     MetadataNode <|.. Column
+    MetadataNode <|.. Constraint
     
     Database o-- Schema : contains
     Schema o-- Table : contains
+    Schema o-- View : contains
     Table o-- Column : contains
+    Table o-- Constraint : contains
 ```
 
 ### Sequence Diagram
@@ -112,7 +126,9 @@ sequenceDiagram
     participant DB as Database
     participant Sch as Schema
     participant Tbl as Table
+    participant Vw as View
     participant Col as Column
+    participant Cst as Constraint
 
     Client->>DB: get_metadata()
     activate DB
@@ -120,16 +136,23 @@ sequenceDiagram
     DB->>Sch: get_metadata()
     activate Sch
     
+    %% Processing Table branch
     Sch->>Tbl: get_metadata()
     activate Tbl
-    
     Tbl->>Col: get_metadata()
     Col-->>Tbl: column_data
-    
-    Tbl-->>Sch: table_data (contains column_data)
+    Tbl->>Cst: get_metadata()
+    Cst-->>Tbl: constraint_data
+    Tbl-->>Sch: table_data (contains cols & constraints)
     deactivate Tbl
     
-    Sch-->>DB: schema_data (contains table_data)
+    %% Processing View branch
+    Sch->>Vw: get_metadata()
+    activate Vw
+    Vw-->>Sch: view_data
+    deactivate Vw
+    
+    Sch-->>DB: schema_data (contains tables & views)
     deactivate Sch
     
     DB-->>Client: database_data (complete JSON tree)
@@ -142,35 +165,69 @@ sequenceDiagram
 class MetadataNode:
     def get_metadata(self): pass
 
-# Composite (Nodes containing children: Database, Schema, Table)
+# Composite (Nodes containing children)
 class Database(MetadataNode):
-    def __init__(self):
-        self.schemas = []
-        
+    def __init__(self): self.children = []
+    def add_child(self, child: MetadataNode): self.children.append(child)
     def get_metadata(self):
-        # Recursively collect data from all Schemas inside
-        return [schema.get_metadata() for schema in self.schemas]
+        return {"type": "Database", "children": [c.get_metadata() for c in self.children]}
 
 class Schema(MetadataNode):
-    def __init__(self):
-        self.tables = []
-        
+    def __init__(self): self.children = []
+    def add_child(self, child: MetadataNode): self.children.append(child)
     def get_metadata(self):
-        # Recursively collect data from all Tables inside
-        return [table.get_metadata() for table in self.tables]
+        return {"type": "Schema", "children": [c.get_metadata() for c in self.children]}
+
+class Table(MetadataNode):
+    def __init__(self, name): 
+        self.name = name
+        self.children = []
+    def add_child(self, child: MetadataNode): self.children.append(child)
+    def get_metadata(self):
+        return {"type": "Table", "name": self.name, "children": [c.get_metadata() for c in self.children]}
+
+# Leaf Nodes (No children)
+class View(MetadataNode):
+    def __init__(self, name): self.name = name
+    def get_metadata(self): return {"type": "View", "name": self.name}
+
+class Column(MetadataNode):
+    def __init__(self, name, col_type): 
+        self.name = name
+        self.col_type = col_type
+    def get_metadata(self): return {"type": "Column", "name": self.name, "col_type": self.col_type}
+
+class Constraint(MetadataNode):
+    def __init__(self, rule): self.rule = rule
+    def get_metadata(self): return {"type": "Constraint", "rule": self.rule}
+
+# --- TEST CODE ---
+db = Database()
+schema = Schema()
+table = Table("Users")
+table.add_child(Column("id", "INT"))
+table.add_child(Constraint("PRIMARY KEY (id)"))
+
+schema.add_child(table)
+schema.add_child(View("ActiveUsers"))
+db.add_child(schema)
+
+# One call recursively builds the entire tree
+import json
+print(json.dumps(db.get_metadata(), indent=2))
 ```
 
 ---
 
-## 2. Template Method Pattern: Constraint (High Priority)
+## 2. Template Method Pattern: Constraint Validation (High Priority)
 
 *   **Why choose Template Method instead of discrete, independent checking functions?**
-    A relational database enforces various Constraints (`NotNull`, `Check`, `Unique`, `PrimaryKey`). While the specific business logic for each constraint differs, the overall validation lifecycle is largely identical across all of them:
-    1. **Pre-processing:** Skip validation if the incoming value is `Null` (unless it's a NotNull constraint).
-    2. **Core Logic Check:** Perform the actual validation rule (e.g., `value > 0`).
-    3. **Post-processing:** Throw a standardized `ConstraintViolationException` if the check fails.
+    A relational database enforces various Constraints (`NotNull`, `Check`, `Unique`, `PrimaryKey`). While the specific business logic for each constraint differs drastically (e.g., `NotNull` just checks memory, whereas `Unique` must query the B-Tree index on disk), the overall validation lifecycle is identical across all of them:
+    1. **Pre-processing:** Skip validation if the incoming value is `Null` (unless it's a NotNull constraint itself).
+    2. **Core Logic Check:** Perform the actual validation rule (e.g., `value > 0` or `lookup_index()`).
+    3. **Post-processing:** Throw a standardized `ConstraintViolationException` if the check fails, ensuring the transaction aborts.
 
-    If we implement these as independent functions, developers must manually copy-paste the pre-processing and post-processing boilerplate into every single constraint class. This leads to code duplication and the risk of inconsistent error handling (e.g., one constraint throws an error, another returns a boolean).
+    If we implement these as independent functions, developers must manually copy-paste the pre-processing and post-processing boilerplate into every single constraint class. This leads to code duplication and the dangerous risk of inconsistent error handling (e.g., one constraint throws an error, another accidentally returns a boolean).
 
     **The Template Method Pattern Solves This By:**
     1. **Inversion of Control (The Hollywood Principle):** The abstract base class (`Constraint`) takes control of the overall algorithm's skeleton via the `validate()` method. It says to the subclasses: "Don't call us, we'll call you."
@@ -182,21 +239,28 @@ class Schema(MetadataNode):
 classDiagram
     class Constraint {
         <<abstract>>
-        +validate(value)
-        #check_logic(value)* bool
+        -String column_name
+        +validate(value, db_context)
+        #check_logic(value, db_context)* bool
+        #on_violation()
     }
     
     class NotNullConstraint {
-        #check_logic(value) bool
+        #check_logic(value, db_context) bool
     }
     
     class CheckConstraint {
         -String expression
-        #check_logic(value) bool
+        #check_logic(value, db_context) bool
+    }
+    
+    class UniqueConstraint {
+        #check_logic(value, db_context) bool
     }
 
     Constraint <|-- NotNullConstraint
     Constraint <|-- CheckConstraint
+    Constraint <|-- UniqueConstraint
 ```
 
 ### Sequence Diagram
@@ -204,403 +268,238 @@ classDiagram
 sequenceDiagram
     actor DB_Engine
     participant Base as Constraint (Abstract)
-    participant Child as CheckConstraint (Concrete)
+    participant Child as UniqueConstraint (Concrete)
+    participant Index as BTree Index (DB Context)
 
-    DB_Engine->>Base: validate(row_data)
+    DB_Engine->>Base: validate("john_doe", db_context)
     activate Base
-    Base->>Base: check_if_null()
     
-    Note right of Base: Calls child's logic method
-    Base->>Child: check_logic(row_data)
-    Child-->>Base: return True/False
+    Note over Base: Step 1: Pre-processing (Null Check)
+    Base->>Base: is_null("john_doe") -> False
     
-    Base->>Base: throw_error_if_false()
-    Base-->>DB_Engine: Validation Success
+    Note over Base: Step 2: Hook Method (Core Logic)
+    Base->>Child: check_logic("john_doe", db_context)
+    activate Child
+    Child->>Index: search("john_doe")
+    Index-->>Child: found = True
+    Child-->>Base: return False (Failed!)
+    deactivate Child
+    
+    Note over Base: Step 3: Post-processing (Exception)
+    Base->>Base: on_violation()
+    Base-->>DB_Engine: throws ConstraintViolationException
     deactivate Base
 ```
 
 ### TDD Code Example
 ```python
+class ConstraintViolationException(Exception):
+    pass
+
 class Constraint:
-    def validate(self, value): # Hard-coded workflow skeleton (Immutable)
-        if value is None: return True
-        if not self.check_logic(value): 
-            raise Exception("Constraint Violation!")
+    def __init__(self, col_name):
+        self.col_name = col_name
+
+    def validate(self, value, db_context): 
+        # Hard-coded workflow skeleton (Immutable by children)
+        if value is None and not isinstance(self, NotNullConstraint): 
+            return True # Pre-processing: Skip nulls for standard constraints
             
-    def check_logic(self, value): raise NotImplementedError()
+        if not self.check_logic(value, db_context): # Core Logic Hook
+            self.on_violation(value) # Post-processing
+            
+    def check_logic(self, value, db_context): 
+        raise NotImplementedError("Subclasses must implement this hook!")
+        
+    def on_violation(self, value):
+        raise ConstraintViolationException(f"Column '{self.col_name}' violated constraint with value '{value}'!")
 
 class CheckConstraint(Constraint):
-    def check_logic(self, value): return value > 0 # Child class focuses purely on core logic
-```
+    def check_logic(self, value, db_context): 
+        return value > 0 # Simple memory check
 
----
+class UniqueConstraint(Constraint):
+    def check_logic(self, value, db_context):
+        # Complex DB lookup check
+        index_data = db_context.get_index(self.col_name)
+        return value not in index_data
 
-#### 3. Factory Method Pattern: Object Creation (High Priority)
+class NotNullConstraint(Constraint):
+    def check_logic(self, value, db_context):
+        return value is not None
 
-*   **Why choose Factory Method instead of direct instantiation (`new BTreeIndex()`)?**
-    In a DBMS, creating metadata objects like Indexes (`BTree`, `Hash`, `Bitmap`) or Constraints (`Check`, `Unique`) depends heavily on the SQL statement parsed. If the `Table` class directly instantiated a `BTreeIndex`, it would be tightly coupled to a specific implementation. Every time a new index type is added to the database, the `Table` class would have to be modified, violating the Open/Closed Principle.
-    
-    **The Factory Method Pattern Solves This By:**
-    1. **Decoupling:** It shifts the responsibility of creating an index out of the `Table` and into a dedicated `IndexFactory`. The `Table` only deals with the generic `Index` interface.
-    2. **Centralized Logic:** All complex instantiation logic (e.g., checking if the column supports Hash indexing) is centralized in one place.
-    3. **Extensibility:** Adding a new `SpatialIndex` in the future only requires adding a new `if` branch inside the Factory; the core `Table` code remains 100% untouched.
+# --- TEST CODE ---
+class MockDBContext:
+    def get_index(self, col): return ["admin", "root"]
 
-##### Class Diagram
-```mermaid
-classDiagram
-    class IndexFactory {
-        +create_index(type: String, column: String)$ Index
-    }
-    
-    class Index {
-        <<interface>>
-        +build_index()
-    }
-    
-    class BTreeIndex {
-        +build_index()
-    }
-    
-    class HashIndex {
-        +build_index()
-    }
+db_context = MockDBContext()
 
-    IndexFactory ..> Index : creates
-    IndexFactory ..> BTreeIndex : creates
-    IndexFactory ..> HashIndex : creates
-    Index <|.. BTreeIndex
-    Index <|.. HashIndex
-```
+# Test 1: Unique Constraint
+unique_username = UniqueConstraint("username")
+unique_username.validate("new_user", db_context) # Passes successfully
 
-##### Sequence Diagram
-```mermaid
-sequenceDiagram
-    participant Parser as SQL Parser
-    participant Tbl as Table
-    participant Fact as IndexFactory
-    participant Idx as BTreeIndex
-
-    Parser->>Tbl: add_index("id_col", "BTREE")
-    activate Tbl
-    Tbl->>Fact: create_index("BTREE", "id_col")
-    activate Fact
-    Fact-->>Idx: <<create>>
-    Fact-->>Tbl: return Index instance
-    deactivate Fact
-    Tbl->>Idx: build_index()
-    deactivate Tbl
-```
-
-##### TDD Code Example
-```python
-class Index:
-    def build(self): pass
-
-class BTreeIndex(Index):
-    def build(self): return "Building balanced tree..."
-
-class HashIndex(Index):
-    def build(self): return "Building hash table..."
-
-class IndexFactory:
-    @staticmethod
-    def create_index(index_type: str) -> Index:
-        if index_type.upper() == "BTREE":
-            return BTreeIndex()
-        elif index_type.upper() == "HASH":
-            return HashIndex()
-        else:
-            raise ValueError(f"Unsupported Index Type: {index_type}")
-
-# Test Factory Method
-btree = IndexFactory.create_index("BTREE")
-assert isinstance(btree, BTreeIndex)
-print(btree.build()) # Building balanced tree...
-
-hash_idx = IndexFactory.create_index("HASH")
-assert isinstance(hash_idx, HashIndex)
-print(hash_idx.build()) # Building hash table...
-```
-
----
-
-#### 4. Strategy Pattern: Referential Action (Medium High Priority)
-
-*   **Why choose Strategy instead of hardcoding `if/else` inside the Foreign Key?**
-    A Foreign Key (FK) defines what happens to child rows when a referenced Primary Key is deleted. Standard SQL defines multiple behaviors: `CASCADE` (delete child), `RESTRICT` (block deletion), `SET NULL`, and `SET DEFAULT`.
-    If we hardcode this logic directly inside the `ForeignKey` class, it becomes a massive, tangled mess of `if (action == 'CASCADE') else if...`.
-
-    **The Strategy Pattern Solves This By:**
-    1. **Behavior Isolation:** Each referential action (`CascadeAction`, `RestrictAction`) is isolated into its own class that implements a common `ReferentialAction` interface.
-    2. **Dynamic Behavior:** The `ForeignKey` class simply holds a reference to the chosen Strategy. When a parent row is deleted, the FK delegates the work by calling `strategy.execute()`. 
-    3. **Cleaner Code:** No massive `if/else` blocks. Adding a custom referential action in the future is as simple as creating a new Strategy class without modifying the FK class.
-
-##### Class Diagram
-```mermaid
-classDiagram
-    class ForeignKey {
-        -strategy: ReferentialAction
-        +set_action(strategy: ReferentialAction)
-        +on_parent_delete()
-    }
-    
-    class ReferentialAction {
-        <<interface>>
-        +execute(child_rows)*
-    }
-    
-    class CascadeAction {
-        +execute(child_rows)
-    }
-    
-    class RestrictAction {
-        +execute(child_rows)
-    }
-    
-    class SetNullAction {
-        +execute(child_rows)
-    }
-
-    ForeignKey o-- ReferentialAction : delegates to
-    ReferentialAction <|.. CascadeAction
-    ReferentialAction <|.. RestrictAction
-    ReferentialAction <|.. SetNullAction
-```
-
-##### Sequence Diagram
-```mermaid
-sequenceDiagram
-    participant DB as Database Engine
-    participant FK as ForeignKey
-    participant Strat as CascadeAction (Strategy)
-
-    DB->>FK: parent_row_deleted()
-    activate FK
-    
-    Note over FK: FK delegates work to<br/>the injected Strategy
-    FK->>Strat: execute(child_rows)
-    activate Strat
-    Strat-->>DB: delete_rows(child_rows)
-    Strat-->>FK: success
-    deactivate Strat
-    
-    FK-->>DB: action_completed
-    deactivate FK
-```
-
-##### TDD Code Example
-```python
-class ReferentialAction:
-    def execute(self, child_rows): pass
-
-class CascadeAction(ReferentialAction):
-    def execute(self, child_rows):
-        return f"Deleted {len(child_rows)} child rows to maintain integrity."
-
-class RestrictAction(ReferentialAction):
-    def execute(self, child_rows):
-        if len(child_rows) > 0:
-            raise Exception("Cannot delete parent: Child rows exist (RESTRICT)!")
-
-class ForeignKey:
-    def __init__(self, strategy: ReferentialAction):
-        self.strategy = strategy
-        
-    def on_parent_delete(self, child_rows):
-        return self.strategy.execute(child_rows)
-
-# Test Strategy Swapping
-fk_cascade = ForeignKey(CascadeAction())
-print(fk_cascade.on_parent_delete([1, 2, 3])) 
-# Output: Deleted 3 child rows to maintain integrity.
-
-fk_restrict = ForeignKey(RestrictAction())
 try:
-    fk_restrict.on_parent_delete([1, 2, 3])
+    unique_username.validate("admin", db_context) # Fails
 except Exception as e:
-    print(e) # Output: Cannot delete parent: Child rows exist (RESTRICT)!
+    print(e) # Output: Column 'username' violated constraint with value 'admin'!
+
+# Test 2: Check Constraint (skips Null properly)
+age_check = CheckConstraint("age")
+age_check.validate(None, db_context) # Passes immediately (Nulls allowed)
 ```
 
 ---
 
-#### 5. Visitor Pattern: Dependency Validation (Medium Priority)
+## 3. Chain of Responsibility Pattern: Privilege Checking (Medium High Priority)
 
-*   **Why choose Visitor instead of putting validation logic inside each object?**
-    When a DBA attempts to drop a table (e.g., `DROP TABLE Users`), the DBMS must verify that no other objects (like `Views` or `StoredProcedures`) depend on it. If we put this validation logic directly inside the `Table`, `View`, and `StoredProcedure` classes, these data-centric classes become bloated with complex business logic. Furthermore, if we later want to add a new operation (e.g., `ExportToJSON` or `CalculateMetrics`), we would have to modify every single object class again.
+*   **Why choose Chain of Responsibility instead of massive `if/else` checks?**
+    In a DBMS, checking if a user has permission to execute a query (like `SELECT * FROM schema.table`) is highly layered. The database engine must sequentially check:
+    1. Does the user have access to the Database?
+    2. Does the user have access to the Schema?
+    3. Does the user have `SELECT` privilege on the Table?
+    4. (Optional) Does the user have access to specific Columns (Column-Level Security)?
+    
+    If we hardcode this in a single `SecurityManager` class with nested `if/else`, the code becomes incredibly bloated and brittle. Adding a new security layer (e.g., Row-Level Security or IP Address restrictions) would force us to modify the core security engine, violating the Open/Closed Principle.
 
-    **The Visitor Pattern Solves This By:**
-    1. **Separation of Concerns:** It completely extracts the operational logic (Dependency Validation) out of the structural classes (`Table`, `View`) and puts it into a dedicated `Visitor` class.
-    2. **Double Dispatch:** It allows the DBMS to dynamically execute the correct validation logic based on *both* the type of the Visitor and the type of the Object being visited.
-    3. **Extreme Extensibility:** We can add infinite new operations (Visitors) without ever touching or recompiling the core `Table` or `View` classes.
+    **The Chain of Responsibility Pattern Solves This By:**
+    1. **Decoupling:** Each security check is encapsulated into its own distinct, lightweight Handler class (`DatabasePrivilegeHandler`, `SchemaPrivilegeHandler`).
+    2. **Sequential Chaining:** Handlers are linked together. The request passes through the chain one by one. If one handler denies access, it breaks the chain immediately and throws a "Permission Denied" error. If it allows access, it automatically passes the request to the next handler.
+    3. **Dynamic Configuration:** You can dynamically insert or remove security layers at runtime (e.g., enabling Column-Level Security only for the Enterprise edition) simply by rearranging the chain, without altering any core logic.
 
-##### Class Diagram
+### Class Diagram
 ```mermaid
 classDiagram
-    class SchemaObject {
-        <<interface>>
-        +accept(visitor: SchemaVisitor)*
-        +get_name() String
+    class PrivilegeHandler {
+        <<abstract>>
+        -PrivilegeHandler next_handler
+        +set_next(handler: PrivilegeHandler)$ PrivilegeHandler
+        +check_access(user, action, target)* bool
+        #do_check(user, action, target)* bool
     }
     
-    class Table {
-        -String name
-        +accept(visitor: SchemaVisitor)
-        +get_name() String
+    class DatabasePrivilegeHandler {
+        #do_check(user, action, target) bool
     }
     
-    class View {
-        -String name
-        -List~String~ dependencies
-        +accept(visitor: SchemaVisitor)
-        +get_dependencies() List
+    class SchemaPrivilegeHandler {
+        #do_check(user, action, target) bool
     }
     
-    class StoredProcedure {
-        -String name
-        -List~String~ dependencies
-        +accept(visitor: SchemaVisitor)
-        +get_dependencies() List
+    class TablePrivilegeHandler {
+        #do_check(user, action, target) bool
+    }
+    
+    class ColumnPrivilegeHandler {
+        #do_check(user, action, target) bool
     }
 
-    class SchemaVisitor {
-        <<interface>>
-        +visit_table(table: Table)*
-        +visit_view(view: View)*
-        +visit_procedure(proc: StoredProcedure)*
-    }
-    
-    class DropValidationVisitor {
-        -String target_table
-        -List~String~ broken_objects
-        +visit_table(table: Table)
-        +visit_view(view: View)
-        +visit_procedure(proc: StoredProcedure)
-        +has_conflicts() bool
-    }
-    
-    SchemaObject <|.. Table
-    SchemaObject <|.. View
-    SchemaObject <|.. StoredProcedure
-    
-    SchemaVisitor <|.. DropValidationVisitor
-    
-    DropValidationVisitor ..> Table : visits
-    DropValidationVisitor ..> View : visits
-    DropValidationVisitor ..> StoredProcedure : visits
+    PrivilegeHandler o-- PrivilegeHandler : next_handler
+    PrivilegeHandler <|-- DatabasePrivilegeHandler
+    PrivilegeHandler <|-- SchemaPrivilegeHandler
+    PrivilegeHandler <|-- TablePrivilegeHandler
+    PrivilegeHandler <|-- ColumnPrivilegeHandler
 ```
 
-##### Sequence Diagram
+### Sequence Diagram
 ```mermaid
 sequenceDiagram
-    participant Eng as DB Engine
-    participant Cat as Catalog (Object List)
-    participant Vw as ActiveUsers (View)
-    participant Proc as CalcSalary (StoredProc)
-    participant Vis as DropValidationVisitor
-
-    Eng->>Vis: <<create("Users")>>
-    activate Vis
-    deactivate Vis
+    participant Client as Query Executor
+    participant DB as DBHandler
+    participant Sch as SchemaHandler
+    participant Tbl as TableHandler
     
-    Eng->>Cat: get_all_objects()
-    Cat-->>Eng: [ActiveUsers, CalcSalary]
+    Client->>DB: check_access("alice", "SELECT", "users")
+    activate DB
+    Note over DB: Alice has DB access
     
-    Note over Eng, Vis: DOUBLE DISPATCH MECHANISM START
+    DB->>Sch: check_access("alice", "SELECT", "users")
+    activate Sch
+    Note over Sch: Alice has Schema access
     
-    Eng->>Vw: accept(Vis)
-    activate Vw
-    Vw->>Vis: visit_view(this)
-    activate Vis
-    Note over Vis: Checks if "Users" is<br/>in View dependencies
-    Vis-->>Vw: validation_done
-    deactivate Vis
-    Vw-->>Eng: accept_done
-    deactivate Vw
+    Sch->>Tbl: check_access("alice", "SELECT", "users")
+    activate Tbl
+    Note over Tbl: Alice is granted SELECT on Table
+    Tbl-->>Sch: return True
+    deactivate Tbl
     
-    Eng->>Proc: accept(Vis)
-    activate Proc
-    Proc->>Vis: visit_procedure(this)
-    activate Vis
-    Note over Vis: Checks if "Users" is<br/>in Proc dependencies
-    Vis-->>Proc: validation_done
-    deactivate Vis
-    Proc-->>Eng: accept_done
-    deactivate Proc
+    Sch-->>DB: return True
+    deactivate Sch
     
-    Eng->>Vis: has_conflicts()
-    activate Vis
-    Vis-->>Eng: return TRUE (Cannot Drop!)
-    deactivate Vis
+    DB-->>Client: return True (Query Proceeds)
+    deactivate DB
+    
+    %% Example of Failure
+    Client->>DB: check_access("bob", "DROP", "users")
+    activate DB
+    Note over DB: Bob lacks DB Admin rights
+    DB-->>Client: throws AccessDeniedException
+    deactivate DB
 ```
 
-##### TDD Code Example
+### TDD Code Example
 ```python
-# 1. VISITOR INTERFACES
-class SchemaVisitor:
-    def visit_table(self, table): pass
-    def visit_view(self, view): pass
-    def visit_procedure(self, proc): pass
+class AccessDeniedException(Exception):
+    pass
 
-# 2. ELEMENT INTERFACES
-class SchemaObject:
-    def accept(self, visitor: SchemaVisitor): pass
+class PrivilegeHandler:
+    def __init__(self):
+        self.next_handler = None
+        
+    def set_next(self, handler):
+        self.next_handler = handler
+        return handler # Allows method chaining
+        
+    def check_access(self, user, action, target):
+        # 1. Execute the specific check for this layer
+        if not self.do_check(user, action, target):
+            raise AccessDeniedException(f"Access Denied at {self.__class__.__name__} for user '{user}'")
+        
+        # 2. If passed and there's a next handler, delegate down the chain
+        if self.next_handler:
+            return self.next_handler.check_access(user, action, target)
+        
+        # 3. If passed and no more handlers, access is fully granted
+        return True 
+        
+    def do_check(self, user, action, target):
+        raise NotImplementedError()
 
-# 3. CONCRETE ELEMENTS
-class Table(SchemaObject):
-    def __init__(self, name): self.name = name
-    def accept(self, visitor): visitor.visit_table(self)
+# Concrete Handlers
+class DatabasePrivilegeHandler(PrivilegeHandler):
+    def do_check(self, user, action, target):
+        # Business logic: Only 'admin' can perform DROP operations
+        if action == "DROP" and user != "admin": return False
+        return True
 
-class View(SchemaObject):
-    def __init__(self, name, dependencies): 
-        self.name = name
-        self.dependencies = dependencies
-    def accept(self, visitor): visitor.visit_view(self)
+class SchemaPrivilegeHandler(PrivilegeHandler):
+    def do_check(self, user, action, target):
+        # Business logic: 'guest' users have no access to underlying schemas
+        return user != "guest"
 
-class StoredProcedure(SchemaObject):
-    def __init__(self, name, dependencies):
-        self.name = name
-        self.dependencies = dependencies
-    def accept(self, visitor): visitor.visit_procedure(self)
+class TablePrivilegeHandler(PrivilegeHandler):
+    def do_check(self, user, action, target):
+        # Business logic: 'alice' has SELECT rights, but no UPDATE rights
+        if user == "alice" and action == "UPDATE": return False
+        return True
 
-# 4. CONCRETE VISITOR
-class DropValidationVisitor(SchemaVisitor):
-    def __init__(self, target_table):
-        self.target_table = target_table
-        self.broken_objects = []
+# --- TEST CODE ---
+# 1. Build the Security Chain dynamically
+security_chain = DatabasePrivilegeHandler()
+security_chain.set_next(SchemaPrivilegeHandler()).set_next(TablePrivilegeHandler())
 
-    def visit_table(self, table):
-        pass # Tables don't depend on other tables in this context
+# 2. Test Cases
+# Test A: Alice tries to SELECT (Passes all 3 layers)
+print(security_chain.check_access("alice", "SELECT", "users")) # Output: True
 
-    def visit_view(self, view):
-        if self.target_table in view.dependencies:
-            self.broken_objects.append(f"View '{view.name}'")
+# Test B: Alice tries to UPDATE (Fails at Layer 3: TablePrivilegeHandler)
+try:
+    security_chain.check_access("alice", "UPDATE", "users")
+except Exception as e:
+    print(e) # Output: Access Denied at TablePrivilegeHandler for user 'alice'
 
-    def visit_procedure(self, proc):
-        if self.target_table in proc.dependencies:
-            self.broken_objects.append(f"Procedure '{proc.name}'")
-
-# 5. TEST: The Engine
-target_to_drop = "users_table"
-visitor = DropValidationVisitor(target_to_drop)
-
-# Simulate the Object Catalog
-objects = [
-    Table("orders"),
-    View("active_users", dependencies=["users_table", "logs"]),
-    StoredProcedure("calc_salary", dependencies=["employees"])
-]
-
-# Double Dispatch execution
-for obj in objects:
-    obj.accept(visitor)
-
-if visitor.broken_objects:
-    print(f"ERROR: Cannot drop '{target_to_drop}'.")
-    print(f"Objects relying on it: {', '.join(visitor.broken_objects)}")
-else:
-    print(f"SUCCESS: '{target_to_drop}' can be safely dropped.")
-
-# Output: 
-# ERROR: Cannot drop 'users_table'.
-# Objects relying on it: View 'active_users'
+# Test C: Bob tries to DROP (Fails immediately at Layer 1: DatabasePrivilegeHandler)
+try:
+    security_chain.check_access("bob", "DROP", "users")
+except Exception as e:
+    print(e) # Output: Access Denied at DatabasePrivilegeHandler for user 'bob'
 ```
