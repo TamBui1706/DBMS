@@ -43,8 +43,15 @@ Below is a detailed analysis for the deeply evaluated features mentioned above. 
 
 ## 1. Composite Pattern: Database Objects (Highest Priority)
 
-*   **Why choose Composite instead of a discrete `List`?** 
-    If you let the Database manage an array of Schemas, and the Schema manage an array of discrete Tables... When the system needs to calculate total storage size (Size) or export the entire Metadata structure (Export), you would have to write multiple nested `for` loops. Composite groups everything (Database, Schema, Table, Column) into a single `MetadataNode` interface. Calling a recursive method once will scan the entire massive data tree.
+*   **Why choose Composite instead of discrete `Lists` or rigid hierarchies?**
+    In a DBMS, metadata is naturally hierarchical: A Database contains multiple Schemas, a Schema contains multiple Tables, and a Table contains multiple Columns. If we model this using rigid, separate lists (e.g., Database managing `List<Schema>`, Schema managing `List<Table>`), we face significant challenges when performing system-wide operations like calculating total storage size, generating a comprehensive DDL export, or traversing the object tree.
+    
+    Without the Composite pattern, traversing this hierarchy requires tightly coupled code with multiple nested `for` loops and type-checking (e.g., `if (obj instanceof Table)`). 
+    
+    **The Composite Pattern Solves This By:**
+    1. **Uniformity:** It introduces a common interface (`MetadataNode`) for both leaf nodes (Columns, which have no children) and composite branches (Database, Schema, Table, which contain children).
+    2. **Recursive Traversal:** Operations like `get_metadata()` are delegated down the tree. The client only needs to call `get_metadata()` on the root `Database` object, and the request automatically propagates down to the lowest `Column` level via recursion.
+    3. **Extensibility:** If we later introduce new metadata objects like `View` or `Index` inside a Schema, we simply implement the `MetadataNode` interface. The core traversal logic remains entirely untouched, adhering perfectly to the Open/Closed Principle (OCP).
 
 ### Class Diagram
 ```mermaid
@@ -147,8 +154,18 @@ class Schema(MetadataNode):
 
 ## 2. Template Method Pattern: Constraint (High Priority)
 
-*   **Why choose Template Method instead of discrete checking functions?**
-    The system has multiple Constraints: `NotNull`, `Check`, `Unique`. Their validation flow is identical: (1) Skip if the value is Null, (2) Check business logic, (3) Throw an error if false. Without Template Method, you would have to copy/paste steps (1) and (3) everywhere. This pattern hard-codes the workflow skeleton in the base class, so child classes only need to implement the core logic (2).
+*   **Why choose Template Method instead of discrete, independent checking functions?**
+    A relational database enforces various Constraints (`NotNull`, `Check`, `Unique`, `PrimaryKey`). While the specific business logic for each constraint differs, the overall validation lifecycle is largely identical across all of them:
+    1. **Pre-processing:** Skip validation if the incoming value is `Null` (unless it's a NotNull constraint).
+    2. **Core Logic Check:** Perform the actual validation rule (e.g., `value > 0`).
+    3. **Post-processing:** Throw a standardized `ConstraintViolationException` if the check fails.
+
+    If we implement these as independent functions, developers must manually copy-paste the pre-processing and post-processing boilerplate into every single constraint class. This leads to code duplication and the risk of inconsistent error handling (e.g., one constraint throws an error, another returns a boolean).
+
+    **The Template Method Pattern Solves This By:**
+    1. **Inversion of Control (The Hollywood Principle):** The abstract base class (`Constraint`) takes control of the overall algorithm's skeleton via the `validate()` method. It says to the subclasses: "Don't call us, we'll call you."
+    2. **Code Reusability:** All boilerplate logic (null checks, exception throwing) is centralized in the base class.
+    3. **Strict Enforcement:** The workflow is strictly enforced and cannot be altered by child classes. Subclasses are forced to implement *only* the specific abstract hook method (`check_logic()`), ensuring absolute consistency across the entire database engine.
 
 ### Class Diagram
 ```mermaid
