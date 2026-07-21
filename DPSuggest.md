@@ -1,8 +1,5 @@
 # Design Pattern Analysis: Database Object Management
 
-Based on the structure of the **Mindmap**, **Class Diagram** (from `README.md`), and the reference image, we focus entirely on breaking down a **single core module**: **Database Object Management**.
-
-This module is divided into two main feature groups (Sub-modules): **Database Objects** and **Database Management**. Below is the priority assessment table and the list of Design Patterns applied in practice, ordered by **Priority**.
 
 ## 📊 1. Database Objects
 
