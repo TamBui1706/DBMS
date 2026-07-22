@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import MagicMock
+from Classes.Core.database import Database
+from Classes.DatabaseObjectManagement.schema import Schema
 
-class Database:
-    pass
 
 class TestDatabase(unittest.TestCase):
 
@@ -107,3 +107,30 @@ class TestDatabase(unittest.TestCase):
             obj.open()
             
         self.assertTrue('FileNotFoundException' in str(context.exception))
+
+    def test_Composite_AddChild_AddsToChildrenList(self):
+        # Arrange
+        db = Database("MyDB")
+        schema = Schema("MySchema")
+        
+        # Act
+        db.add_child(schema)
+        
+        # Assert
+        self.assertIn(schema, db.children)
+
+    def test_Composite_GetMetadata_ReturnsRecursiveDict(self):
+        # Arrange
+        db = Database("MyDB")
+        schema = Schema("MySchema")
+        db.add_child(schema)
+        
+        # Act
+        meta = db.get_metadata()
+        
+        # Assert
+        self.assertEqual(meta["type"], "Database")
+        self.assertEqual(meta["name"], "MyDB")
+        self.assertEqual(len(meta["children"]), 1)
+        self.assertEqual(meta["children"][0]["type"], "Schema")
+        self.assertEqual(meta["children"][0]["name"], "MySchema")

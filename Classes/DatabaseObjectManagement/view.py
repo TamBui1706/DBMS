@@ -1,4 +1,4 @@
-from DBMS.Classes.DatabaseObjectManagement.metadata_node import MetadataNode
+from Classes.DatabaseObjectManagement.metadata_node import MetadataNode
 
 class View(MetadataNode):
     def __init__(self, name: str = None, queryDefinition: str = None):

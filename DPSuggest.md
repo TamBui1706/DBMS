@@ -503,3 +503,264 @@ try:
 except Exception as e:
     print(e) # Output: Access Denied at DatabasePrivilegeHandler for user 'bob'
 ```
+
+---
+
+## 4. Factory Method Pattern: Object Creation (High Priority)
+
+*   **Why choose Factory Method instead of direct instantiation (`new Index()`)?**
+    In a DBMS, creating objects like Indexes, Triggers, or Partitions often depends on the specific engine configuration, the chosen algorithm (e.g., B-Tree vs Hash for indexes), and involves complex initialization (allocating disk pages, registering with catalogs). If we let the `Table` class directly instantiate `BTreeIndex` or `HashIndex` via `if/else`, the `Table` class becomes tightly coupled to specific storage implementations. Adding a new index type (like `BitmapIndex`) would require modifying the core `Table` class, violating the Open/Closed Principle.
+    
+    **The Factory Method Pattern Solves This By:**
+    1. **Decoupling:** The `Table` class delegates the creation of the index to a Factory interface. It doesn't need to know the concrete class of the index being created.
+    2. **Encapsulation of Initialization:** The Factory hides all the complex setup logic (e.g., checking memory limits, allocating storage, writing to the system catalog) in one place.
+    3. **Extensibility:** To add a new index type, we simply extend the factory logic or create a new factory subclass, leaving the core `Table` operations completely untouched.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class IndexFactory {
+        <<interface>>
+        +create_index(table, column, type)* Index
+    }
+    
+    class DefaultIndexFactory {
+        +create_index(table, column, type) Index
+    }
+    
+    class Index {
+        <<abstract>>
+        +search(key)*
+        +insertKey(key, row_id)*
+    }
+    
+    class BTreeIndex {
+        +search(key)
+        +insertKey(key, row_id)
+    }
+    
+    class HashIndex {
+        +search(key)
+        +insertKey(key, row_id)
+    }
+
+    IndexFactory <|.. DefaultIndexFactory
+    DefaultIndexFactory ..> BTreeIndex : creates
+    DefaultIndexFactory ..> HashIndex : creates
+    Index <|-- BTreeIndex
+    Index <|-- HashIndex
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Client
+    participant Tbl as Table
+    participant Fct as DefaultIndexFactory
+    participant Idx as BTreeIndex
+    participant Cat as CatalogManager
+
+    Client->>Tbl: create_index("id_col", "BTREE")
+    activate Tbl
+    
+    Tbl->>Fct: create_index(self, "id_col", "BTREE")
+    activate Fct
+    
+    Note over Fct: Encapsulated Complex Setup
+    Fct->>Idx: <<create>> BTreeIndex()
+    activate Idx
+    Idx-->>Fct: index_instance
+    deactivate Idx
+    
+    Fct->>Cat: registerObject(index_instance)
+    Cat-->>Fct: success
+    
+    Fct-->>Tbl: index_instance
+    deactivate Fct
+    
+    Tbl-->>Client: Index Created
+    deactivate Tbl
+```
+
+### TDD Code Example
+```python
+class Index:
+    def search(self, key): pass
+
+class BTreeIndex(Index):
+    def __init__(self, table_name, column_name):
+        self.type = "BTREE"
+        print(f"Allocating B-Tree nodes for {table_name}.{column_name}")
+
+class HashIndex(Index):
+    def __init__(self, table_name, column_name):
+        self.type = "HASH"
+        print(f"Allocating Hash buckets for {table_name}.{column_name}")
+
+class DefaultIndexFactory:
+    def create_index(self, table_name, column_name, index_type):
+        # Centralized instantiation logic
+        if index_type.upper() == "BTREE":
+            index = BTreeIndex(table_name, column_name)
+        elif index_type.upper() == "HASH":
+            index = HashIndex(table_name, column_name)
+        else:
+            raise ValueError(f"Unsupported Index Type: {index_type}")
+        
+        # Centralized post-creation logic (e.g. catalog registration)
+        print(f"Registering {index.type} index in System Catalog...")
+        return index
+
+# --- TEST CODE ---
+factory = DefaultIndexFactory()
+
+# The client/table only talks to the factory, never calling constructors directly.
+idx1 = factory.create_index("users", "id", "BTREE")
+# Output: Allocating B-Tree nodes for users.id
+# Output: Registering BTREE index in System Catalog...
+
+idx2 = factory.create_index("sessions", "token", "HASH")
+# Output: Allocating Hash buckets for sessions.token
+# Output: Registering HASH index in System Catalog...
+```
+
+---
+
+## 5. Strategy Pattern: Referential Action (Medium High Priority)
+
+*   **Why choose Strategy instead of massive `switch/case` inside `ForeignKey`?**
+    When a referenced row in a parent table is deleted or updated, a Foreign Key constraint must enforce referential integrity. Standard SQL allows several actions: `CASCADE` (delete child rows), `RESTRICT` (block the deletion), `SET NULL` (nullify child keys), and `SET DEFAULT`. 
+    If we put all these behaviors into a single `on_violation()` method inside the `ForeignKey` class with a giant `if/elif/else` block, the class becomes bloated. Testing each cascading behavior in isolation also becomes difficult.
+
+    **The Strategy Pattern Solves This By:**
+    1. **Behavior Encapsulation:** Each referential action (`CascadeAction`, `RestrictAction`, `SetNullAction`) is encapsulated into its own class implementing a common `ReferentialAction` interface.
+    2. **Runtime Interchangeability:** A `ForeignKey` is composed of a `ReferentialAction` object. The action can be dynamically assigned when the constraint is defined.
+    3. **Single Responsibility Principle:** The `ForeignKey` class focuses only on detecting the relationship change. The specific `ReferentialAction` class focuses purely on executing the consequent cascading operation.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class ForeignKey {
+        -String referenceTable
+        -String referenceColumn
+        -ReferentialAction deleteAction
+        +set_delete_action(action: ReferentialAction)
+        +trigger_delete(row_id)
+    }
+    
+    class ReferentialAction {
+        <<interface>>
+        +execute(child_table, foreign_key, deleted_id)*
+    }
+    
+    class RestrictAction {
+        +execute(child_table, foreign_key, deleted_id)
+    }
+    
+    class CascadeAction {
+        +execute(child_table, foreign_key, deleted_id)
+    }
+    
+    class SetNullAction {
+        +execute(child_table, foreign_key, deleted_id)
+    }
+
+    ForeignKey o-- ReferentialAction : has-a
+    ReferentialAction <|.. RestrictAction
+    ReferentialAction <|.. CascadeAction
+    ReferentialAction <|.. SetNullAction
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant FK as ForeignKey
+    participant Strat as CascadeAction
+    participant ChildDB as Child Table
+
+    DB_Engine->>FK: Parent row deleted (id=5)
+    activate FK
+    
+    FK->>Strat: execute(child_table, fk_col, 5)
+    activate Strat
+    
+    Note over Strat: Cascade Strategy kicks in
+    Strat->>ChildDB: query("DELETE WHERE fk_col = 5")
+    ChildDB-->>Strat: 3 rows deleted
+    
+    Strat-->>FK: success
+    deactivate Strat
+    
+    FK-->>DB_Engine: referential integrity maintained
+    deactivate FK
+```
+
+### TDD Code Example
+```python
+# The Strategy Interface
+class ReferentialAction:
+    def execute(self, child_table, fk_col, deleted_id):
+        pass
+
+# Concrete Strategies
+class RestrictAction(ReferentialAction):
+    def execute(self, child_table, fk_col, deleted_id):
+        # Check if children exist; if yes, abort!
+        child_rows = child_table.get(fk_col, deleted_id)
+        if child_rows:
+            raise Exception("RESTRICT: Cannot delete parent row. Child records exist.")
+        print("RESTRICT: No child records found. Safe to delete.")
+
+class CascadeAction(ReferentialAction):
+    def execute(self, child_table, fk_col, deleted_id):
+        # Delete children silently
+        print(f"CASCADE: Deleting all rows in child table where {fk_col} = {deleted_id}")
+
+class SetNullAction(ReferentialAction):
+    def execute(self, child_table, fk_col, deleted_id):
+        # Nullify children
+        print(f"SET NULL: Setting {fk_col} to NULL in child table where {fk_col} = {deleted_id}")
+
+# The Context
+class ForeignKey:
+    def __init__(self, ref_table, ref_col):
+        self.ref_table = ref_table
+        self.ref_col = ref_col
+        self.delete_action = RestrictAction() # Default Strategy
+
+    def set_delete_action(self, action: ReferentialAction):
+        self.delete_action = action
+
+    def trigger_delete(self, child_table_mock, deleted_id):
+        # Delegates the behavior to the injected strategy
+        self.delete_action.execute(child_table_mock, self.ref_col, deleted_id)
+
+# --- TEST CODE ---
+# Mocking a child table for testing
+class MockChildTable:
+    def get(self, col, val):
+        return [1, 2] # Simulating that children DO exist
+
+child_db = MockChildTable()
+fk_constraint = ForeignKey("users", "user_id")
+
+# Test 1: Default RESTRICT behavior
+print("Testing RESTRICT:")
+try:
+    fk_constraint.trigger_delete(child_db, deleted_id=10)
+except Exception as e:
+    print(e) # Output: RESTRICT: Cannot delete parent row. Child records exist.
+
+# Test 2: Swap strategy to CASCADE at runtime
+print("\nTesting CASCADE:")
+fk_constraint.set_delete_action(CascadeAction())
+fk_constraint.trigger_delete(child_db, deleted_id=10)
+# Output: CASCADE: Deleting all rows in child table where user_id = 10
+
+# Test 3: Swap strategy to SET NULL at runtime
+print("\nTesting SET NULL:")
+fk_constraint.set_delete_action(SetNullAction())
+fk_constraint.trigger_delete(child_db, deleted_id=10)
+# Output: SET NULL: Setting user_id to NULL in child table where user_id = 10
+```

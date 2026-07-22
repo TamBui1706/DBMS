@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from DBMS.Classes.DatabaseObjectManagement.metadata_node import MetadataNode
-from DBMS.Classes.DatabaseObjectManagement.exceptions import ConstraintViolationException
+from Classes.DatabaseObjectManagement.metadata_node import MetadataNode
+from Classes.DatabaseObjectManagement.exceptions import ConstraintViolationException
 
 class Constraint(MetadataNode, ABC):
     def __init__(self, column_name: str, rule: str):
@@ -16,6 +16,7 @@ class Constraint(MetadataNode, ABC):
         if not self.check_logic(value, db_context):
             # Post-processing: Exception
             self.on_violation(value)
+        return True
 
     @abstractmethod
     def check_logic(self, value, db_context) -> bool:

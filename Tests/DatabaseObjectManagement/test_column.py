@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
+from Classes.DatabaseObjectManagement.column import Column
 
-class Column:
-    pass
 
 class TestColumn(unittest.TestCase):
 
@@ -68,6 +67,18 @@ class TestColumn(unittest.TestCase):
         # Assert
         self.assertEqual(result, 'Success')
         obj.setDefaultValue.assert_called_once()
+
+    def test_Composite_GetMetadata_ReturnsLeafDict(self):
+        # Arrange
+        col = Column("id", "INT")
+        
+        # Act
+        meta = col.get_metadata()
+        
+        # Assert
+        self.assertEqual(meta["type"], "Column")
+        self.assertEqual(meta["name"], "id")
+        self.assertEqual(meta["col_type"], "INT")
 
     def test_ChangeType_WhenCompatible_Succeeds(self):
         # Arrange

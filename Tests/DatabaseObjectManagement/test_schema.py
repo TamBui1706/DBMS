@@ -1,8 +1,9 @@
 import unittest
 from unittest.mock import MagicMock
+from Classes.DatabaseObjectManagement.schema import Schema
+from Classes.DatabaseObjectManagement.table import Table
+from Classes.DatabaseObjectManagement.view import View
 
-class Schema:
-    pass
 
 class TestSchema(unittest.TestCase):
 
@@ -107,3 +108,32 @@ class TestSchema(unittest.TestCase):
         # Assert
         self.assertEqual(result, 'Success')
         obj.validate.assert_called_once()
+
+    def test_Composite_AddChild_AddsToChildrenList(self):
+        # Arrange
+        schema = Schema("MySchema")
+        table = Table("MyTable")
+        
+        # Act
+        schema.add_child(table)
+        
+        # Assert
+        self.assertIn(table, schema.children)
+
+    def test_Composite_GetMetadata_ReturnsRecursiveDict(self):
+        # Arrange
+        schema = Schema("MySchema")
+        table = Table("MyTable")
+        view = View("MyView", "SELECT * FROM MyTable")
+        schema.add_child(table)
+        schema.add_child(view)
+        
+        # Act
+        meta = schema.get_metadata()
+        
+        # Assert
+        self.assertEqual(meta["type"], "Schema")
+        self.assertEqual(meta["name"], "MySchema")
+        self.assertEqual(len(meta["children"]), 2)
+        self.assertEqual(meta["children"][0]["name"], "MyTable")
+        self.assertEqual(meta["children"][1]["name"], "MyView")

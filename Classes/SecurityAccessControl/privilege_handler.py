@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from DBMS.Classes.SecurityAccessControl.exceptions import AccessDeniedException
+from Classes.SecurityAccessControl.exceptions import AccessDeniedException
 
 class PrivilegeHandler(ABC):
     def __init__(self):

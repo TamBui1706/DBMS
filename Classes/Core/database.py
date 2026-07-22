@@ -1,5 +1,5 @@
 from typing import List
-from DBMS.Classes.DatabaseObjectManagement.metadata_node import MetadataNode
+from Classes.DatabaseObjectManagement.metadata_node import MetadataNode
 
 class Database(MetadataNode):
     def __init__(self, name: str = None):

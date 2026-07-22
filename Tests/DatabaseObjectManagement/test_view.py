@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
+from Classes.DatabaseObjectManagement.view import View
 
-class View:
-    pass
 
 class TestView(unittest.TestCase):
 
@@ -44,18 +43,30 @@ class TestView(unittest.TestCase):
             
         self.assertTrue('InvalidViewException' in str(context.exception))
 
-    def test_Materialize_CachesResultSetToDisk(self):
+    def test_GetSourceTables_ParsesQueryForDependencies(self):
         # Arrange
         obj = View()
-        obj.materialize = MagicMock()
-        obj.materialize.return_value = 'Success'
+        obj.getSourceTables = MagicMock()
+        obj.getSourceTables.return_value = 'ParsesQueryForDependencies'
         
         # Act
-        result = obj.materialize()
+        result = obj.getSourceTables()
         
         # Assert
-        self.assertEqual(result, 'Success')
-        obj.materialize.assert_called_once()
+        self.assertEqual(result, 'ParsesQueryForDependencies')
+        obj.getSourceTables.assert_called_once()
+
+    def test_Composite_GetMetadata_ReturnsLeafDict(self):
+        # Arrange
+        view = View("MyView", "SELECT * FROM Users")
+        
+        # Act
+        meta = view.get_metadata()
+        
+        # Assert
+        self.assertEqual(meta["type"], "View")
+        self.assertEqual(meta["name"], "MyView")
+        self.assertEqual(meta["query"], "SELECT * FROM Users")
 
     def test_Refresh_UpdatesMaterializedData(self):
         # Arrange

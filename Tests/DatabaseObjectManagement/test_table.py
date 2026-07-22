@@ -1,8 +1,9 @@
 import unittest
 from unittest.mock import MagicMock
+from Classes.DatabaseObjectManagement.table import Table
+from Classes.DatabaseObjectManagement.column import Column
+from Classes.DatabaseObjectManagement.not_null_constraint import NotNullConstraint
 
-class Table:
-    pass
 
 class TestTable(unittest.TestCase):
 
@@ -158,3 +159,33 @@ class TestTable(unittest.TestCase):
         # Assert
         self.assertEqual(result, 'UpdatesMetadataAndViews')
         obj.renameColumn.assert_called_once()
+
+    def test_Composite_AddChild_AddsToChildrenList(self):
+        # Arrange
+        table = Table("MyTable")
+        col = Column("id", "INT")
+        
+        # Act
+        table.add_child(col)
+        
+        # Assert
+        self.assertIn(col, table.children)
+
+    def test_Composite_GetMetadata_ReturnsRecursiveDict(self):
+        # Arrange
+        table = Table("MyTable")
+        col = Column("id", "INT")
+        constraint = NotNullConstraint("id")
+        table.add_child(col)
+        table.add_child(constraint)
+        
+        # Act
+        meta = table.get_metadata()
+        
+        # Assert
+        self.assertEqual(meta["type"], "Table")
+        self.assertEqual(meta["name"], "MyTable")
+        self.assertEqual(len(meta["children"]), 2)
+        self.assertEqual(meta["children"][0]["name"], "id")
+        self.assertEqual(meta["children"][0]["col_type"], "INT")
+        self.assertEqual(meta["children"][1]["rule"], "NOT NULL")

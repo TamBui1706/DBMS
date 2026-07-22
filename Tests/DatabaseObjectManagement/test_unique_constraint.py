@@ -1,14 +1,12 @@
 import unittest
 from unittest.mock import MagicMock
-
-class UniqueConstraint:
-    pass
+from Classes.DatabaseObjectManagement.unique_constraint import UniqueConstraint
 
 class TestUniqueConstraint(unittest.TestCase):
 
     def test_Validate_WhenValueIsGloballyUnique_Succeeds(self):
         # Arrange
-        obj = UniqueConstraint()
+        obj = UniqueConstraint("dummy_col")
         obj.validate = MagicMock()
         obj.validate.return_value = 'Succeeds'
         
@@ -21,7 +19,7 @@ class TestUniqueConstraint(unittest.TestCase):
 
     def test_Validate_WhenValueExistsInAnotherRow_ThrowsException(self):
         # Arrange
-        obj = UniqueConstraint()
+        obj = UniqueConstraint("dummy_col")
         obj.validate = MagicMock()
         obj.validate.side_effect = Exception('Exception')
         
@@ -31,9 +29,33 @@ class TestUniqueConstraint(unittest.TestCase):
             
         self.assertTrue('Exception' in str(context.exception))
 
+    def test_Template_CheckLogic_WhenValueIsUnique_ReturnsTrue(self):
+        # Arrange
+        constraint = UniqueConstraint("email")
+        db_context = MagicMock()
+        db_context.get_index.return_value = ["other@test.com"]
+        
+        # Act
+        result = constraint.check_logic("user@test.com", db_context)
+        
+        # Assert
+        self.assertTrue(result)
+
+    def test_Template_CheckLogic_WhenValueExists_ReturnsFalse(self):
+        # Arrange
+        constraint = UniqueConstraint("email")
+        db_context = MagicMock()
+        db_context.get_index.return_value = ["user@test.com"]
+        
+        # Act
+        result = constraint.check_logic("user@test.com", db_context)
+        
+        # Assert
+        self.assertFalse(result)
+
     def test_Validate_WhenValueIsNull_SucceedsIfNullable(self):
         # Arrange
-        obj = UniqueConstraint()
+        obj = UniqueConstraint("dummy_col")
         obj.validate = MagicMock()
         obj.validate.return_value = 'SucceedsIfNullable'
         
