@@ -521,11 +521,15 @@ except Exception as e:
 classDiagram
     class IndexFactory {
         <<interface>>
-        +create_index(table, column, type)* Index
+        +create_index(table, column)* Index
     }
     
-    class DefaultIndexFactory {
-        +create_index(table, column, type) Index
+    class BTreeIndexFactory {
+        +create_index(table, column) Index
+    }
+    
+    class HashIndexFactory {
+        +create_index(table, column) Index
     }
     
     class Index {
@@ -544,9 +548,10 @@ classDiagram
         +insertKey(key, row_id)
     }
 
-    IndexFactory <|.. DefaultIndexFactory
-    DefaultIndexFactory ..> BTreeIndex : creates
-    DefaultIndexFactory ..> HashIndex : creates
+    IndexFactory <|.. BTreeIndexFactory
+    IndexFactory <|.. HashIndexFactory
+    BTreeIndexFactory ..> BTreeIndex : creates
+    HashIndexFactory ..> HashIndex : creates
     Index <|-- BTreeIndex
     Index <|-- HashIndex
 ```
@@ -556,14 +561,14 @@ classDiagram
 sequenceDiagram
     actor Client
     participant Tbl as Table
-    participant Fct as DefaultIndexFactory
+    participant Fct as BTreeIndexFactory
     participant Idx as BTreeIndex
     participant Cat as CatalogManager
 
-    Client->>Tbl: create_index("id_col", "BTREE")
+    Client->>Tbl: create_index("id_col", BTreeIndexFactory)
     activate Tbl
     
-    Tbl->>Fct: create_index(self, "id_col", "BTREE")
+    Tbl->>Fct: create_index(self, "id_col")
     activate Fct
     
     Note over Fct: Encapsulated Complex Setup
@@ -584,42 +589,61 @@ sequenceDiagram
 
 ### TDD Code Example
 ```python
-class Index:
+from abc import ABC, abstractmethod
+
+# The Product Interface
+class Index(ABC):
+    @abstractmethod
     def search(self, key): pass
 
+# Concrete Products
 class BTreeIndex(Index):
     def __init__(self, table_name, column_name):
         self.type = "BTREE"
         print(f"Allocating B-Tree nodes for {table_name}.{column_name}")
+        
+    def search(self, key): pass
 
 class HashIndex(Index):
     def __init__(self, table_name, column_name):
         self.type = "HASH"
         print(f"Allocating Hash buckets for {table_name}.{column_name}")
-
-class DefaultIndexFactory:
-    def create_index(self, table_name, column_name, index_type):
-        # Centralized instantiation logic
-        if index_type.upper() == "BTREE":
-            index = BTreeIndex(table_name, column_name)
-        elif index_type.upper() == "HASH":
-            index = HashIndex(table_name, column_name)
-        else:
-            raise ValueError(f"Unsupported Index Type: {index_type}")
         
+    def search(self, key): pass
+
+# The Factory Interface
+class IndexFactory(ABC):
+    @abstractmethod
+    def create_index(self, table_name, column_name) -> Index:
+        pass
+        
+    def register_index(self, index: Index):
         # Centralized post-creation logic (e.g. catalog registration)
         print(f"Registering {index.type} index in System Catalog...")
+
+# Concrete Factories
+class BTreeIndexFactory(IndexFactory):
+    def create_index(self, table_name, column_name) -> Index:
+        index = BTreeIndex(table_name, column_name)
+        self.register_index(index)
+        return index
+
+class HashIndexFactory(IndexFactory):
+    def create_index(self, table_name, column_name) -> Index:
+        index = HashIndex(table_name, column_name)
+        self.register_index(index)
         return index
 
 # --- TEST CODE ---
-factory = DefaultIndexFactory()
+# The client/table decides WHICH factory to use, but depends on the interface
+def create_table_index(table_name, column_name, factory: IndexFactory):
+    return factory.create_index(table_name, column_name)
 
-# The client/table only talks to the factory, never calling constructors directly.
-idx1 = factory.create_index("users", "id", "BTREE")
+idx1 = create_table_index("users", "id", BTreeIndexFactory())
 # Output: Allocating B-Tree nodes for users.id
 # Output: Registering BTREE index in System Catalog...
 
-idx2 = factory.create_index("sessions", "token", "HASH")
+idx2 = create_table_index("sessions", "token", HashIndexFactory())
 # Output: Allocating Hash buckets for sessions.token
 # Output: Registering HASH index in System Catalog...
 ```
