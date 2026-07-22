@@ -169,14 +169,14 @@ Below is a detailed analysis for the deeply evaluated features mentioned above. 
 #### 1. Composite Pattern: Database Objects (Highest Priority)
 
 *   **Why choose Composite instead of discrete `Lists` or rigid hierarchies?**
-    In a DBMS, metadata is naturally hierarchical: A Database contains multiple Schemas, a Schema contains multiple Tables, and a Table contains multiple Columns. If we model this using rigid, separate lists (e.g., Database managing `List<Schema>`, Schema managing `List<Table>`), we face significant challenges when performing system-wide operations like calculating total storage size, generating a comprehensive DDL export, or traversing the object tree.
+    In a DBMS, metadata is naturally hierarchical: A Database contains multiple Schemas, a Schema contains multiple Tables/Views, and a Table contains multiple Columns and Constraints. If we model this using rigid, separate lists (e.g., `List<Table>`, `List<View>`, `List<Constraint>`), we face significant challenges when performing system-wide operations like calculating total storage size, generating a comprehensive DDL export, or traversing the object tree.
     
     Without the Composite pattern, traversing this hierarchy requires tightly coupled code with multiple nested `for` loops and type-checking (e.g., `if (obj instanceof Table)`). 
     
     **The Composite Pattern Solves This By:**
-    1. **Uniformity:** It introduces a common interface (`MetadataNode`) for both leaf nodes (Columns, which have no children) and composite branches (Database, Schema, Table, which contain children).
-    2. **Recursive Traversal:** Operations like `get_metadata()` are delegated down the tree. The client only needs to call `get_metadata()` on the root `Database` object, and the request automatically propagates down to the lowest `Column` level via recursion.
-    3. **Extensibility:** If we later introduce new metadata objects like `View` or `Index` inside a Schema, we simply implement the `MetadataNode` interface. The core traversal logic remains entirely untouched, adhering perfectly to the Open/Closed Principle (OCP).
+    1. **Uniformity:** It introduces a common interface (`MetadataNode`) for both leaf nodes (Columns, Constraints - which have no children) and composite branches (Database, Schema, Table - which contain children).
+    2. **Recursive Traversal:** Operations like `get_metadata()` are delegated down the tree. The client only needs to call `get_metadata()` on the root `Database` object, and the request automatically propagates down to the lowest `Column` or `Constraint` level via recursion.
+    3. **Extensibility:** If we later introduce new metadata objects like `Trigger` or `Index`, we simply implement the `MetadataNode` interface. The core traversal logic remains entirely untouched, adhering perfectly to the Open/Closed Principle (OCP).
 
 ##### Class Diagram
 ```mermaid
@@ -187,20 +187,25 @@ classDiagram
     }
     
     class Database {
-        -List schemas
-        +add_schema(s: MetadataNode)
+        -List~MetadataNode~ schemas
+        +add_child(s: MetadataNode)
         +get_metadata() dict
     }
     
     class Schema {
-        -List tables
-        +add_table(t: MetadataNode)
+        -List~MetadataNode~ objects
+        +add_child(o: MetadataNode)
         +get_metadata() dict
     }
     
     class Table {
-        -List columns
-        +add_column(c: MetadataNode)
+        -List~MetadataNode~ elements
+        +add_child(e: MetadataNode)
+        +get_metadata() dict
+    }
+    
+    class View {
+        -String query
         +get_metadata() dict
     }
     
@@ -209,15 +214,24 @@ classDiagram
         -String type
         +get_metadata() dict
     }
+    
+    class Constraint {
+        -String rule
+        +get_metadata() dict
+    }
 
     MetadataNode <|.. Database
     MetadataNode <|.. Schema
     MetadataNode <|.. Table
+    MetadataNode <|.. View
     MetadataNode <|.. Column
+    MetadataNode <|.. Constraint
     
     Database o-- Schema : contains
     Schema o-- Table : contains
+    Schema o-- View : contains
     Table o-- Column : contains
+    Table o-- Constraint : contains
 ```
 
 ##### Sequence Diagram
@@ -227,7 +241,9 @@ sequenceDiagram
     participant DB as Database
     participant Sch as Schema
     participant Tbl as Table
+    participant Vw as View
     participant Col as Column
+    participant Cst as Constraint
 
     Client->>DB: get_metadata()
     activate DB
@@ -235,16 +251,23 @@ sequenceDiagram
     DB->>Sch: get_metadata()
     activate Sch
     
+    %% Processing Table branch
     Sch->>Tbl: get_metadata()
     activate Tbl
-    
     Tbl->>Col: get_metadata()
     Col-->>Tbl: column_data
-    
-    Tbl-->>Sch: table_data (contains column_data)
+    Tbl->>Cst: get_metadata()
+    Cst-->>Tbl: constraint_data
+    Tbl-->>Sch: table_data (contains cols & constraints)
     deactivate Tbl
     
-    Sch-->>DB: schema_data (contains table_data)
+    %% Processing View branch
+    Sch->>Vw: get_metadata()
+    activate Vw
+    Vw-->>Sch: view_data
+    deactivate Vw
+    
+    Sch-->>DB: schema_data (contains tables & views)
     deactivate Sch
     
     DB-->>Client: database_data (complete JSON tree)
@@ -257,35 +280,69 @@ sequenceDiagram
 class MetadataNode:
     def get_metadata(self): pass
 
-# Composite (Nodes containing children: Database, Schema, Table)
+# Composite (Nodes containing children)
 class Database(MetadataNode):
-    def __init__(self):
-        self.schemas = []
-        
+    def __init__(self): self.children = []
+    def add_child(self, child: MetadataNode): self.children.append(child)
     def get_metadata(self):
-        # Recursively collect data from all Schemas inside
-        return [schema.get_metadata() for schema in self.schemas]
+        return {"type": "Database", "children": [c.get_metadata() for c in self.children]}
 
 class Schema(MetadataNode):
-    def __init__(self):
-        self.tables = []
-        
+    def __init__(self): self.children = []
+    def add_child(self, child: MetadataNode): self.children.append(child)
     def get_metadata(self):
-        # Recursively collect data from all Tables inside
-        return [table.get_metadata() for table in self.tables]
+        return {"type": "Schema", "children": [c.get_metadata() for c in self.children]}
+
+class Table(MetadataNode):
+    def __init__(self, name): 
+        self.name = name
+        self.children = []
+    def add_child(self, child: MetadataNode): self.children.append(child)
+    def get_metadata(self):
+        return {"type": "Table", "name": self.name, "children": [c.get_metadata() for c in self.children]}
+
+# Leaf Nodes (No children)
+class View(MetadataNode):
+    def __init__(self, name): self.name = name
+    def get_metadata(self): return {"type": "View", "name": self.name}
+
+class Column(MetadataNode):
+    def __init__(self, name, col_type): 
+        self.name = name
+        self.col_type = col_type
+    def get_metadata(self): return {"type": "Column", "name": self.name, "col_type": self.col_type}
+
+class Constraint(MetadataNode):
+    def __init__(self, rule): self.rule = rule
+    def get_metadata(self): return {"type": "Constraint", "rule": self.rule}
+
+# --- TEST CODE ---
+db = Database()
+schema = Schema()
+table = Table("Users")
+table.add_child(Column("id", "INT"))
+table.add_child(Constraint("PRIMARY KEY (id)"))
+
+schema.add_child(table)
+schema.add_child(View("ActiveUsers"))
+db.add_child(schema)
+
+# One call recursively builds the entire tree
+import json
+print(json.dumps(db.get_metadata(), indent=2))
 ```
 
 ---
 
-#### 2. Template Method Pattern: Constraint (High Priority)
+#### 2. Template Method Pattern: Constraint Validation (High Priority)
 
 *   **Why choose Template Method instead of discrete, independent checking functions?**
-    A relational database enforces various Constraints (`NotNull`, `Check`, `Unique`, `PrimaryKey`). While the specific business logic for each constraint differs, the overall validation lifecycle is largely identical across all of them:
-    1. **Pre-processing:** Skip validation if the incoming value is `Null` (unless it's a NotNull constraint).
-    2. **Core Logic Check:** Perform the actual validation rule (e.g., `value > 0`).
-    3. **Post-processing:** Throw a standardized `ConstraintViolationException` if the check fails.
+    A relational database enforces various Constraints (`NotNull`, `Check`, `Unique`, `PrimaryKey`). While the specific business logic for each constraint differs drastically (e.g., `NotNull` just checks memory, whereas `Unique` must query the B-Tree index on disk), the overall validation lifecycle is identical across all of them:
+    1. **Pre-processing:** Skip validation if the incoming value is `Null` (unless it's a NotNull constraint itself).
+    2. **Core Logic Check:** Perform the actual validation rule (e.g., `value > 0` or `lookup_index()`).
+    3. **Post-processing:** Throw a standardized `ConstraintViolationException` if the check fails, ensuring the transaction aborts.
 
-    If we implement these as independent functions, developers must manually copy-paste the pre-processing and post-processing boilerplate into every single constraint class. This leads to code duplication and the risk of inconsistent error handling (e.g., one constraint throws an error, another returns a boolean).
+    If we implement these as independent functions, developers must manually copy-paste the pre-processing and post-processing boilerplate into every single constraint class. This leads to code duplication and the dangerous risk of inconsistent error handling (e.g., one constraint throws an error, another accidentally returns a boolean).
 
     **The Template Method Pattern Solves This By:**
     1. **Inversion of Control (The Hollywood Principle):** The abstract base class (`Constraint`) takes control of the overall algorithm's skeleton via the `validate()` method. It says to the subclasses: "Don't call us, we'll call you."
@@ -297,21 +354,28 @@ class Schema(MetadataNode):
 classDiagram
     class Constraint {
         <<abstract>>
-        +validate(value)
-        #check_logic(value)* bool
+        -String column_name
+        +validate(value, db_context)
+        #check_logic(value, db_context)* bool
+        #on_violation()
     }
     
     class NotNullConstraint {
-        #check_logic(value) bool
+        #check_logic(value, db_context) bool
     }
     
     class CheckConstraint {
         -String expression
-        #check_logic(value) bool
+        #check_logic(value, db_context) bool
+    }
+    
+    class UniqueConstraint {
+        #check_logic(value, db_context) bool
     }
 
     Constraint <|-- NotNullConstraint
     Constraint <|-- CheckConstraint
+    Constraint <|-- UniqueConstraint
 ```
 
 ##### Sequence Diagram
@@ -319,33 +383,84 @@ classDiagram
 sequenceDiagram
     actor DB_Engine
     participant Base as Constraint (Abstract)
-    participant Child as CheckConstraint (Concrete)
+    participant Child as UniqueConstraint (Concrete)
+    participant Index as BTree Index (DB Context)
 
-    DB_Engine->>Base: validate(row_data)
+    DB_Engine->>Base: validate("john_doe", db_context)
     activate Base
-    Base->>Base: check_if_null()
     
-    Note right of Base: Calls child's logic method
-    Base->>Child: check_logic(row_data)
-    Child-->>Base: return True/False
+    Note over Base: Step 1: Pre-processing (Null Check)
+    Base->>Base: is_null("john_doe") -> False
     
-    Base->>Base: throw_error_if_false()
-    Base-->>DB_Engine: Validation Success
+    Note over Base: Step 2: Hook Method (Core Logic)
+    Base->>Child: check_logic("john_doe", db_context)
+    activate Child
+    Child->>Index: search("john_doe")
+    Index-->>Child: found = True
+    Child-->>Base: return False (Failed!)
+    deactivate Child
+    
+    Note over Base: Step 3: Post-processing (Exception)
+    Base->>Base: on_violation()
+    Base-->>DB_Engine: throws ConstraintViolationException
     deactivate Base
 ```
 
 ##### TDD Code Example
 ```python
+class ConstraintViolationException(Exception):
+    pass
+
 class Constraint:
-    def validate(self, value): # Hard-coded workflow skeleton (Immutable)
-        if value is None: return True
-        if not self.check_logic(value): 
-            raise Exception("Constraint Violation!")
+    def __init__(self, col_name):
+        self.col_name = col_name
+
+    def validate(self, value, db_context): 
+        # Hard-coded workflow skeleton (Immutable by children)
+        if value is None and not isinstance(self, NotNullConstraint): 
+            return True # Pre-processing: Skip nulls for standard constraints
             
-    def check_logic(self, value): raise NotImplementedError()
+        if not self.check_logic(value, db_context): # Core Logic Hook
+            self.on_violation(value) # Post-processing
+            
+    def check_logic(self, value, db_context): 
+        raise NotImplementedError("Subclasses must implement this hook!")
+        
+    def on_violation(self, value):
+        raise ConstraintViolationException(f"Column '{self.col_name}' violated constraint with value '{value}'!")
 
 class CheckConstraint(Constraint):
-    def check_logic(self, value): return value > 0 # Child class focuses purely on core logic
+    def check_logic(self, value, db_context): 
+        return value > 0 # Simple memory check
+
+class UniqueConstraint(Constraint):
+    def check_logic(self, value, db_context):
+        # Complex DB lookup check
+        index_data = db_context.get_index(self.col_name)
+        return value not in index_data
+
+class NotNullConstraint(Constraint):
+    def check_logic(self, value, db_context):
+        return value is not None
+
+# --- TEST CODE ---
+class MockDBContext:
+    def get_index(self, col): return ["admin", "root"]
+
+db_context = MockDBContext()
+
+# Test 1: Unique Constraint
+unique_username = UniqueConstraint("username")
+unique_username.validate("new_user", db_context) # Passes successfully
+
+try:
+    unique_username.validate("admin", db_context) # Fails
+except Exception as e:
+    print(e) # Output: Column 'username' violated constraint with value 'admin'!
+
+# Test 2: Check Constraint (skips Null properly)
+age_check = CheckConstraint("age")
+age_check.validate(None, db_context) # Passes immediately (Nulls allowed)
 ```
 
 ## 📐 Class Diagrams
