@@ -825,23 +825,33 @@ class DatabaseManager {
     +listDatabases()
     +renameDatabase()
 }
+class MetadataNode {
+    <<interface>>
+    +get_metadata() dict
+}
 class Database {
     +name : String
+    -children : List~MetadataNode~
     +open()
     +contextData
     +schemaDict : Dict
     +close()
     +createSchema()
     +getSchema()
+    +add_child(node: MetadataNode)
+    +get_metadata() dict
 }
 class Schema {
     +name : String
+    -children : List~MetadataNode~
     +createTable()
     +tables : Dict
     +dropTable()
     +getTable()
     +listTables()
     +validate()
+    +add_child(node: MetadataNode)
+    +get_metadata() dict
 }
 class CatalogManager {
     +registerObject()
@@ -856,6 +866,7 @@ class CatalogManager {
 %% 3. Objects
 class Table {
     +name : String
+    -children : List~MetadataNode~
     +insert()
     +update()
     +delete()
@@ -866,13 +877,18 @@ class Table {
     +getRowCount()
     +renameColumn()
     +truncate()
+    +add_child(node: MetadataNode)
+    +get_metadata() dict
 }
 class View {
     +queryDefinition : String
+    -name : String
+    -query : String
     +materializedData : Cache
     +compileView()
     +materialize()
     +refresh()
+    +get_metadata() dict
 }
 class StoredProcedure {
     +execute()
@@ -915,6 +931,7 @@ class Partition {
 %% 4. Table Internals
 class Column {
     +name : String
+    -type : String
     +nullable : Boolean
     +dataType
     +defaultValue
@@ -923,6 +940,7 @@ class Column {
     +setDefaultValue()
     +validateNullable()
     +validateType()
+    +get_metadata() dict
 }
 class Row {
     +rowId : UUID
@@ -944,7 +962,12 @@ class DataType {
 %% 5. Constraints
 class Constraint {
     <<abstract>>
-    +validate()
+    -column_name : String
+    -rule : String
+    +validate(value, db_context)
+    #check_logic(value, db_context) bool
+    #on_violation(value)
+    +get_metadata() dict
 }
 class PrimaryKey
 class ForeignKey {
@@ -957,8 +980,16 @@ class ForeignKey {
     +onUpdateCascade()
     +validate()
 }
-class UniqueConstraint
-class CheckConstraint
+class UniqueConstraint {
+    #check_logic(value, db_context) bool
+}
+class CheckConstraint {
+    -expression : String
+    #check_logic(value, db_context) bool
+}
+class NotNullConstraint {
+    #check_logic(value, db_context) bool
+}
 
 %% 6. Indexes
 class Index {
@@ -1195,6 +1226,26 @@ class User {
 class Role
 class Permission
 
+class PrivilegeHandler {
+    <<abstract>>
+    -next_handler : PrivilegeHandler
+    +set_next(handler: PrivilegeHandler) PrivilegeHandler
+    +check_access(user, action, target) bool
+    #do_check(user, action, target) bool
+}
+class DatabasePrivilegeHandler {
+    #do_check(user, action, target) bool
+}
+class SchemaPrivilegeHandler {
+    #do_check(user, action, target) bool
+}
+class TablePrivilegeHandler {
+    #do_check(user, action, target) bool
+}
+class ColumnPrivilegeHandler {
+    #do_check(user, action, target) bool
+}
+
 %% --- RELATIONSHIPS ---
 
 DatabaseServer --> ConnectionManager
@@ -1283,6 +1334,21 @@ CatalogManager --> StatisticsManager
 SecurityManager --> User
 SecurityManager --> Role
 Role --> Permission
+
+MetadataNode <|.. Database
+MetadataNode <|.. Schema
+MetadataNode <|.. Table
+MetadataNode <|.. View
+MetadataNode <|.. Column
+MetadataNode <|.. Constraint
+
+Constraint <|-- NotNullConstraint
+
+PrivilegeHandler o-- PrivilegeHandler : next_handler
+PrivilegeHandler <|-- DatabasePrivilegeHandler
+PrivilegeHandler <|-- SchemaPrivilegeHandler
+PrivilegeHandler <|-- TablePrivilegeHandler
+PrivilegeHandler <|-- ColumnPrivilegeHandler
 ```
 
 
