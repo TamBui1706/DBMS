@@ -463,6 +463,163 @@ age_check = CheckConstraint("age")
 age_check.validate(None, db_context) # Passes immediately (Nulls allowed)
 ```
 
+---
+
+## 3. Chain of Responsibility Pattern: Privilege Checking (Medium High Priority)
+
+*   **Why choose Chain of Responsibility instead of massive `if/else` checks?**
+    In a DBMS, checking if a user has permission to execute a query (like `SELECT * FROM schema.table`) is highly layered. The database engine must sequentially check:
+    1. Does the user have access to the Database?
+    2. Does the user have access to the Schema?
+    3. Does the user have `SELECT` privilege on the Table?
+    4. (Optional) Does the user have access to specific Columns (Column-Level Security)?
+    
+    If we hardcode this in a single `SecurityManager` class with nested `if/else`, the code becomes incredibly bloated and brittle. Adding a new security layer (e.g., Row-Level Security or IP Address restrictions) would force us to modify the core security engine, violating the Open/Closed Principle.
+
+    **The Chain of Responsibility Pattern Solves This By:**
+    1. **Decoupling:** Each security check is encapsulated into its own distinct, lightweight Handler class (`DatabasePrivilegeHandler`, `SchemaPrivilegeHandler`).
+    2. **Sequential Chaining:** Handlers are linked together. The request passes through the chain one by one. If one handler denies access, it breaks the chain immediately and throws a "Permission Denied" error. If it allows access, it automatically passes the request to the next handler.
+    3. **Dynamic Configuration:** You can dynamically insert or remove security layers at runtime (e.g., enabling Column-Level Security only for the Enterprise edition) simply by rearranging the chain, without altering any core logic.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class PrivilegeHandler {
+        <<abstract>>
+        -PrivilegeHandler next_handler
+        +set_next(handler: PrivilegeHandler)$ PrivilegeHandler
+        +check_access(user, action, target)* bool
+        #do_check(user, action, target)* bool
+    }
+    
+    class DatabasePrivilegeHandler {
+        #do_check(user, action, target) bool
+    }
+    
+    class SchemaPrivilegeHandler {
+        #do_check(user, action, target) bool
+    }
+    
+    class TablePrivilegeHandler {
+        #do_check(user, action, target) bool
+    }
+    
+    class ColumnPrivilegeHandler {
+        #do_check(user, action, target) bool
+    }
+
+    PrivilegeHandler o-- PrivilegeHandler : next_handler
+    PrivilegeHandler <|-- DatabasePrivilegeHandler
+    PrivilegeHandler <|-- SchemaPrivilegeHandler
+    PrivilegeHandler <|-- TablePrivilegeHandler
+    PrivilegeHandler <|-- ColumnPrivilegeHandler
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant Client as Query Executor
+    participant DB as DBHandler
+    participant Sch as SchemaHandler
+    participant Tbl as TableHandler
+    
+    Client->>DB: check_access("alice", "SELECT", "users")
+    activate DB
+    Note over DB: Alice has DB access
+    
+    DB->>Sch: check_access("alice", "SELECT", "users")
+    activate Sch
+    Note over Sch: Alice has Schema access
+    
+    Sch->>Tbl: check_access("alice", "SELECT", "users")
+    activate Tbl
+    Note over Tbl: Alice is granted SELECT on Table
+    Tbl-->>Sch: return True
+    deactivate Tbl
+    
+    Sch-->>DB: return True
+    deactivate Sch
+    
+    DB-->>Client: return True (Query Proceeds)
+    deactivate DB
+    
+    %% Example of Failure
+    Client->>DB: check_access("bob", "DROP", "users")
+    activate DB
+    Note over DB: Bob lacks DB Admin rights
+    DB-->>Client: throws AccessDeniedException
+    deactivate DB
+```
+
+### TDD Code Example
+```python
+class AccessDeniedException(Exception):
+    pass
+
+class PrivilegeHandler:
+    def __init__(self):
+        self.next_handler = None
+        
+    def set_next(self, handler):
+        self.next_handler = handler
+        return handler # Allows method chaining
+        
+    def check_access(self, user, action, target):
+        # 1. Execute the specific check for this layer
+        if not self.do_check(user, action, target):
+            raise AccessDeniedException(f"Access Denied at {self.__class__.__name__} for user '{user}'")
+        
+        # 2. If passed and there's a next handler, delegate down the chain
+        if self.next_handler:
+            return self.next_handler.check_access(user, action, target)
+        
+        # 3. If passed and no more handlers, access is fully granted
+        return True 
+        
+    def do_check(self, user, action, target):
+        raise NotImplementedError()
+
+# Concrete Handlers
+class DatabasePrivilegeHandler(PrivilegeHandler):
+    def do_check(self, user, action, target):
+        # Business logic: Only 'admin' can perform DROP operations
+        if action == "DROP" and user != "admin": return False
+        return True
+
+class SchemaPrivilegeHandler(PrivilegeHandler):
+    def do_check(self, user, action, target):
+        # Business logic: 'guest' users have no access to underlying schemas
+        return user != "guest"
+
+class TablePrivilegeHandler(PrivilegeHandler):
+    def do_check(self, user, action, target):
+        # Business logic: 'alice' has SELECT rights, but no UPDATE rights
+        if user == "alice" and action == "UPDATE": return False
+        return True
+
+# --- TEST CODE ---
+# 1. Build the Security Chain dynamically
+security_chain = DatabasePrivilegeHandler()
+security_chain.set_next(SchemaPrivilegeHandler()).set_next(TablePrivilegeHandler())
+
+# 2. Test Cases
+# Test A: Alice tries to SELECT (Passes all 3 layers)
+print(security_chain.check_access("alice", "SELECT", "users")) # Output: True
+
+# Test B: Alice tries to UPDATE (Fails at Layer 3: TablePrivilegeHandler)
+try:
+    security_chain.check_access("alice", "UPDATE", "users")
+except Exception as e:
+    print(e) # Output: Access Denied at TablePrivilegeHandler for user 'alice'
+
+# Test C: Bob tries to DROP (Fails immediately at Layer 1: DatabasePrivilegeHandler)
+try:
+    security_chain.check_access("bob", "DROP", "users")
+except Exception as e:
+    print(e) # Output: Access Denied at DatabasePrivilegeHandler for user 'bob'
+```
+
+
 ## 📐 Class Diagrams
 
 
