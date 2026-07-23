@@ -102,6 +102,44 @@ This group manages how data is persistently stored and retrieved from disk.
 | **Medium** | Data Page Snapshot | **Memento** | Captures before-image and after-image of data pages for crash recovery. |
 | **Medium** | Table Partitioning | **Strategy** | Allows switching between Hash, Range, and List partitioning schemes at runtime. |
 
+## 6. Distributed Systems & High Availability
+
+This group handles replication, sharding, and cluster coordination for modern distributed databases.
+
+| Priority | Feature | Design Pattern | Reason / Context |
+| :---: | :--- | :--- | :--- |
+| **Highest** | Consensus Algorithm | **State** | Manages node states (Follower, Candidate, Leader) in Raft/Paxos. |
+| **Highest** | Replication Manager | **Observer** | Replicates data changes to standby nodes as soon as the primary commits. |
+| **High** | Sharding Strategy | **Strategy** | Switches between Hash, Range, and Directory-based sharding algorithms. |
+| **High** | Distributed Lock | **Mediator** | Coordinates locks across multiple distributed nodes to prevent race conditions. |
+| **Medium High** | Split-Brain Resolution | **Chain of Responsibility** | Tries multiple tie-breaking rules when cluster network partitions occur. |
+| **Medium High** | Node Communication | **Proxy** | Intercepts RPC calls between nodes to handle retries and timeouts transparently. |
+| **Medium** | Topology Manager | **Singleton** | Maintains a single, synchronized global view of all active nodes in the cluster. |
+| **Medium** | Data Rebalancing | **Command** | Encapsulates the task of moving data partitions between nodes as a queueable job. |
+| **Medium** | Health Checking | **Visitor** | Visits nodes across the network to collect latency and throughput metrics safely. |
+| **Medium** | Read Replica Routing | **Adapter** | Routes read queries to the closest replica while hiding cluster topology complexity. |
+| **Medium** | Failover Execution | **Template Method** | Standardizes the failover workflow (Detect, Elect, Promote) across different node types. |
+| **Medium** | Gossip Protocol | **Iterator** | Traverses random neighbor nodes periodically to disseminate cluster state efficiently. |
+
+## 7. Security, Auditing & Compliance
+
+This group ensures data privacy, access control, and regulatory compliance.
+
+| Priority | Feature | Design Pattern | Reason / Context |
+| :---: | :--- | :--- | :--- |
+| **Highest** | Authentication | **Chain of Responsibility** | Chains multiple auth methods (Password, LDAP, Kerberos, OAuth) for fallback. |
+| **Highest** | Role-Based Access | **Composite** | Roles can inherit permissions from other Roles, forming a nested hierarchy. |
+| **High** | Audit Logging | **Decorator** | Attaches tracking capabilities to DDL/DML operations dynamically. |
+| **High** | Data Encryption (TDE) | **Proxy** | Encrypts and decrypts data pages transparently right before disk I/O. |
+| **Medium High** | Key Management | **Singleton** | Centralizes and strictly controls access to encryption keys and master secrets. |
+| **Medium High** | Row-Level Security | **Strategy** | Applies different predicate logic based on the user's role to filter visible rows. |
+| **Medium** | SQL Injection Filter | **Interpreter** | Parses incoming SQL specifically to detect and block malicious token patterns. |
+| **Medium** | Data Masking | **Adapter** | Wraps normal data output with masked formats (e.g., `***-***-1234`) for untrusted clients. |
+| **Medium** | Connection SSL/TLS | **Factory Method** | Instantiates secure socket connections based on specific client protocol capabilities. |
+| **Medium** | Privilege Revocation | **Observer** | Notifies active sessions to terminate immediately if a user's permissions are revoked. |
+| **Medium** | Security Policy | **Builder** | Constructs complex security profiles (combining IP whitelists and time restrictions) step by step. |
+| **Medium** | Vulnerability Scanner | **Visitor** | Scans system configurations without altering them to report potential weaknesses. |
+
 ---
 
 # Deep Dive Analysis (Class Diagrams & Sequence Diagrams)
@@ -843,5 +881,140 @@ fk_constraint.trigger_delete(child_db, deleted_id=10)
 print("\nTesting SET NULL:")
 fk_constraint.set_delete_action(SetNullAction())
 fk_constraint.trigger_delete(child_db, deleted_id=10)
-# Output: SET NULL: Setting user_id to NULL in child table where user_id = 10
+```
+
+---
+
+## 6. Iterator Pattern: Query Execution (Volcano Model) (High Priority)
+
+*   **Why choose Iterator instead of fetching all data into memory at once?**
+    When a database executes a query like `SELECT * FROM users JOIN orders`, it must process massive amounts of data. If the `Join` operator processes everything and returns a giant list to the `Filter` operator, it could consume gigabytes of RAM and crash the server (Out-Of-Memory).
+    
+    **The Iterator Pattern (Volcano Model) Solves This By:**
+    1. **Pipelining:** Every physical execution operator (`TableScan`, `Filter`, `HashJoin`) implements a standard Iterator interface with a `next()` method.
+    2. **Streaming Execution:** Data is pulled up the tree one row (or batch) at a time. The root node calls `next()`, which trickles down to the leaf node.
+    3. **Low Memory Footprint:** Since rows are streamed lazily, only a small number of rows reside in memory at any given time, allowing the DBMS to process datasets much larger than RAM.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Operator {
+        <<interface>>
+        +open()*
+        +next()* Row
+        +close()*
+    }
+    
+    class SeqScanOperator {
+        -String table_name
+        -int current_index
+        +open()
+        +next() Row
+        +close()
+    }
+    
+    class FilterOperator {
+        -Operator child
+        -Predicate condition
+        +open()
+        +next() Row
+        +close()
+    }
+    
+    class LimitOperator {
+        -Operator child
+        -int limit
+        -int count
+        +open()
+        +next() Row
+        +close()
+    }
+
+    Operator <|.. SeqScanOperator
+    Operator <|.. FilterOperator
+    Operator <|.. LimitOperator
+    FilterOperator o-- Operator : child
+    LimitOperator o-- Operator : child
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+class Operator(ABC):
+    @abstractmethod
+    def open(self): pass
+    @abstractmethod
+    def next(self): pass
+    @abstractmethod
+    def close(self): pass
+
+class SeqScanOperator(Operator):
+    def __init__(self, data):
+        self.data = data
+        self.cursor = 0
+        
+    def open(self): self.cursor = 0
+    def next(self):
+        if self.cursor < len(self.data):
+            row = self.data[self.cursor]
+            self.cursor += 1
+            return row
+        return None
+    def close(self): pass
+
+class FilterOperator(Operator):
+    def __init__(self, child_op, predicate):
+        self.child = child_op
+        self.predicate = predicate
+        
+    def open(self): self.child.open()
+    def next(self):
+        while True:
+            row = self.child.next()
+            if row is None: return None
+            if self.predicate(row): return row # Passes the filter
+    def close(self): self.child.close()
+
+class LimitOperator(Operator):
+    def __init__(self, child_op, limit):
+        self.child = child_op
+        self.limit = limit
+        self.count = 0
+        
+    def open(self):
+        self.child.open()
+        self.count = 0
+        
+    def next(self):
+        if self.count >= self.limit: return None
+        row = self.child.next()
+        if row is not None: self.count += 1
+        return row
+    def close(self): self.child.close()
+
+# --- TEST CODE ---
+# Simulating a physical query plan: SELECT * FROM users WHERE age > 18 LIMIT 2
+raw_data = [
+    {"id": 1, "age": 15},
+    {"id": 2, "age": 22},
+    {"id": 3, "age": 30},
+    {"id": 4, "age": 12},
+    {"id": 5, "age": 25}
+]
+
+scan = SeqScanOperator(raw_data)
+filter_op = FilterOperator(scan, lambda r: r["age"] > 18)
+limit_op = LimitOperator(filter_op, 2)
+
+# Execution Engine Engine loop (Pull-based)
+limit_op.open()
+while True:
+    row = limit_op.next()
+    if row is None: break
+    print(f"Fetched Row: {row}")
+limit_op.close()
+# Output:
+# Fetched Row: {'id': 2, 'age': 22}
+# Fetched Row: {'id': 3, 'age': 30}
 ```
