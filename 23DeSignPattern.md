@@ -4215,7 +4215,3 @@ Can parse ngon ngu don gian?
 | **Circular Dependencies** | A->B->C->A | Mediator / DI |
 
 ---
-
-*Tai lieu nay duoc tao de hoc tap 23 Design Pattern cua GoF mot cach day du va thuc te.*
-
-*Tham khao: "Design Patterns: Elements of Reusable Object-Oriented Software" - Gang of Four (1994)*
