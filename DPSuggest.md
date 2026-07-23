@@ -7,21 +7,21 @@ This group manages the data-constituent components (Schemas, Tables, Constraints
 
 | Priority | Feature | Design Pattern | Reason / Context |
 | :---: | :--- | :--- | :--- |
-| **Highest** | Database Objects | **Composite** | Database contains Schemas, Schema contains Tables/Views, and manages them uniformly. |
-| **High** | Constraint Validation | **Template Method** | `Validate()` defines the workflow, each constraint only implements `Check()`. |
-| **High** | Object Creation | **Factory Method** | Centralizes instantiation logic for various metadata objects like Indexes and Triggers. |
-| **Medium High** | Referential Action | **Strategy** | Selects Cascade, Restrict, SetNull, or SetDefault behavior when deleting/updating. |
-| **Medium High** | Schema Cloning | **Prototype** | Enables cloning of an existing Table or Schema structure without creating from scratch. |
-| **Medium High** | Privilege Checking | **Chain of Responsibility** | Passes permission checks sequentially from Database -> Schema -> Table levels. |
-| **Medium** | DDL Command | **Command** | `CreateTable`, `DropTable`, and `AlterTable` operations are encapsulated into executable objects. |
-| **Medium** | Metadata Caching | **Proxy** | Acts as a placeholder for Table definitions to allow lazy-loading from disk. |
-| **Medium** | Table Modification | **Decorator** | Dynamically attaches temporary constraints or properties to a Table during execution. |
-| **Medium** | Schema Navigation | **Iterator** | Provides sequential access to traverse all objects in a schema transparently. |
-| **Medium** | Data Type Sharing | **Flyweight** | Shares common data type instances (e.g., `INT`) across thousands of columns to save RAM. |
-| **Medium** | Metadata Snapshot | **Memento** | Captures Table schema state before an `ALTER` operation to allow rollback on failure. |
-| **Medium** | View Refreshment | **Strategy** | Allows switching between `Immediate`, `Deferred`, or `OnDemand` view materialization algorithms. |
-| **Medium** | Trigger Notification | **Observer** | When a row changes, the Table notifies all attached Triggers to execute their custom logic. |
-| **Medium** | Dependency Validation | **Visitor** | Traverses Views and Stored Procedures to check for broken dependencies when a base Table drops. |
+| **Highest** | **Schema Management** | **Composite** | Database contains Schemas, Schema contains Tables/Views, and manages them uniformly. |
+| **Medium High** |  | **Prototype** | Enables cloning of an existing Table or Schema structure without creating from scratch. |
+| **Medium** |  | **Command** | `CreateTable`, `DropTable`, and `AlterTable` operations are encapsulated into executable objects. |
+| **Medium** |  | **Iterator** | Provides sequential access to traverse all objects in a schema transparently. |
+| **High** | **Constraint Management** | **Template Method** | `Validate()` defines the workflow, each constraint only implements `Check()`. |
+| **Medium** |  | **Decorator** | Dynamically attaches temporary constraints or properties to a Table during execution. |
+| **Medium** |  | **Visitor** | Traverses Views and Stored Procedures to check for broken dependencies when a base Table drops. |
+| **High** | **Object Creation & Types** | **Factory Method** | Centralizes instantiation logic for various metadata objects like Indexes and Triggers. |
+| **Medium** |  | **Flyweight** | Shares common data type instances (e.g., `INT`) across thousands of columns to save RAM. |
+| **Medium High** | **Referential Integrity** | **Strategy** | Selects Cascade, Restrict, SetNull, or SetDefault behavior when deleting/updating. |
+| **Medium High** | **Security & Privileges** | **Chain of Responsibility** | Passes permission checks sequentially from Database -> Schema -> Table levels. |
+| **Medium** | **Metadata Management** | **Proxy** | Acts as a placeholder for Table definitions to allow lazy-loading from disk. |
+| **Medium** |  | **Memento** | Captures Table schema state before an `ALTER` operation to allow rollback on failure. |
+| **Medium** | **Views & Triggers** | **Strategy** | Allows switching between `Immediate`, `Deferred`, or `OnDemand` view materialization algorithms. |
+| **Medium** |  | **Observer** | When a row changes, the Table notifies all attached Triggers to execute their custom logic. |
 
 ## 2. Database Management & Connectivity
 
@@ -29,21 +29,21 @@ This group provides the external interface and manages the database lifecycle.
 
 | Priority | Feature | Design Pattern | Reason / Context |
 | :---: | :--- | :--- | :--- |
-| **Highest** | Catalog Management | **Singleton** | Ensures exactly one global registry instance manages all database metadata. |
-| **High** | DatabaseServer | **Facade** | Provides a single unified API to start, stop and configure database server. |
-| **High** | Server Config | **Builder** | Constructs complex server startup configurations (memory size, thread pool) step by step. |
-| **Medium High** | Database Lifecycle | **State** | Database transitions between states such as Offline, Online, ReadOnly, and Recovering. |
-| **Medium High** | Database Events | **Observer** | Monitoring systems receive events for Create, Drop, Backup, and Restore. |
-| **Medium High** | Connection Pooling | **Object Pool** | Reuses a fixed pool of client connections to avoid costly startup/teardown overhead. |
-| **Medium High** | Audit Logging | **Decorator** | Attaches auditing capabilities to user actions dynamically without modifying core classes. |
-| **Medium** | Backup/Restore | **Template Method**| Provides a fixed backup workflow, while differentiating between Full and Incremental. |
-| **Medium** | Task Scheduling | **Command** | Encapsulates background tasks (vacuum, statistics gathering) into queueable objects. |
-| **Medium** | Perf Monitoring | **Visitor** | Gathers health statistics by visiting various management components without modifying them. |
-| **Medium** | Cluster Discovery | **Mediator** | Centralizes communication between cluster nodes (Heartbeats, Leader Election). |
-| **Medium** | Health Checking | **Strategy** | Allows switching between simple Ping checks and Deep structural checks. |
-| **Medium** | Access Control | **Proxy** | A security proxy intercepts client connections to verify permissions before hitting the engine. |
-| **Medium** | Config Resolution | **Chain of Responsibility** | Resolves settings by checking session-level, database-level, and global-level configs. |
-| **Medium** | Plugin Loader | **Factory Method** | Centralizes instantiation of third-party plugins (auth providers, custom types). |
+| **Highest** | **Database Server Core** | **Singleton** | Ensures exactly one global registry instance manages all database metadata. |
+| **High** |  | **Facade** | Provides a single unified API to start, stop and configure database server. |
+| **High** |  | **Builder** | Constructs complex server startup configurations (memory size, thread pool) step by step. |
+| **Medium High** |  | **State** | Database transitions between states such as Offline, Online, ReadOnly, and Recovering. |
+| **Medium High** |  | **Observer** | Monitoring systems receive events for Create, Drop, Backup, and Restore. |
+| **Medium High** | **Connection & Settings** | **Object Pool** | Reuses a fixed pool of client connections to avoid costly startup/teardown overhead. |
+| **Medium** |  | **Proxy** | A security proxy intercepts client connections to verify permissions before hitting the engine. |
+| **Medium** |  | **Chain of Responsibility** | Resolves settings by checking session-level, database-level, and global-level configs. |
+| **Medium High** | **Maintenance & Monitoring** | **Decorator** | Attaches auditing capabilities to user actions dynamically without modifying core classes. |
+| **Medium** |  | **Command** | Encapsulates background tasks (vacuum, statistics gathering) into queueable objects. |
+| **Medium** |  | **Visitor** | Gathers health statistics by visiting various management components without modifying them. |
+| **Medium** |  | **Strategy** | Allows switching between simple Ping checks and Deep structural checks. |
+| **Medium** | **Storage & Backup** | **Template Method** | Provides a fixed backup workflow, while differentiating between Full and Incremental. |
+| **Medium** | **Cluster & Plugins** | **Mediator** | Centralizes communication between cluster nodes (Heartbeats, Leader Election). |
+| **Medium** |  | **Factory Method** | Centralizes instantiation of third-party plugins (auth providers, custom types). |
 
 ## 3. Query Processing & Optimization
 
@@ -51,18 +51,18 @@ This group handles parsing, optimizing, and executing SQL queries efficiently.
 
 | Priority | Feature | Design Pattern | Reason / Context |
 | :---: | :--- | :--- | :--- |
-| **Highest** | Abstract Syntax Tree | **Composite** | Represents parsed SQL queries as a nested tree of expressions and clauses. |
-| **Highest** | Query Optimizer | **Strategy** | Allows switching between Cost-Based Optimizer (CBO) and Rule-Based Optimizer (RBO). |
-| **High** | Plan Generation | **Builder** | Constructs complex physical execution plans step by step from logical plans. |
-| **High** | Expression Evaluation | **Interpreter** | Evaluates mathematical and logical expressions within WHERE/HAVING clauses. |
-| **Medium High** | Operator Traversal | **Visitor** | Traverses the query plan to apply transformations (predicate pushdown) cleanly. |
-| **Medium High** | Query Execution | **Iterator** | Employs the Volcano model where physical operators (`Join`, `Filter`) fetch rows via `next()`. |
-| **Medium High** | Cached Plan Lookup | **Flyweight** | Reuses identical prepared execution plans across multiple sessions to save memory. |
-| **Medium** | Query Rewrite | **Chain of Responsibility** | Passes the query through a series of rewrite rules (view expansion, constant folding). |
-| **Medium** | Execution Context | **Singleton** | Provides global configuration and parameters for the current running query. |
-| **Medium** | Operator Factory | **Factory Method** | Creates specific execution operators (e.g., HashJoin, MergeJoin) based on optimizer choices. |
-| **Medium** | Query Progress | **Observer** | Notifies monitoring systems about the progress of long-running analytics queries. |
-| **Medium** | Result Set Formatting | **Adapter** | Converts internal data representations into standard client protocols (e.g., JDBC/ODBC). |
+| **Highest** | **SQL Parsing** | **Composite** | Represents parsed SQL queries as a nested tree of expressions and clauses. |
+| **High** |  | **Interpreter** | Evaluates mathematical and logical expressions within WHERE/HAVING clauses. |
+| **Highest** | **Query Optimization** | **Strategy** | Allows switching between Cost-Based Optimizer (CBO) and Rule-Based Optimizer (RBO). |
+| **Medium High** |  | **Visitor** | Traverses the query plan to apply transformations (predicate pushdown) cleanly. |
+| **Medium** |  | **Chain of Responsibility** | Passes the query through a series of rewrite rules (view expansion, constant folding). |
+| **High** | **Query Execution** | **Builder** | Constructs complex physical execution plans step by step from logical plans. |
+| **Medium High** |  | **Iterator** | Employs the Volcano model where physical operators (`Join`, `Filter`) fetch rows via `next()`. |
+| **Medium** |  | **Singleton** | Provides global configuration and parameters for the current running query. |
+| **Medium** |  | **Factory Method** | Creates specific execution operators (e.g., HashJoin, MergeJoin) based on optimizer choices. |
+| **Medium High** | **Result & Caching** | **Flyweight** | Reuses identical prepared execution plans across multiple sessions to save memory. |
+| **Medium** |  | **Observer** | Notifies monitoring systems about the progress of long-running analytics queries. |
+| **Medium** |  | **Adapter** | Converts internal data representations into standard client protocols (e.g., JDBC/ODBC). |
 
 ## 4. Transaction Management & Concurrency Control
 
@@ -70,18 +70,18 @@ This group guarantees ACID properties across multiple concurrent operations.
 
 | Priority | Feature | Design Pattern | Reason / Context |
 | :---: | :--- | :--- | :--- |
-| **Highest** | Transaction State | **State** | Manages transaction transitions (Active, Partially Committed, Committed, Aborted). |
-| **Highest** | Lock Manager | **Mediator** | Coordinates lock requests and releases between transactions to prevent conflicts. |
-| **High** | Write-Ahead Log (WAL)| **Command** | Encapsulates every database modification as a log record that can be replayed or undone. |
-| **High** | Isolation Levels | **Strategy** | Implements different behaviors for Read Committed, Repeatable Read, and Serializable. |
-| **Medium High** | Deadlock Detection | **Visitor** | Traverses the Wait-For Graph to identify cycles (deadlocks) among waiting transactions. |
-| **Medium High** | MVCC Versioning | **Prototype** | Creates new versions of rows for Multi-Version Concurrency Control instead of overwriting. |
-| **Medium** | Distributed Commit | **Template Method** | Defines the strict Prepare and Commit phases (2PC), delegating specific node actions. |
-| **Medium** | Transaction Lifecycle | **Observer** | Notifies dependent components (e.g., Cache Manager) when a transaction commits or aborts. |
-| **Medium** | Timestamp Generator | **Singleton** | Provides globally unique, monotonically increasing timestamps for MVCC. |
-| **Medium** | Savepoints | **Memento** | Allows a transaction to rollback to an intermediate state without fully aborting. |
-| **Medium** | Commit Queue | **Command** | Queues commit requests to be flushed to disk in efficient batches (Group Commit). |
-| **Medium** | Conflict Resolution | **Chain of Responsibility** | Passes conflicting writes through rules (First-Writer-Wins, Timestamp ordering). |
+| **Highest** | **Transaction Core** | **State** | Manages transaction transitions (Active, Partially Committed, Committed, Aborted). |
+| **Medium** |  | **Observer** | Notifies dependent components (e.g., Cache Manager) when a transaction commits or aborts. |
+| **Medium** |  | **Memento** | Allows a transaction to rollback to an intermediate state without fully aborting. |
+| **Highest** | **Concurrency Control** | **Mediator** | Coordinates lock requests and releases between transactions to prevent conflicts. |
+| **Medium High** |  | **Visitor** | Traverses the Wait-For Graph to identify cycles (deadlocks) among waiting transactions. |
+| **Medium** |  | **Chain of Responsibility** | Passes conflicting writes through rules (First-Writer-Wins, Timestamp ordering). |
+| **High** | **Durability & Commit** | **Command** | Encapsulates every database modification as a log record that can be replayed or undone. |
+| **Medium** |  | **Template Method** | Defines the strict Prepare and Commit phases (2PC), delegating specific node actions. |
+| **Medium** |  | **Command** | Queues commit requests to be flushed to disk in efficient batches (Group Commit). |
+| **High** | **MVCC & Isolation** | **Strategy** | Implements different behaviors for Read Committed, Repeatable Read, and Serializable. |
+| **Medium High** |  | **Prototype** | Creates new versions of rows for Multi-Version Concurrency Control instead of overwriting. |
+| **Medium** |  | **Singleton** | Provides globally unique, monotonically increasing timestamps for MVCC. |
 
 ## 5. Storage Engine & Indexing
 
@@ -89,18 +89,18 @@ This group manages how data is persistently stored and retrieved from disk.
 
 | Priority | Feature | Design Pattern | Reason / Context |
 | :---: | :--- | :--- | :--- |
-| **Highest** | Storage Interface | **Adapter** | Wraps OS-specific file I/O operations into a standardized DBMS storage interface. |
-| **Highest** | Buffer Eviction | **Strategy** | Encapsulates page replacement algorithms (LRU, Clock, LFU) to allow dynamic switching. |
-| **High** | Buffer Pool Manager | **Flyweight** | Manages a pool of fixed-size memory pages shared across various queries to minimize I/O. |
-| **High** | Index Creation | **Factory Method** | Abstracts the instantiation of specific index structures (B+Tree, Hash, Bitmap). |
-| **Medium High** | B+Tree Traversal | **Iterator** | Provides sequential access to leaf nodes for efficient range scans. |
-| **Medium High** | Page Compression | **Decorator** | Adds transparent compression/decompression to storage pages before writing to disk. |
-| **Medium High** | Storage Hierarchy | **Composite** | Represents Tablespaces containing Files, which contain Extents, which contain Pages. |
-| **Medium** | Index Search | **Template Method** | Defines a generic search algorithm, delegating specific node comparisons to child classes. |
-| **Medium** | Data Serialization | **Builder** | Constructs complex row formats (handling null bitmaps, variable lengths) step by step. |
-| **Medium** | Write Cache | **Proxy** | Intercepts writes to coalesce them in memory before flushing sequentially to disk. |
-| **Medium** | Data Page Snapshot | **Memento** | Captures before-image and after-image of data pages for crash recovery. |
-| **Medium** | Table Partitioning | **Strategy** | Allows switching between Hash, Range, and List partitioning schemes at runtime. |
+| **Highest** | **Storage Structures** | **Adapter** | Wraps OS-specific file I/O operations into a standardized DBMS storage interface. |
+| **Medium High** |  | **Decorator** | Adds transparent compression/decompression to storage pages before writing to disk. |
+| **Medium High** |  | **Composite** | Represents Tablespaces containing Files, which contain Extents, which contain Pages. |
+| **Medium** |  | **Proxy** | Intercepts writes to coalesce them in memory before flushing sequentially to disk. |
+| **Medium** |  | **Memento** | Captures before-image and after-image of data pages for crash recovery. |
+| **Highest** | **Buffer Management** | **Strategy** | Encapsulates page replacement algorithms (LRU, Clock, LFU) to allow dynamic switching. |
+| **High** |  | **Flyweight** | Manages a pool of fixed-size memory pages shared across various queries to minimize I/O. |
+| **High** | **Indexing** | **Factory Method** | Abstracts the instantiation of specific index structures (B+Tree, Hash, Bitmap). |
+| **Medium High** |  | **Iterator** | Provides sequential access to leaf nodes for efficient range scans. |
+| **Medium** |  | **Template Method** | Defines a generic search algorithm, delegating specific node comparisons to child classes. |
+| **Medium** | **Data Formatting** | **Builder** | Constructs complex row formats (handling null bitmaps, variable lengths) step by step. |
+| **Medium** |  | **Strategy** | Allows switching between Hash, Range, and List partitioning schemes at runtime. |
 
 ## 6. Distributed Systems & High Availability
 
@@ -108,18 +108,18 @@ This group handles replication, sharding, and cluster coordination for modern di
 
 | Priority | Feature | Design Pattern | Reason / Context |
 | :---: | :--- | :--- | :--- |
-| **Highest** | Consensus Algorithm | **State** | Manages node states (Follower, Candidate, Leader) in Raft/Paxos. |
-| **Highest** | Replication Manager | **Observer** | Replicates data changes to standby nodes as soon as the primary commits. |
-| **High** | Sharding Strategy | **Strategy** | Switches between Hash, Range, and Directory-based sharding algorithms. |
-| **High** | Distributed Lock | **Mediator** | Coordinates locks across multiple distributed nodes to prevent race conditions. |
-| **Medium High** | Split-Brain Resolution | **Chain of Responsibility** | Tries multiple tie-breaking rules when cluster network partitions occur. |
-| **Medium High** | Node Communication | **Proxy** | Intercepts RPC calls between nodes to handle retries and timeouts transparently. |
-| **Medium** | Topology Manager | **Singleton** | Maintains a single, synchronized global view of all active nodes in the cluster. |
-| **Medium** | Data Rebalancing | **Command** | Encapsulates the task of moving data partitions between nodes as a queueable job. |
-| **Medium** | Health Checking | **Visitor** | Visits nodes across the network to collect latency and throughput metrics safely. |
-| **Medium** | Read Replica Routing | **Adapter** | Routes read queries to the closest replica while hiding cluster topology complexity. |
-| **Medium** | Failover Execution | **Template Method** | Standardizes the failover workflow (Detect, Elect, Promote) across different node types. |
-| **Medium** | Gossip Protocol | **Iterator** | Traverses random neighbor nodes periodically to disseminate cluster state efficiently. |
+| **Highest** | **Cluster State** | **State** | Manages node states (Follower, Candidate, Leader) in Raft/Paxos. |
+| **Highest** |  | **Observer** | Replicates data changes to standby nodes as soon as the primary commits. |
+| **Medium** |  | **Singleton** | Maintains a single, synchronized global view of all active nodes in the cluster. |
+| **High** | **Distribution & Routing** | **Strategy** | Switches between Hash, Range, and Directory-based sharding algorithms. |
+| **Medium** |  | **Adapter** | Routes read queries to the closest replica while hiding cluster topology complexity. |
+| **High** | **Cluster Coordination** | **Mediator** | Coordinates locks across multiple distributed nodes to prevent race conditions. |
+| **Medium High** |  | **Chain of Responsibility** | Tries multiple tie-breaking rules when cluster network partitions occur. |
+| **Medium High** |  | **Proxy** | Intercepts RPC calls between nodes to handle retries and timeouts transparently. |
+| **Medium** | **Cluster Operations** | **Command** | Encapsulates the task of moving data partitions between nodes as a queueable job. |
+| **Medium** |  | **Template Method** | Standardizes the failover workflow (Detect, Elect, Promote) across different node types. |
+| **Medium** |  | **Iterator** | Traverses random neighbor nodes periodically to disseminate cluster state efficiently. |
+| **Medium** | **Maintenance & Monitoring** | **Visitor** | Visits nodes across the network to collect latency and throughput metrics safely. |
 
 ## 7. Security, Auditing & Compliance
 
@@ -127,18 +127,18 @@ This group ensures data privacy, access control, and regulatory compliance.
 
 | Priority | Feature | Design Pattern | Reason / Context |
 | :---: | :--- | :--- | :--- |
-| **Highest** | Authentication | **Chain of Responsibility** | Chains multiple auth methods (Password, LDAP, Kerberos, OAuth) for fallback. |
-| **Highest** | Role-Based Access | **Composite** | Roles can inherit permissions from other Roles, forming a nested hierarchy. |
-| **High** | Audit Logging | **Decorator** | Attaches tracking capabilities to DDL/DML operations dynamically. |
-| **High** | Data Encryption (TDE) | **Proxy** | Encrypts and decrypts data pages transparently right before disk I/O. |
-| **Medium High** | Key Management | **Singleton** | Centralizes and strictly controls access to encryption keys and master secrets. |
-| **Medium High** | Row-Level Security | **Strategy** | Applies different predicate logic based on the user's role to filter visible rows. |
-| **Medium** | SQL Injection Filter | **Interpreter** | Parses incoming SQL specifically to detect and block malicious token patterns. |
-| **Medium** | Data Masking | **Adapter** | Wraps normal data output with masked formats (e.g., `***-***-1234`) for untrusted clients. |
-| **Medium** | Connection SSL/TLS | **Factory Method** | Instantiates secure socket connections based on specific client protocol capabilities. |
-| **Medium** | Privilege Revocation | **Observer** | Notifies active sessions to terminate immediately if a user's permissions are revoked. |
-| **Medium** | Security Policy | **Builder** | Constructs complex security profiles (combining IP whitelists and time restrictions) step by step. |
-| **Medium** | Vulnerability Scanner | **Visitor** | Scans system configurations without altering them to report potential weaknesses. |
+| **Highest** | **Authentication & Roles** | **Chain of Responsibility** | Chains multiple auth methods (Password, LDAP, Kerberos, OAuth) for fallback. |
+| **Highest** |  | **Composite** | Roles can inherit permissions from other Roles, forming a nested hierarchy. |
+| **Medium** |  | **Observer** | Notifies active sessions to terminate immediately if a user's permissions are revoked. |
+| **High** | **Maintenance & Monitoring** | **Decorator** | Attaches tracking capabilities to DDL/DML operations dynamically. |
+| **High** | **Data Protection** | **Proxy** | Encrypts and decrypts data pages transparently right before disk I/O. |
+| **Medium High** |  | **Singleton** | Centralizes and strictly controls access to encryption keys and master secrets. |
+| **Medium High** |  | **Strategy** | Applies different predicate logic based on the user's role to filter visible rows. |
+| **Medium** |  | **Adapter** | Wraps normal data output with masked formats (e.g., `***-***-1234`) for untrusted clients. |
+| **Medium** | **Connection Security** | **Interpreter** | Parses incoming SQL specifically to detect and block malicious token patterns. |
+| **Medium** |  | **Factory Method** | Instantiates secure socket connections based on specific client protocol capabilities. |
+| **Medium** |  | **Builder** | Constructs complex security profiles (combining IP whitelists and time restrictions) step by step. |
+| **Medium** | **Auditing & Compliance** | **Visitor** | Scans system configurations without altering them to report potential weaknesses. |
 
 ---
 
