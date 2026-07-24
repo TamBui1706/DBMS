@@ -932,6 +932,230 @@ sequenceDiagram
 
 
 
+
+
+---
+
+## 11. Builder Pattern (Xây Dựng Cấu Trúc Bảng)
+**Mục tiêu:** Xây dựng một đối tượng Bảng phức tạp từng bước một thay vì nhét tất cả vào một hàm khởi tạo (Constructor) khổng lồ.
+
+- **Vấn đề:** Để tạo một đối tượng `Table` trong CSDL, bạn cần rất nhiều thứ: Tên bảng, danh sách Cột, Khoá chính, Khoá ngoại, Index. Nếu dùng hàm khởi tạo thông thường, bạn sẽ phải gọi một hàm vô cùng rắc rối: `new Table("users", [col1, col2], "id", [fk1], [idx1])`. Càng về sau, hàm này càng dài và cực kỳ dễ truyền nhầm tham số (Anti-pattern Telescoping Constructor).
+- **Giải pháp Builder:** Tách rời quá trình xây dựng bảng ra khỏi lớp `Table`. Ta tạo ra một lớp `TableBuilder`. Lớp này cung cấp các hàm nối tiếp nhau (fluent interface) để lắp ráp bảng từ từ: `builder.add_column("id").add_primary_key("id").build()`.
+- **Sự linh hoạt:** Code cực kỳ dễ đọc. Bạn có thể xây dựng các bảng khác nhau mà không sợ thiếu sót dữ liệu. Nếu hệ thống báo thiếu Khoá chính, trình Builder có thể bắt lỗi ngay tại hàm `build()` trước khi bảng được tạo ra.
+
+### Giải thích Sơ đồ Class và Sequence (Builder)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class Table {
+        +String name
+        +List columns
+        +String primary_key
+        +add_column(c)
+        +set_primary_key(k)
+    }
+    
+    class TableBuilder {
+        -Table table
+        +TableBuilder(name)
+        +add_column(name, type) TableBuilder
+        +add_primary_key(col_name) TableBuilder
+        +build() Table
+    }
+
+    TableBuilder --> Table : builds
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Mấu chốt của Builder là mọi hàm cấu hình như `add_column()` đều kết thúc bằng lệnh `return self`. Nhờ đó ta có thể gọi chuỗi liên tục (Method Chaining). Hàm `build()` cuối cùng sẽ nhả ra thành phẩm là đối tượng `Table`.
+- **Quan hệ (Relationships):** `TableBuilder` giữ nhiệm vụ "build" (tạo lập) đối tượng `Table`. Nó cô lập toàn bộ sự phức tạp ra khỏi client.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant Builder as TableBuilder
+    participant Tbl as Table
+    
+    DB_Engine->>Builder: <<create>> TableBuilder("users")
+    activate Builder
+    Builder->>Tbl: <<create>> Table("users")
+    
+    DB_Engine->>Builder: add_column("id", "INT")
+    Builder->>Tbl: add_column(Column("id", "INT"))
+    Builder-->>DB_Engine: returns self
+    
+    DB_Engine->>Builder: add_primary_key("id")
+    Builder->>Tbl: set_primary_key("id")
+    Builder-->>DB_Engine: returns self
+    
+    DB_Engine->>Builder: build()
+    Builder-->>DB_Engine: returns Table
+    deactivate Builder
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Engine triệu hồi Builder thay vì triệu hồi thẳng Table.
+2. Engine liên tiếp nhét nguyên liệu vào (cột, khoá chính). Builder đứng giữa nhận lệnh và sắp xếp vào bảng.
+3. Khi Engine gọi `build()`, Builder giao ra chiếc Bảng hoàn chỉnh.
+
+---
+
+## 12. Flyweight Pattern (Dùng Chung Siêu Dữ Liệu)
+**Mục tiêu:** Tiết kiệm tối đa bộ nhớ RAM bằng cách chia sẻ các đối tượng có thuộc tính giống hệt nhau.
+
+- **Vấn đề:** Một CSDL có 10.000 bảng, mỗi bảng 20 cột => Tổng cộng 200.000 đối tượng `Column`. Mỗi cột lại cần một đối tượng `DataType` để quy định nó là INT hay VARCHAR. Việc tạo ra 200.000 đối tượng `DataType` trong RAM để lưu trữ những chữ "INT", "VARCHAR" giống hệt nhau là một sự lãng phí khủng khiếp.
+- **Giải pháp Flyweight:** Tạo một nhà máy `DataTypeFactory` có chứa bộ nhớ đệm (Cache). Lần đầu tiên hệ thống cần kiểu `INT`, nhà máy khởi tạo object `IntegerType` và lưu vào cache. Các cột sau này nếu cần kiểu `INT`, nhà máy chỉ việc móc cái object cũ ra cho xài chung.
+- **Sự linh hoạt:** Hàng triệu cột trên toàn bộ hệ thống CSDL sẽ chỉ trỏ về đúng **1** đối tượng `IntegerType` duy nhất trên RAM. Tiết kiệm hàng trăm Megabyte bộ nhớ dễ như trở bàn tay.
+
+### Giải thích Sơ đồ Class và Sequence (Flyweight)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class DataType {
+        <<interface>>
+        +get_name()* String
+        +get_size()* int
+    }
+    
+    class IntegerType {
+        +get_name() String
+        +get_size() int
+    }
+    
+    class DataTypeFactory {
+        -Map~String, DataType~ cache
+        +get_type(name) DataType
+    }
+    
+    class Column {
+        -String name
+        -DataType type
+    }
+
+    DataType <|.. IntegerType
+    DataTypeFactory *-- DataType : caches
+    Column o-- DataType : uses (shared)
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Hàm `get_type(name)` của Factory đóng vai trò người gác cổng. Nó quét Hash Map, có thì trả về, không có thì tạo mới.
+- **Quan hệ (Relationships):** Nút thắt quan trọng nhất là `Column` chỉ giữ quan hệ Aggregation (sử dụng chung) đối với `DataType`. Nó không tự tạo (không dùng Composition) mà phụ thuộc vào đồ xài chung của Factory.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Factory as DataTypeFactory
+    participant Cache as HashMap
+    participant IntType as IntegerType
+    
+    Engine->>Factory: get_type("INT")
+    activate Factory
+    Factory->>Cache: check "INT"
+    Cache-->>Factory: not found
+    
+    Factory->>IntType: <<create>> IntegerType()
+    Factory->>Cache: store("INT", instance)
+    
+    Factory-->>Engine: IntType instance
+    deactivate Factory
+    
+    Engine->>Factory: get_type("INT")
+    activate Factory
+    Factory->>Cache: check "INT"
+    Cache-->>Factory: returns existing instance
+    Factory-->>Engine: IntType instance (shared)
+    deactivate Factory
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Lần gọi thứ 1: Factory không thấy `INT` trong kho. Nó cắn răng khởi tạo tốn tài nguyên, cất vào kho rồi trả về.
+2. Lần gọi thứ 2 (và n lần sau): Factory moi ngay hàng có sẵn trong kho ra trả về. Cực kỳ tốc độ và zero tốn kém RAM.
+
+---
+
+## 13. Visitor Pattern (Duyệt Cấu Trúc Đa Hình)
+**Mục tiêu:** Bổ sung chức năng mới cho một cấu trúc cây phức tạp (như Database -> Schema -> Table) mà không cần chui vào sửa code của các đối tượng trong cây.
+
+- **Vấn đề:** Chúng ta đã dùng Composite Pattern để nối Bảng với Cột thành một cây. Giờ nếu muốn viết chức năng "Xuất toàn bộ cấu trúc CSDL thành câu lệnh SQL (DDL)", ta phải nhét hàm `generate_ddl()` vào trong lớp `Database`, lớp `Table`, lớp `Column`. Điều này làm code rác rưởi, vi phạm Single Responsibility Principle (Vì các lớp này vốn chỉ dùng để chứa cấu trúc dữ liệu, không phải để sinh mã).
+- **Giải pháp Visitor:** Tạo ra một chuyên gia (Visitor) tên là `DDLGeneratorVisitor`. Gã chuyên gia này ôm toàn bộ logic sinh mã SQL. Cây cấu trúc lúc này chỉ cần có duy nhất một hàm `accept(Visitor)`. Nó nói rằng: *"Mời chuyên gia vào thăm. Chuyên gia muốn làm gì nhà tôi thì làm"*.
+- **Sự linh hoạt:** Ngày mai sếp yêu cầu chức năng "Tính tổng dung lượng đĩa của toàn CSDL". Ta chỉ việc viết thêm class `SizeCalculatorVisitor` và thả vào cho nó đi dạo trong cây cấu trúc. Các lớp Bảng, Cột đứng im không cần phải sửa đổi bất kỳ dòng code nào!
+
+### Giải thích Sơ đồ Class và Sequence (Visitor)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class DatabaseNode {
+        <<interface>>
+        +accept(Visitor v)*
+    }
+    
+    class Table {
+        +accept(Visitor v)
+    }
+    
+    class Column {
+        +accept(Visitor v)
+    }
+    
+    class Visitor {
+        <<interface>>
+        +visit_table(Table t)*
+        +visit_column(Column c)*
+    }
+    
+    class DDLGeneratorVisitor {
+        -String script
+        +visit_table(Table t)
+        +visit_column(Column c)
+        +get_script() String
+    }
+
+    DatabaseNode <|.. Table
+    DatabaseNode <|.. Column
+    Visitor <|.. DDLGeneratorVisitor
+    DatabaseNode --> Visitor : accepts
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Kỹ thuật *Double Dispatch*. `Table` có hàm `accept(visitor)`, bên trong nó lập tức gọi ngược lại `visitor.visit_table(self)`. Nó tự khai báo danh tính của mình cho Visitor.
+- **Quan hệ (Relationships):** Các Node hoàn toàn không dính chặt vào `DDLGeneratorVisitor`, chúng chỉ nhận giao diện trừu tượng `Visitor`.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Vis as DDLGeneratorVisitor
+    participant Tbl as Table
+    participant Col as Column
+    
+    Engine->>Tbl: accept(Vis)
+    activate Tbl
+    Tbl->>Vis: visit_table(self)
+    activate Vis
+    Note over Vis: Appends "CREATE TABLE..."
+    
+    loop For each column
+        Tbl->>Col: accept(Vis)
+        activate Col
+        Col->>Vis: visit_column(self)
+        Vis-->>Col: returns
+        deactivate Col
+    end
+    
+    Vis-->>Tbl: returns
+    deactivate Vis
+    Tbl-->>Engine: returns
+    deactivate Tbl
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Engine thả ông Visitor vào bảng.
+2. Bảng nhiệt tình gọi: `"Mời ông vào thăm bảng của tôi" (visit_table)`. Ông Visitor lập tức lấy bút ra viết `CREATE TABLE...`
+3. Bảng gọi tiếp đàn con của mình (các Cột), bảo chúng đưa tay ra đón khách.
+4. Lần lượt các Cột gọi: `"Mời ông vào thăm cột của cháu" (visit_column)`. Ông Visitor lại lia lịa viết tên cột vào script.
+5. Duyệt xong, toàn bộ câu lệnh SQL hoàn chỉnh đã nằm gọn trong tay ông Visitor. Bảng và Cột đứng vỗ tay mà không phải suy nghĩ gì thêm.
+
+
+
 ---
 
 ## TỔNG HỢP: Danh sách Thuộc tính và Phương thức cần thêm vào Code/Test
@@ -1104,3 +1328,51 @@ Dưới đây là bảng liệt kê chi tiết những **Thuộc tính (Properti
 *   **Các Triggers Cụ Thể (`AuditLogTrigger`, `ValidationTrigger`):**
     *   **Phương thức:**
         *   `+ update(...) -> None`: Tự định nghĩa logic của riêng nó. (VD: Audit thì in log, Validation thì check lỗi thiếu dữ liệu).
+
+
+### 11. Thuộc cho Builder Pattern (Xây Dựng Cấu Trúc Bảng)
+**Mục tiêu:** Tránh nhồi nhét thuộc tính vào Constructor, cho phép lắp ráp bảng một cách mềm dẻo.
+
+*   **Class `TableBuilder` (Kẻ Xây Dựng):**
+    *   **Thuộc tính:**
+        *   `- table: Table`: Con trỏ chứa đối tượng Bảng đang được xây dựng dang dở.
+    *   **Phương thức (Lưu ý: Mọi hàm đều phải return self):**
+        *   `+ add_column(name, data_type) -> TableBuilder`: Nhét cột vào bảng, trả về chính nó để nối chuỗi (Method chaining).
+        *   `+ add_primary_key(col_name) -> TableBuilder`: Đặt khoá chính cho bảng.
+        *   `+ build() -> Table`: Khóa sổ, trả về đối tượng `Table` hoàn chỉnh để DBMS sử dụng.
+
+### 12. Thuộc cho Flyweight Pattern (Dùng Chung Siêu Dữ Liệu)
+**Mục tiêu:** Chia sẻ thuộc tính dùng chung trên toàn hệ thống để cứu rỗi bộ nhớ RAM.
+
+*   **Interface `DataType` (Kiểu Dữ Liệu):**
+    *   **Phương thức:**
+        *   `+ get_name() -> String`: Lấy tên (Ví dụ: "INT").
+        *   `+ get_size() -> int`: Lấy số byte chiếm dụng (Ví dụ: 4 bytes).
+*   **Class `DataTypeFactory` (Nhà Máy Cấp Phát):**
+    *   **Thuộc tính:**
+        *   `- cache: Map<String, DataType>`: Kho lưu trữ tĩnh (Static/Class-level variable) chứa các đối tượng đã được sinh ra.
+    *   **Phương thức:**
+        *   `+ get_type(name) -> DataType`: Quét cache. Có thì móc ra, chưa có thì gọi `new IntegerType()` rồi nhét vào cache trước khi trả về.
+*   **Class `Column` (Kẻ Ăn Bám):**
+    *   **Thuộc tính:**
+        *   `- type: DataType`: Con trỏ chỉ lưu địa chỉ tham chiếu đến đối tượng nằm trong kho của Factory, không tự khởi tạo mới.
+
+### 13. Thuộc cho Visitor Pattern (Duyệt Cấu Trúc Đa Hình)
+**Mục tiêu:** Thêm thuật toán mới (như sinh mã DDL) vào cây cấu trúc CSDL mà không làm rác code của các bảng/cột.
+
+*   **Interface `Visitor` (Chuyên Gia Thăm Viếng):**
+    *   **Phương thức:**
+        *   `+ visit_table(Table t) -> None`: Nơi chứa logic muốn áp dụng lên Bảng.
+        *   `+ visit_column(Column c) -> None`: Nơi chứa logic muốn áp dụng lên Cột.
+*   **Class `DDLGeneratorVisitor` (Chuyên Gia Sinh Mã):**
+    *   **Thuộc tính:**
+        *   `- script: List[String]`: Mảng lưu trữ câu lệnh SQL dần dần được hình thành.
+    *   **Phương thức:**
+        *   `+ visit_table(Table t)`: Ghi chuỗi `"CREATE TABLE..."`. Duyệt qua các cột con bắt chúng nó `accept(self)`.
+        *   `+ get_script() -> String`: Hàm gọi cuối cùng để lấy thành quả chuỗi SQL.
+*   **Interface `DatabaseNode` (Giao Diện Chờ Viếng Thăm):**
+    *   **Phương thức:**
+        *   `+ accept(Visitor v) -> None`: Mọi thành phần (Table, Column) phải có hàm này.
+*   **Class `Table`, `Column`:**
+    *   **Phương thức:**
+        *   `+ accept(Visitor v)`: Viết đúng 1 dòng logic chuẩn mực: `v.visit_table(self)` (với Table) hoặc `v.visit_column(self)` (với Column). Đẩy trách nhiệm xử lý sang cho ông Visitor.
