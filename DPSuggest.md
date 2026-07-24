@@ -1565,16 +1565,9 @@ users_table.attach(val_trigger)
 
 # Perform operation
 users_table.insert({"id": 1, "name": "Alice", "email": "alice@gmail.com"})
-# Output:
-# Table 'users': Inserting row {'id': 1, 'name': 'Alice', 'email': 'alice@gmail.com'} into storage...
-# [AUDIT LOG] Recorded INSERT operation with data: {'id': 1, 'name': 'Alice', 'email': 'alice@gmail.com'}
 
-# Perform another operation that fails validation trigger
 users_table.insert({"id": 2, "name": "Bob"})
-# Output:
-# Table 'users': Inserting row {'id': 2, 'name': 'Bob'} into storage...
-# [AUDIT LOG] Recorded INSERT operation with data: {'id': 2, 'name': 'Bob'}
-# [VALIDATION] Warning: Inserted row is missing an email field!
+
 ```
 
 
@@ -1900,10 +1893,4 @@ tbl.accept(visitor)
 
 print("Generated Script:")
 print(visitor.get_result())
-# Output:
-# Generated Script:
-# CREATE TABLE employees (
-#     id INT,
-#     name VARCHAR,
-# );
 ```
