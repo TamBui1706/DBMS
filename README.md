@@ -1043,6 +1043,142 @@ limit_op.close()
 # Fetched Row: {'id': 3, 'age': 30}
 ```
 
+---
+
+## 7. Prototype Pattern: Schema Cloning (Medium High Priority)
+
+*   **Why choose Prototype instead of creating a new object from scratch?**
+    In a DBMS, cloning an existing Table (e.g., `CREATE TABLE users_backup AS SELECT * FROM users` with no data, just schema) involves duplicating the table definition, all of its columns (and their specific data types, lengths, default values), and sometimes indexes and constraints. If the DBMS Engine tries to manually extract each property from the metadata tables and instantiate new `Column` objects step-by-step, the code becomes extremely slow, complex, and coupled to the specific classes.
+    
+    **The Prototype Pattern Solves This By:**
+    1. **Self-Cloning Capability:** Every `MetadataNode` (like `Table`, `Column`) implements a `clone()` method. The object itself knows best how to create an exact deep copy of its own state.
+    2. **Performance:** Cloning objects in memory is generally faster than re-parsing definitions or querying the system catalog to build a new object from scratch.
+    3. **Decoupling:** The Engine just calls `table.clone()`. It doesn't need to know the internal structure of the `Table` or how its children (`Columns`) are organized.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Cloneable {
+        <<interface>>
+        +clone()* Cloneable
+    }
+    
+    class MetadataNode {
+        <<abstract>>
+        +String name
+        +clone()* MetadataNode
+    }
+    
+    class Table {
+        +List~Column~ columns
+        +clone() Table
+        +add_column(Column c)
+    }
+    
+    class Column {
+        +String type
+        +clone() Column
+    }
+
+    Cloneable <|.. MetadataNode
+    MetadataNode <|-- Table
+    MetadataNode <|-- Column
+    Table *-- Column : contains
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant Tbl as Original Table
+    participant Col1 as Original Column
+    participant ClonedTbl as Cloned Table
+    
+    DB_Engine->>Tbl: clone()
+    activate Tbl
+    
+    Tbl->>ClonedTbl: <<create>> new Table()
+    
+    loop For each Column
+        Tbl->>Col1: clone()
+        activate Col1
+        Col1-->>Tbl: Cloned Column
+        deactivate Col1
+        Tbl->>ClonedTbl: add_column(Cloned Column)
+    end
+    
+    Tbl-->>DB_Engine: Cloned Table
+    deactivate Tbl
+```
+
+### TDD Code Example
+```python
+import copy
+from abc import ABC, abstractmethod
+
+class Cloneable(ABC):
+    @abstractmethod
+    def clone(self): pass
+
+class Column(Cloneable):
+    def __init__(self, name, data_type):
+        self.name = name
+        self.data_type = data_type
+        
+    def clone(self):
+        # Shallow copy is fine for simple strings
+        return copy.copy(self)
+        
+    def __str__(self): return f"{self.name} {self.data_type}"
+
+class Table(Cloneable):
+    def __init__(self, name):
+        self.name = name
+        self.columns = []
+        
+    def add_column(self, col):
+        self.columns.append(col)
+        
+    def clone(self):
+        # Deep copy needed because a Table contains a list of Columns
+        cloned_table = Table(self.name + "_clone")
+        for col in self.columns:
+            cloned_table.add_column(col.clone())
+        return cloned_table
+        
+    def __str__(self):
+        cols = ", ".join(str(c) for c in self.columns)
+        return f"Table({self.name}) [{cols}]"
+
+# --- TEST CODE ---
+original = Table("users")
+original.add_column(Column("id", "INT"))
+original.add_column(Column("name", "VARCHAR(50)"))
+
+print(f"Original: {original}")
+
+# Cloning the table
+backup = original.clone()
+print(f"Backup  : {backup}")
+
+# Modify original to ensure deep copy works
+original.add_column(Column("created_at", "TIMESTAMP"))
+print(f"After modifying Original:")
+print(f"Original: {original}")
+print(f"Backup  : {backup}") # Backup should NOT have 'created_at'
+
+# Output:
+# Original: Table(users) [id INT, name VARCHAR(50)]
+# Backup  : Table(users_clone) [id INT, name VARCHAR(50)]
+# After modifying Original:
+# Original: Table(users) [id INT, name VARCHAR(50), created_at TIMESTAMP]
+# Backup  : Table(users_clone) [id INT, name VARCHAR(50)]
+```
+
+---
+
+
+
 
 
 
