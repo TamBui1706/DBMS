@@ -523,6 +523,415 @@ Sơ đồ minh hoạ sự uyển chuyển của Context khi gọi Strategy:
 3. `CascadeAction` tự biết thân biết phận, gửi thẳng một câu Query "xoá tận gốc" (DELETE WHERE) xuống cho Bảng Con (Child Table) để dọn dẹp tàn dư.
 4. Báo cáo thành công ngược trở lại, giữ vững tính toàn vẹn dữ liệu (Referential Integrity) mà không hề làm nghẽn logic lõi.
 
+
+
+---
+
+## 6. Iterator Pattern (Trình Xử Lý Truy Vấn - Volcano Model)
+**Mục tiêu:** Xử lý luồng dữ liệu khổng lồ bằng cách kéo (pull) từng dòng một thay vì tải tất cả vào bộ nhớ cùng lúc.
+
+- **Vấn đề:** Khi DBMS thực thi câu truy vấn `SELECT * FROM users JOIN orders`, nó phải xử lý hàng triệu dòng dữ liệu. Nếu toán tử `Join` nạp toàn bộ kết quả vào một mảng khổng lồ trên RAM rồi mới truyền sang toán tử `Filter`, máy chủ chắc chắn sẽ sập vì lỗi Out-Of-Memory (Hết bộ nhớ).
+- **Giải pháp Iterator:** Đóng gói mỗi bước thực thi vật lý (`TableScan`, `Filter`, `Join`) thành một toán tử (Operator) hoạt động như một Iterator. Mỗi toán tử đều có hàm `next()`.
+- **Sự linh hoạt:** Dữ liệu sẽ chảy qua hệ thống theo từng dòng (hoặc từng lô nhỏ - batch) một cách lười biếng (lazy evaluation). Gốc của cây truy vấn sẽ liên tục gọi `next()`, kéo dữ liệu từ từ từ các lá lên đỉnh. Do đó, dù bảng có 1 tỷ dòng, RAM cũng chỉ chứa vài dòng tại một thời điểm.
+
+### Giải thích Sơ đồ Class và Sequence (Iterator)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class Operator {
+        <<interface>>
+        +open()*
+        +next()* Row
+        +close()*
+    }
+    
+    class SeqScanOperator {
+        -String table_name
+        -int current_index
+        +open()
+        +next() Row
+        +close()
+    }
+    
+    class FilterOperator {
+        -Operator child
+        -Predicate condition
+        +open()
+        +next() Row
+        +close()
+    }
+    
+    class LimitOperator {
+        -Operator child
+        -int limit
+        -int count
+        +open()
+        +next() Row
+        +close()
+    }
+
+    Operator <|.. SeqScanOperator
+    Operator <|.. FilterOperator
+    Operator <|.. LimitOperator
+    FilterOperator o-- Operator : child
+    LimitOperator o-- Operator : child
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Mọi Operator đều có chung một bộ API gồm 3 hàm cơ bản: `open()` (khởi tạo), `next()` (lấy dòng tiếp theo), `close()` (dọn dẹp).
+- **Quan hệ (Relationships):** 
+  - **Realization:** `SeqScanOperator`, `FilterOperator`, `LimitOperator` đều implement `Operator`.
+  - **Aggregation:** `FilterOperator` và `LimitOperator` tự giữ một biến trỏ tới `Operator` con của nó để có thể gọi `self.child.next()` liên tục.
+- **Điểm mạnh (Pros):** Rất dễ để thêm các thuật toán thực thi mới (như `HashJoinOperator`) mà không phá vỡ mô hình Volcano hiện tại, chỉ cần tuân thủ đúng 3 hàm cơ bản là cắm vào đâu cũng chạy được.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Lim as LimitOperator
+    participant Fil as FilterOperator
+    participant Sca as SeqScanOperator
+    
+    Engine->>Lim: next()
+    activate Lim
+    
+    Lim->>Fil: next()
+    activate Fil
+    
+    Fil->>Sca: next()
+    activate Sca
+    Sca-->>Fil: row_data
+    deactivate Sca
+    
+    Note over Fil: Áp dụng điều kiện lọc
+    Fil-->>Lim: row_data (nếu thoả điều kiện)
+    deactivate Fil
+    
+    Lim-->>Engine: row_data
+    deactivate Lim
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Engine ở trên cùng sẽ bắt đầu gọi `next()` vào thằng Toán tử gốc (`LimitOperator`).
+2. `LimitOperator` chưa có sẵn data nên nó đẩy lệnh `next()` xuống `FilterOperator`.
+3. `FilterOperator` lại đẩy lệnh `next()` xuống tận cùng là `SeqScanOperator` (toán tử quét ổ đĩa).
+4. `SeqScanOperator` đọc 1 dòng từ đĩa và ném ngược lên. `FilterOperator` nhận dòng đó, lọc xem có thoả mãn không, nếu có thì ném lên cho `Limit`. `Limit` sẽ đếm số lượng, nếu chưa đủ thì trả lên Engine. Quy trình lặp lại vòng vèo như vậy nhưng hoàn toàn tiết kiệm RAM!
+
+---
+
+## 7. Prototype Pattern (Nhân Bản Lược Đồ)
+**Mục tiêu:** Cấp phát các cấu trúc bảng phức tạp nhanh chóng bằng cách nhân bản sâu (deep-clone).
+
+- **Vấn đề:** Khi bạn muốn tạo ra một bảng ảo, bảng tạm từ một bảng có sẵn (VD: `CREATE TABLE temp_users AS SELECT * FROM users` nhưng chỉ lấy schema), hệ thống sẽ phải đọc lại bảng `users` từ System Catalog, chọc vào từng cột, xem kiểu dữ liệu, các ràng buộc... rồi mới gán từng cái một để tạo bảng mới. Việc này rất chậm.
+- **Giải pháp Prototype:** Mỗi đối tượng `MetadataNode` (như `Table`, `Column`) tự biết cách tạo ra một bản sao (clone) chính xác y hệt nó thông qua hàm `clone()`. Thay vì lắp ráp từ đầu, ta lấy thẳng cái khuôn cũ mà đúc ra đối tượng mới trong tích tắc.
+- **Sự linh hoạt:** Trình khởi tạo không cần biết rõ bên trong `Table` có những cấu trúc `Column` hay `Constraint` rắc rối thế nào, nó chỉ đơn giản gọi `table.clone()` và nhận về một bảng y chang, sẵn sàng để sửa đổi độc lập.
+
+### Giải thích Sơ đồ Class và Sequence (Prototype)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class Cloneable {
+        <<interface>>
+        +clone()* Cloneable
+    }
+    
+    class MetadataNode {
+        <<abstract>>
+        +String name
+        +clone()* MetadataNode
+    }
+    
+    class Table {
+        +List~Column~ columns
+        +clone() Table
+        +add_column(Column c)
+    }
+    
+    class Column {
+        +String type
+        +clone() Column
+    }
+
+    Cloneable <|.. MetadataNode
+    MetadataNode <|-- Table
+    MetadataNode <|-- Column
+    Table *-- Column : contains
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Mấu chốt nằm ở hàm `clone()`. Ở `Column`, `clone()` có thể chỉ cần Shallow Copy (vì chỉ lưu String). Nhưng ở `Table`, hàm `clone()` bắt buộc phải thực thi Deep Copy: Tự tạo một `Table` mới, duyệt qua mảng `columns` cũ, gọi `col.clone()` cho từng đứa rồi nhét vào `Table` mới.
+- **Quan hệ (Relationships):** `Table` có chứa nhiều `Column`. Khi `Table` được nhân bản, mọi `Column` bên trong nó cũng phải được đệ quy nhân bản theo.
+- **Điểm mạnh (Pros):** Giải quyết triệt để bài toán tạo các object có cấu trúc cây (tree structure) phức tạp một cách nhanh nhất.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant Tbl as Original Table
+    participant Col1 as Original Column
+    participant ClonedTbl as Cloned Table
+    
+    DB_Engine->>Tbl: clone()
+    activate Tbl
+    
+    Tbl->>ClonedTbl: <<create>> new Table()
+    
+    loop For each Column
+        Tbl->>Col1: clone()
+        activate Col1
+        Col1-->>Tbl: Cloned Column
+        deactivate Col1
+        Tbl->>ClonedTbl: add_column(Cloned Column)
+    end
+    
+    Tbl-->>DB_Engine: Cloned Table
+    deactivate Tbl
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Engine yêu cầu clone một Table có sẵn.
+2. Table gốc tự đứng ra lập một bản sao Table trống trơn.
+3. Chạy vòng lặp qua từng Column của mình, ép mỗi Column phải tự nhả ra một bản sao.
+4. Gắn các Column sao chép đó vào Table mới. Mọi thứ diễn ra ngầm định hoàn toàn bên trong hàm `clone()`, DB_Engine ở bên ngoài không cần động tay.
+
+---
+
+## 8. Proxy Pattern (Cơ Chế Bộ Nhớ Đệm Lười Biếng - Lazy Loading)
+**Mục tiêu:** Giảm thiểu nghẽn RAM lúc khởi động bằng cách dùng một lớp vỏ giả mạo (Proxy).
+
+- **Vấn đề:** Khởi động một DBMS doanh nghiệp có hàng vạn bảng, view, thủ tục... Nếu load toàn bộ định dạng và siêu dữ liệu (metadata) của tất cả vào RAM một lúc, server sẽ cực kỳ nặng nề và khởi động chậm chạp.
+- **Giải pháp Proxy:** Cung cấp một "chim mồi" (Proxy) thay cho đối tượng Bảng thực sự. Cái Proxy này cực nhẹ, chỉ chứa mỗi cái tên bảng. Khi Query Optimizer ngó tới cái tên bảng đó và đòi lấy danh sách cột `get_columns()`, Proxy sẽ đánh lừa bằng cách âm thầm chặn luồng, xuống ổ đĩa lôi cái `RealTable` lên (Lazy-Load), lưu vào bộ nhớ cache, rồi mới trỏ qua để lấy kết quả. 
+- **Sự linh hoạt:** Tiết kiệm tối đa bộ nhớ vì những bảng nào 10 năm không ai sờ tới thì mãi mãi chỉ nằm dưới đĩa cứng, nhưng Client vẫn tưởng là bảng đó đang sẵn sàng trên RAM.
+
+### Giải thích Sơ đồ Class và Sequence (Proxy)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class ITable {
+        <<interface>>
+        +get_columns()* List
+        +get_row_count()* int
+    }
+    
+    class RealTable {
+        -List columns
+        -int row_count
+        +get_columns() List
+        +get_row_count() int
+    }
+    
+    class TableProxy {
+        -String table_name
+        -RealTable real_table
+        -load_from_disk()
+        +get_columns() List
+        +get_row_count() int
+    }
+
+    ITable <|.. RealTable
+    ITable <|.. TableProxy
+    TableProxy o-- RealTable : caches
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Cả Proxy và RealTable đều tuân theo Interface `ITable` (Có chung hàm `get_columns()`). Trong `TableProxy`, nó có thêm hàm `load_from_disk()` sẽ được kích hoạt bí mật trong lần đầu tiên bị gọi.
+- **Quan hệ (Relationships):** `TableProxy` và `RealTable` là anh em cùng chung interface, nhưng Proxy lại giấu một con trỏ trỏ tới `RealTable`. Sự giả mạo này quá hoàn hảo đến mức Optimizer ở ngoài không thể nhận ra nó đang nói chuyện với Bảng Thật hay Vỏ Bọc.
+- **Điểm mạnh (Pros):** Proxy trong DBMS là đỉnh cao của Lazy Loading, cứu cánh cho việc ngốn RAM.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Optimizer
+    participant Proxy as TableProxy("users")
+    participant Disk as SystemCatalog (Disk)
+    participant Real as RealTable("users")
+
+    Optimizer->>Proxy: get_columns()
+    activate Proxy
+    
+    opt If real_table is None
+        Proxy->>Disk: read_metadata("users")
+        Disk-->>Proxy: metadata
+        Proxy->>Real: <<create>> RealTable(metadata)
+    end
+    
+    Proxy->>Real: get_columns()
+    Real-->>Proxy: [id, name, email]
+    
+    Proxy-->>Optimizer: [id, name, email]
+    deactivate Proxy
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Optimizer (Trình tối ưu hoá) chỉ gọi vô tư hàm `get_columns()` của đối tượng Proxy.
+2. Proxy kiểm tra xem ruột của mình (con trỏ `RealTable`) có rỗng không. Lần đầu chắc chắn rỗng, nó lẳng lặng quét đĩa, khởi tạo đối tượng `RealTable` thật sự.
+3. Sau đó, nó mới chuyển lời yêu cầu `get_columns()` sang cho `RealTable`.
+4. Mọi lần gọi tiếp theo sẽ bỏ qua bước quét đĩa mà dùng luôn ruột đã nạp, tạo ra một cache vô cùng tiện lợi.
+
+---
+
+## 9. Command Pattern (Thực Thi Lệnh DDL)
+**Mục tiêu:** Đóng gói các lệnh biến đổi cấu trúc (CREATE, DROP) thành các đối tượng độc lập.
+
+- **Vấn đề:** Nếu Parser dịch ra lệnh `CREATE TABLE users` và lập tức nhét thẳng vào Engine bằng cách gọi một hàm `Engine.create_table("users")` cực to, hai module này sẽ dính liền với nhau (tightly coupled). Khủng khiếp hơn, nếu giao dịch (Transaction) đang chạy mà bị sập, làm sao ta Undo (rollback) lại bảng vừa mới tạo? 
+- **Giải pháp Command:** Biến câu lệnh DDL thành một thực thể (Object) có thể cầm nắm được, ví dụ `CreateTableCommand`. Object này chứa đầy đủ mọi tham số cần thiết để thực thi việc tạo bảng. Đặc biệt, nó được chuẩn hóa để có thêm hàm `undo()` giúp đảo ngược thao tác.
+- **Sự linh hoạt:** DBMS có thể xếp hàng (Queue) một loạt các thao tác DDL lại, rồi mới chạy lệnh `execute()` hàng loạt. Nếu thằng nào chạy giữa chừng bị lỗi, DBMS chỉ cần lôi đống Command cũ ra gõ lệnh `undo()` là database quay về trạng thái sạch bóc ban đầu (Transactional DDL).
+
+### Giải thích Sơ đồ Class và Sequence (Command)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class DDLCommand {
+        <<interface>>
+        +execute()*
+        +undo()*
+    }
+    
+    class CreateTableCommand {
+        -String table_name
+        -Catalog receiver
+        +execute()
+        +undo()
+    }
+    
+    class DropTableCommand {
+        -String table_name
+        -Table backup
+        -Catalog receiver
+        +execute()
+        +undo()
+    }
+    
+    class Catalog {
+        +add_table(name)
+        +remove_table(name)
+    }
+
+    DDLCommand <|.. CreateTableCommand
+    DDLCommand <|.. DropTableCommand
+    CreateTableCommand --> Catalog : receiver
+    DropTableCommand --> Catalog : receiver
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Tất cả Command đều tuân thủ `execute()` (Làm) và `undo()` (Hoàn Tác). Trong `CreateTableCommand`, thao tác Làm là Gọi `add_table`, thao tác Hoàn Tác là Gọi `remove_table`.
+- **Quan hệ (Relationships):** Các Command phải giữ con trỏ trỏ tới kẻ thực sự hành động - Receiver (ở đây là `Catalog` của hệ thống). Nhờ có con trỏ receiver, Command biết phải sai khiến ai làm việc.
+- **Điểm mạnh (Pros):** Tách rời kẻ ra lệnh (Parser) với kẻ thực thi (Catalog), tạo tiền đề cho hệ thống Recovery và Rollback (Redo/Undo Log) đỉnh cao trong DBMS.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant Cmd as CreateTableCommand
+    participant Cat as Catalog
+
+    DB_Engine->>Cmd: execute()
+    activate Cmd
+    
+    Note over Cmd: Receiver executes the actual work
+    Cmd->>Cat: add_table("users")
+    Cat-->>Cmd: success
+    
+    Cmd-->>DB_Engine: success
+    deactivate Cmd
+    
+    opt Transaction Abort
+        DB_Engine->>Cmd: undo()
+        activate Cmd
+        Cmd->>Cat: remove_table("users")
+        Cat-->>Cmd: success
+        Cmd-->>DB_Engine: rolled back
+        deactivate Cmd
+    end
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Engine ra lệnh `execute()` cho Command.
+2. Command tự động gọi xuống hàm thao tác của Catalog để thêm bảng.
+3. Nếu vì một lý do nào đó giao dịch thất bại, Engine sẽ lấy ngay chính Command đó ra gọi `undo()`. Command sẽ tự biết cách dọn dẹp bãi chiến trường (gọi ngược lệnh xoá bảng). Tính năng Rollback của DB chính là hoạt động theo kiểu này!
+
+---
+
+## 10. Observer Pattern (Thông Báo Triggers)
+**Mục tiêu:** Cho phép nhiều lớp xử lý tự động lắng nghe và phản ứng khi Bảng (Table) bị thay đổi.
+
+- **Vấn đề:** Khi một bảng `users` được insert một dòng mới, nó có thể cần phải kích hoạt hàng loạt tác vụ phụ: Gọi `AuditLog` để lưu log, gọi `NotificationService` để bắn mail, hoặc gọi Trigger để kiểm tra logic nội bộ. Nếu ta Code tất cả các hàm gọi này vào cuối hàm `Table.insert()`, Bảng sẽ phình to và biến thành một nồi lẩu thập cẩm các thứ linh tinh.
+- **Giải pháp Observer:** Class `Table` giờ sẽ là một Kẻ Phát Sóng (Subject), nó giữ một mảng `Triggers` (Người Lắng Nghe - Observer). Khi có đứa insert dữ liệu thành công, Bảng chả cần biết ai đang quan tâm, nó chỉ việc hét lên `notify("INSERT", data)`. Những ai đã đăng ký `attach()` trước đó sẽ tự động nhận được thông báo qua hàm `update()` để tự lo phần việc của mình.
+- **Sự linh hoạt:** Trigger, Log, Notification có thể tự do cắm vào hoặc rút ra khỏi một Bảng (Plugin) lúc Database đang vận hành mà không cần đụng chạm gì đến lớp lõi `Table`.
+
+### Giải thích Sơ đồ Class và Sequence (Observer)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class Subject {
+        <<interface>>
+        +attach(Observer o)*
+        +detach(Observer o)*
+        +notify(event, data)*
+    }
+    
+    class Table {
+        -List~Trigger~ triggers
+        +attach(Trigger t)
+        +detach(Trigger t)
+        +notify(event, data)
+        +insert(row)
+    }
+    
+    class Trigger {
+        <<interface>>
+        +update(event, data)*
+    }
+    
+    class AuditLogTrigger {
+        +update(event, data)
+    }
+    
+    class ValidationTrigger {
+        +update(event, data)
+    }
+
+    Subject <|.. Table
+    Trigger <|.. AuditLogTrigger
+    Trigger <|.. ValidationTrigger
+    Table o-- Trigger : notifies
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** `Table` có `attach()`, `detach()` để quản lý đăng ký, và `notify()` để duyệt mảng gọi thông báo. Tất cả `Trigger` phải có hàm callback `update()`.
+- **Quan hệ (Relationships):** Bảng có quan hệ Tụ tập (Aggregation) 1-Nhiều với Trigger. Sự phụ thuộc cực kỳ lỏng lẻo, Bảng chỉ gọi `Trigger.update()`, ngoài ra không cần biết bên trong cái Trigger nó làm khỉ gì.
+- **Điểm mạnh (Pros):** Hệ thống Event-Driven hoàn hảo, là nền tảng cốt lõi của tính năng Database Triggers trong thực tế.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor User
+    participant Tbl as Table("users")
+    participant Aud as AuditLogTrigger
+    participant Val as ValidationTrigger
+
+    User->>Tbl: insert( {id: 1, name: "Alice"} )
+    activate Tbl
+    
+    Note over Tbl: Inserts row into storage
+    
+    Tbl->>Tbl: notify("INSERT", data)
+    activate Tbl
+    
+    Tbl->>Aud: update("INSERT", data)
+    Aud-->>Tbl: success
+    
+    Tbl->>Val: update("INSERT", data)
+    Val-->>Tbl: success
+    
+    deactivate Tbl
+    
+    Tbl-->>User: Row inserted
+    deactivate Tbl
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. User gọi `insert()` một hàng vào bảng. Bảng thực hiện lưu xuống đĩa.
+2. Lưu xong, bảng lập tức kích hoạt chuông báo cháy `notify()`.
+3. Chuông này sẽ kêu gọi từng Observer (`AuditLogTrigger`, `ValidationTrigger`) gọi hàm `update()` để thi hành các logic phụ (ghi log, hoặc cấm cản). Mọi thứ kết thúc êm đẹp và cực kỳ tách bạch!
+
+
+
 ---
 
 ## TỔNG HỢP: Danh sách Thuộc tính và Phương thức cần thêm vào Code/Test
@@ -613,3 +1022,85 @@ Dưới đây là bảng liệt kê chi tiết những **Thuộc tính (Properti
     *   **Phương thức:**
         *   `+ set_delete_action(action: ReferentialAction)`: Hàm nạp chiến thuật mới lúc Runtime.
         *   `+ trigger_delete(child_table, deleted_id)`: Hàm được DB gọi. Bên trong hàm này, nó móc `delete_action` ra và uỷ quyền cho nó (gọi `.execute()`).
+
+
+### 6. Thuộc cho Iterator Pattern (Trình Xử Lý Truy Vấn - Volcano Model)
+**Mục tiêu:** Xử lý luồng dữ liệu khổng lồ bằng cách kéo (pull) từng dòng một thay vì tải tất cả vào bộ nhớ cùng lúc.
+
+*   **Interface `Operator` (Lớp Cha):**
+    *   **Phương thức:**
+        *   `+ open() -> None`: Khởi tạo trạng thái, reset con trỏ.
+        *   `+ next() -> Row`: Kéo dòng tiếp theo. Trả về None nếu hết dữ liệu.
+        *   `+ close() -> None`: Đóng tài nguyên và dọn dẹp.
+*   **Các Toán tử Cụ thể (`SeqScanOperator`, `FilterOperator`, `LimitOperator`):**
+    *   **Thuộc tính:**
+        *   `- child: Operator`: Biến lưu trữ toán tử con (đối với Filter/Limit) để gọi chuỗi.
+        *   `- predicate: callable`: Điều kiện lọc (cho Filter).
+        *   `- limit: int`: Số dòng giới hạn (cho Limit).
+    *   **Phương thức:**
+        *   `+ next() -> Row`: Override. Tự gọi `self.child.next()` liên tục để lấy dòng dữ liệu, kiểm tra logic riêng của mình, sau đó trả về cho thằng gọi phía trên.
+
+### 7. Thuộc cho Prototype Pattern (Nhân Bản Lược Đồ)
+**Mục tiêu:** Cấp phát các cấu trúc bảng phức tạp nhanh chóng bằng cách nhân bản sâu (deep-clone) thay vì phải dùng Factory/Builder đọc lại từ ổ đĩa.
+
+*   **Interface `Cloneable` (Bản Hợp Đồng Nhân Bản):**
+    *   **Phương thức:**
+        *   `+ clone() -> Cloneable`: Hàm bắt buộc mọi đối tượng muốn nhân bản phải có.
+*   **Class `MetadataNode`, `Table`, `Column`:**
+    *   **Phương thức:**
+        *   `+ clone() -> Table/Column`: Triển khai logic sao chép. `Column` có thể xài Shallow Copy (vì chỉ chứa String đơn giản). `Table` bắt buộc phải xài Deep Copy vì nó phải duyệt qua danh sách `self.columns`, gọi `col.clone()` cho từng cột rồi nhét vào bảng sao chép mới.
+
+### 8. Thuộc cho Proxy Pattern (Cơ Chế Bộ Nhớ Đệm Lười Biếng - Lazy Loading)
+**Mục tiêu:** Giảm thiểu nghẽn RAM lúc khởi động bằng cách dùng một lớp vỏ giả mạo (Proxy), chỉ thực sự tải dữ liệu nặng từ ổ cứng khi có lệnh truy vấn.
+
+*   **Interface `ITable` (Giao Diện Bảng Chân Chính):**
+    *   **Phương thức:**
+        *   `+ get_columns() -> List`: Lấy danh sách cột của bảng.
+*   **Class `RealTable` (Bảng Thật - Chứa Dữ Liệu Nặng):**
+    *   **Thuộc tính:**
+        *   `- columns: List`: Chứa hàng tá siêu dữ liệu nặng nề.
+*   **Class `TableProxy` (Vỏ Bọc):**
+    *   **Thuộc tính:**
+        *   `- real_table: RealTable`: Con trỏ tới bảng thật (Khởi tạo bằng None).
+        *   `- table_name: String`: Nhớ tên bảng để sau này còn biết đường mà load từ đĩa.
+    *   **Phương thức:**
+        *   `# _load() -> None`: Hàm nội bộ. Kiểm tra nếu `real_table` là None thì mới gọi `RealTable(name)` để load từ đĩa lên.
+        *   `+ get_columns() -> List`: Gọi `self._load()` trước, đảm bảo dữ liệu có sẵn rồi mới uỷ quyền cho `self.real_table.get_columns()`.
+
+### 9. Thuộc cho Command Pattern (Thực Thi Lệnh DDL)
+**Mục tiêu:** Đóng gói các lệnh biến đổi cấu trúc (CREATE, DROP) thành các đối tượng có thể xếp hàng, hoàn tác (Undo) và theo dõi log.
+
+*   **Interface `DDLCommand`:**
+    *   **Phương thức:**
+        *   `+ execute() -> None`: Thực thi lệnh.
+        *   `+ undo() -> None`: Đảo ngược lệnh (rollback).
+*   **Các Lệnh Cụ Thể (`CreateTableCommand`, `DropTableCommand`):**
+    *   **Thuộc tính:**
+        *   `- receiver: Catalog`: Hệ thống chịu trách nhiệm thao tác thật.
+        *   `- table_name: String`: Tên bảng cần thao tác.
+    *   **Phương thức:**
+        *   `+ execute() -> None`: Gọi `receiver.add_table(table_name)`.
+        *   `+ undo() -> None`: Gọi ngược lại `receiver.remove_table(table_name)`.
+*   **Class Quản Lý (Invoker - Tuỳ chọn):**
+    *   **Thuộc tính:**
+        *   `- history: List[DDLCommand]`: Danh sách các lệnh đã được gọi (để dùng khi cần Undo).
+
+### 10. Thuộc cho Observer Pattern (Thông Báo Triggers)
+**Mục tiêu:** Cho phép nhiều Triggers độc lập có thể lắng nghe và phản ứng khi Bảng (Table) bị thay đổi mà không làm thay đổi lõi Bảng.
+
+*   **Interface `Subject` (Chủ Thể):**
+    *   **Phương thức:**
+        *   `+ attach(observer: Trigger) -> None`: Đăng ký theo dõi.
+        *   `+ detach(observer: Trigger) -> None`: Huỷ theo dõi.
+        *   `+ notify(event, data) -> None`: Thông báo tới toàn bộ danh sách.
+*   **Class `Table` (Đóng vai trò Subject):**
+    *   **Thuộc tính:**
+        *   `- triggers: List[Trigger]`: Danh sách các Trigger đang đính kèm vào bảng.
+    *   **Phương thức:**
+        *   `+ insert(row)`: Hàm nghiệp vụ chính. Cuối hàm sẽ gọi `self.notify("INSERT", row)`.
+*   **Interface `Trigger` (Kẻ Lắng Nghe - Observer):**
+    *   **Phương thức:**
+        *   `+ update(event_type, row_data) -> None`: Hàm callback được tự động gọi khi Subject có biến.
+*   **Các Triggers Cụ Thể (`AuditLogTrigger`, `ValidationTrigger`):**
+    *   **Phương thức:**
+        *   `+ update(...) -> None`: Tự định nghĩa logic của riêng nó. (VD: Audit thì in log, Validation thì check lỗi thiếu dữ liệu).

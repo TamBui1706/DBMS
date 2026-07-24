@@ -1005,3 +1005,572 @@ limit_op.close()
 # Fetched Row: {'id': 2, 'age': 22}
 # Fetched Row: {'id': 3, 'age': 30}
 ```
+
+---
+
+## 7. Prototype Pattern: Schema Cloning (Medium High Priority)
+
+*   **Why choose Prototype instead of creating a new object from scratch?**
+    In a DBMS, cloning an existing Table (e.g., `CREATE TABLE users_backup AS SELECT * FROM users` with no data, just schema) involves duplicating the table definition, all of its columns (and their specific data types, lengths, default values), and sometimes indexes and constraints. If the DBMS Engine tries to manually extract each property from the metadata tables and instantiate new `Column` objects step-by-step, the code becomes extremely slow, complex, and coupled to the specific classes.
+    
+    **The Prototype Pattern Solves This By:**
+    1. **Self-Cloning Capability:** Every `MetadataNode` (like `Table`, `Column`) implements a `clone()` method. The object itself knows best how to create an exact deep copy of its own state.
+    2. **Performance:** Cloning objects in memory is generally faster than re-parsing definitions or querying the system catalog to build a new object from scratch.
+    3. **Decoupling:** The Engine just calls `table.clone()`. It doesn't need to know the internal structure of the `Table` or how its children (`Columns`) are organized.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Cloneable {
+        <<interface>>
+        +clone()* Cloneable
+    }
+    
+    class MetadataNode {
+        <<abstract>>
+        +String name
+        +clone()* MetadataNode
+    }
+    
+    class Table {
+        +List~Column~ columns
+        +clone() Table
+        +add_column(Column c)
+    }
+    
+    class Column {
+        +String type
+        +clone() Column
+    }
+
+    Cloneable <|.. MetadataNode
+    MetadataNode <|-- Table
+    MetadataNode <|-- Column
+    Table *-- Column : contains
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant Tbl as Original Table
+    participant Col1 as Original Column
+    participant ClonedTbl as Cloned Table
+    
+    DB_Engine->>Tbl: clone()
+    activate Tbl
+    
+    Tbl->>ClonedTbl: <<create>> new Table()
+    
+    loop For each Column
+        Tbl->>Col1: clone()
+        activate Col1
+        Col1-->>Tbl: Cloned Column
+        deactivate Col1
+        Tbl->>ClonedTbl: add_column(Cloned Column)
+    end
+    
+    Tbl-->>DB_Engine: Cloned Table
+    deactivate Tbl
+```
+
+### TDD Code Example
+```python
+import copy
+from abc import ABC, abstractmethod
+
+class Cloneable(ABC):
+    @abstractmethod
+    def clone(self): pass
+
+class Column(Cloneable):
+    def __init__(self, name, data_type):
+        self.name = name
+        self.data_type = data_type
+        
+    def clone(self):
+        # Shallow copy is fine for simple strings
+        return copy.copy(self)
+        
+    def __str__(self): return f"{self.name} {self.data_type}"
+
+class Table(Cloneable):
+    def __init__(self, name):
+        self.name = name
+        self.columns = []
+        
+    def add_column(self, col):
+        self.columns.append(col)
+        
+    def clone(self):
+        # Deep copy needed because a Table contains a list of Columns
+        cloned_table = Table(self.name + "_clone")
+        for col in self.columns:
+            cloned_table.add_column(col.clone())
+        return cloned_table
+        
+    def __str__(self):
+        cols = ", ".join(str(c) for c in self.columns)
+        return f"Table({self.name}) [{cols}]"
+
+# --- TEST CODE ---
+original = Table("users")
+original.add_column(Column("id", "INT"))
+original.add_column(Column("name", "VARCHAR(50)"))
+
+print(f"Original: {original}")
+
+# Cloning the table
+backup = original.clone()
+print(f"Backup  : {backup}")
+
+# Modify original to ensure deep copy works
+original.add_column(Column("created_at", "TIMESTAMP"))
+print(f"After modifying Original:")
+print(f"Original: {original}")
+print(f"Backup  : {backup}") # Backup should NOT have 'created_at'
+
+# Output:
+# Original: Table(users) [id INT, name VARCHAR(50)]
+# Backup  : Table(users_clone) [id INT, name VARCHAR(50)]
+# After modifying Original:
+# Original: Table(users) [id INT, name VARCHAR(50), created_at TIMESTAMP]
+# Backup  : Table(users_clone) [id INT, name VARCHAR(50)]
+```
+
+---
+
+## 8. Proxy Pattern: Metadata Caching (Medium Priority)
+
+*   **Why choose Proxy instead of loading everything on startup?**
+    An enterprise DBMS may have tens of thousands of tables, views, and procedures. If the DBMS Engine tries to load the full metadata (columns, data types, constraints) of every single object into RAM at startup, it will cause immense memory bloat and unacceptable startup times.
+    
+    **The Proxy Pattern Solves This By:**
+    1. **Lazy Loading:** A `TableProxy` acts as a lightweight placeholder. It only contains the table's name. It implements the same interface as the `RealTable`.
+    2. **Transparent Access:** When the Query Optimizer queries the proxy for the table's columns (e.g., calling `get_columns()`), the proxy intercepts the call, fetches the heavy metadata from the disk catalog, instantiates the `RealTable`, and caches it for future calls.
+    3. **Memory Efficiency:** Only the metadata of actively queried tables resides in memory.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class ITable {
+        <<interface>>
+        +get_columns()* List
+        +get_row_count()* int
+    }
+    
+    class RealTable {
+        -List columns
+        -int row_count
+        +get_columns() List
+        +get_row_count() int
+    }
+    
+    class TableProxy {
+        -String table_name
+        -RealTable real_table
+        -load_from_disk()
+        +get_columns() List
+        +get_row_count() int
+    }
+
+    ITable <|.. RealTable
+    ITable <|.. TableProxy
+    TableProxy o-- RealTable : caches
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Optimizer
+    participant Proxy as TableProxy("users")
+    participant Disk as SystemCatalog (Disk)
+    participant Real as RealTable("users")
+
+    Optimizer->>Proxy: get_columns()
+    activate Proxy
+    
+    opt If real_table is None
+        Proxy->>Disk: read_metadata("users")
+        Disk-->>Proxy: metadata
+        Proxy->>Real: <<create>> RealTable(metadata)
+    end
+    
+    Proxy->>Real: get_columns()
+    Real-->>Proxy: [id, name, email]
+    
+    Proxy-->>Optimizer: [id, name, email]
+    deactivate Proxy
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+class ITable(ABC):
+    @abstractmethod
+    def get_columns(self): pass
+
+class RealTable(ITable):
+    def __init__(self, table_name):
+        print(f"[DISK I/O] Loading heavy metadata for table '{table_name}' from disk...")
+        self.table_name = table_name
+        # Simulate loading columns
+        self.columns = ["id", "username", "email"]
+        
+    def get_columns(self):
+        return self.columns
+
+class TableProxy(ITable):
+    def __init__(self, table_name):
+        self.table_name = table_name
+        self.real_table = None # Cache is initially empty
+        print(f"[PROXY] Created lightweight placeholder for '{table_name}'.")
+        
+    def _load(self):
+        if self.real_table is None:
+            self.real_table = RealTable(self.table_name)
+            
+    def get_columns(self):
+        self._load() # Ensure real object exists
+        return self.real_table.get_columns()
+
+# --- TEST CODE ---
+# Startup phase: Creating proxies is very fast
+users_table = TableProxy("users")
+orders_table = TableProxy("orders")
+
+print("
+--- Processing Query: SELECT email FROM users ---")
+# First access triggers disk load
+cols = users_table.get_columns()
+print(f"Columns in users: {cols}")
+
+print("
+--- Processing Query: SELECT username FROM users ---")
+# Second access uses cache (no disk I/O)
+cols2 = users_table.get_columns()
+print(f"Columns in users: {cols2}")
+
+# Output:
+# [PROXY] Created lightweight placeholder for 'users'.
+# [PROXY] Created lightweight placeholder for 'orders'.
+#
+# --- Processing Query: SELECT email FROM users ---
+# [DISK I/O] Loading heavy metadata for table 'users' from disk...
+# Columns in users: ['id', 'username', 'email']
+#
+# --- Processing Query: SELECT username FROM users ---
+# Columns in users: ['id', 'username', 'email']
+```
+
+---
+
+## 9. Command Pattern: DDL Commands (Medium Priority)
+
+*   **Why choose Command instead of running DDL logic directly?**
+    When a user issues `CREATE TABLE`, `DROP TABLE`, or `ALTER TABLE`, executing the creation logic directly inside the SQL Parser or Query Engine tightly couples those components. It also makes it very difficult to implement features like Transactional DDL (where a `CREATE TABLE` can be rolled back if a subsequent command fails) or Replicated DDL (sending the command to replica nodes).
+    
+    **The Command Pattern Solves This By:**
+    1. **Encapsulation:** Every DDL operation is wrapped into an object (e.g., `CreateTableCommand`) that contains all necessary information (table name, columns) to execute the action.
+    2. **Undo Capability:** Commands can implement an `undo()` method. E.g., the undo of `CreateTable` is `DROP TABLE`.
+    3. **Queueing & Logging:** Commands can be placed in a queue for sequential execution, or serialized to a Write-Ahead Log (WAL) before execution.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class DDLCommand {
+        <<interface>>
+        +execute()*
+        +undo()*
+    }
+    
+    class CreateTableCommand {
+        -String table_name
+        -Catalog receiver
+        +execute()
+        +undo()
+    }
+    
+    class DropTableCommand {
+        -String table_name
+        -Table backup
+        -Catalog receiver
+        +execute()
+        +undo()
+    }
+    
+    class Catalog {
+        +add_table(name)
+        +remove_table(name)
+    }
+
+    DDLCommand <|.. CreateTableCommand
+    DDLCommand <|.. DropTableCommand
+    CreateTableCommand --> Catalog : receiver
+    DropTableCommand --> Catalog : receiver
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant Cmd as CreateTableCommand
+    participant Cat as Catalog
+
+    DB_Engine->>Cmd: execute()
+    activate Cmd
+    
+    Note over Cmd: Receiver executes the actual work
+    Cmd->>Cat: add_table("users")
+    Cat-->>Cmd: success
+    
+    Cmd-->>DB_Engine: success
+    deactivate Cmd
+    
+    opt Transaction Abort
+        DB_Engine->>Cmd: undo()
+        activate Cmd
+        Cmd->>Cat: remove_table("users")
+        Cat-->>Cmd: success
+        Cmd-->>DB_Engine: rolled back
+        deactivate Cmd
+    end
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+# The Receiver
+class Catalog:
+    def __init__(self):
+        self.tables = set()
+        
+    def add_table(self, name):
+        print(f"[CATALOG] Creating table '{name}'")
+        self.tables.add(name)
+        
+    def remove_table(self, name):
+        print(f"[CATALOG] Dropping table '{name}'")
+        self.tables.remove(name)
+        
+    def __str__(self): return f"Current Tables: {self.tables}"
+
+# The Command Interface
+class DDLCommand(ABC):
+    @abstractmethod
+    def execute(self): pass
+    @abstractmethod
+    def undo(self): pass
+
+# Concrete Commands
+class CreateTableCommand(DDLCommand):
+    def __init__(self, catalog, table_name):
+        self.catalog = catalog
+        self.table_name = table_name
+        
+    def execute(self):
+        self.catalog.add_table(self.table_name)
+        
+    def undo(self):
+        print(f"-> UNDO CreateTableCommand({self.table_name})")
+        self.catalog.remove_table(self.table_name)
+
+class DropTableCommand(DDLCommand):
+    def __init__(self, catalog, table_name):
+        self.catalog = catalog
+        self.table_name = table_name
+        
+    def execute(self):
+        self.catalog.remove_table(self.table_name)
+        
+    def undo(self):
+        print(f"-> UNDO DropTableCommand({self.table_name})")
+        # In a real DBMS, this requires restoring the table from a Memento/Backup
+        self.catalog.add_table(self.table_name)
+
+# --- TEST CODE ---
+catalog = Catalog()
+history = [] # To keep track of executed commands for rollback
+
+print(catalog)
+
+cmd1 = CreateTableCommand(catalog, "users")
+cmd1.execute()
+history.append(cmd1)
+
+cmd2 = CreateTableCommand(catalog, "orders")
+cmd2.execute()
+history.append(cmd2)
+
+print(catalog)
+
+# Something went wrong, rollback the last transaction!
+print("
+[TRANSACTION FAILED] Rolling back changes...")
+while history:
+    last_cmd = history.pop()
+    last_cmd.undo()
+
+print(catalog)
+
+# Output:
+# Current Tables: set()
+# [CATALOG] Creating table 'users'
+# [CATALOG] Creating table 'orders'
+# Current Tables: {'users', 'orders'}
+# 
+# [TRANSACTION FAILED] Rolling back changes...
+# -> UNDO CreateTableCommand(orders)
+# [CATALOG] Dropping table 'orders'
+# -> UNDO CreateTableCommand(users)
+# [CATALOG] Dropping table 'users'
+# Current Tables: set()
+```
+
+---
+
+## 10. Observer Pattern: Trigger Notification (Medium Priority)
+
+*   **Why choose Observer instead of hardcoding trigger logic inside `Table.insert()`?**
+    Database Triggers are custom logic executed automatically when a table undergoes an `INSERT`, `UPDATE`, or `DELETE`. If a `Table` class explicitly calls `AuditLog.write()` or `NotificationService.send()` whenever a row is inserted, the `Table` becomes tightly coupled to arbitrary services and violates the Single Responsibility Principle.
+    
+    **The Observer Pattern Solves This By:**
+    1. **Loose Coupling:** The `Table` acts as a Subject. It maintains a list of `Trigger` observers. It doesn't know what the triggers do.
+    2. **Dynamic Subscription:** Triggers can be dynamically attached (created) or detached (dropped) at runtime via `attach()` and `detach()`.
+    3. **Event Broadcasting:** When `Table.insert()` finishes, it simply iterates through its observers and calls `trigger.update(row_data)`.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Subject {
+        <<interface>>
+        +attach(Observer o)*
+        +detach(Observer o)*
+        +notify(event, data)*
+    }
+    
+    class Table {
+        -List~Trigger~ triggers
+        +attach(Trigger t)
+        +detach(Trigger t)
+        +notify(event, data)
+        +insert(row)
+    }
+    
+    class Trigger {
+        <<interface>>
+        +update(event, data)*
+    }
+    
+    class AuditLogTrigger {
+        +update(event, data)
+    }
+    
+    class ValidationTrigger {
+        +update(event, data)
+    }
+
+    Subject <|.. Table
+    Trigger <|.. AuditLogTrigger
+    Trigger <|.. ValidationTrigger
+    Table o-- Trigger : notifies
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor User
+    participant Tbl as Table("users")
+    participant Aud as AuditLogTrigger
+    participant Val as ValidationTrigger
+
+    User->>Tbl: insert( {id: 1, name: "Alice"} )
+    activate Tbl
+    
+    Note over Tbl: Inserts row into storage
+    
+    Tbl->>Tbl: notify("INSERT", data)
+    activate Tbl
+    
+    Tbl->>Aud: update("INSERT", data)
+    Aud-->>Tbl: success
+    
+    Tbl->>Val: update("INSERT", data)
+    Val-->>Tbl: success
+    
+    deactivate Tbl
+    
+    Tbl-->>User: Row inserted
+    deactivate Tbl
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+# The Observer Interface
+class Trigger(ABC):
+    @abstractmethod
+    def update(self, event_type, row_data): pass
+
+# Concrete Observers
+class AuditLogTrigger(Trigger):
+    def update(self, event_type, row_data):
+        print(f"[AUDIT LOG] Recorded {event_type} operation with data: {row_data}")
+
+class ValidationTrigger(Trigger):
+    def update(self, event_type, row_data):
+        if event_type == "INSERT" and "email" not in row_data:
+            print(f"[VALIDATION] Warning: Inserted row is missing an email field!")
+
+# The Subject
+class Table:
+    def __init__(self, name):
+        self.name = name
+        self.triggers = [] # List of observers
+        
+    def attach(self, trigger: Trigger):
+        self.triggers.append(trigger)
+        
+    def detach(self, trigger: Trigger):
+        self.triggers.remove(trigger)
+        
+    def notify(self, event_type, row_data):
+        # Broadcast to all attached observers
+        for trigger in self.triggers:
+            trigger.update(event_type, row_data)
+            
+    def insert(self, row_data):
+        print(f"\nTable '{self.name}': Inserting row {row_data} into storage...")
+        # (Storage logic goes here)
+        
+        # Notify observers that an insert happened
+        self.notify("INSERT", row_data)
+
+# --- TEST CODE ---
+users_table = Table("users")
+
+# Create triggers (Observers)
+audit_trigger = AuditLogTrigger()
+val_trigger = ValidationTrigger()
+
+# Attach triggers to the table (Subscription)
+users_table.attach(audit_trigger)
+users_table.attach(val_trigger)
+
+# Perform operation
+users_table.insert({"id": 1, "name": "Alice", "email": "alice@gmail.com"})
+# Output:
+# Table 'users': Inserting row {'id': 1, 'name': 'Alice', 'email': 'alice@gmail.com'} into storage...
+# [AUDIT LOG] Recorded INSERT operation with data: {'id': 1, 'name': 'Alice', 'email': 'alice@gmail.com'}
+
+# Perform another operation that fails validation trigger
+users_table.insert({"id": 2, "name": "Bob"})
+# Output:
+# Table 'users': Inserting row {'id': 2, 'name': 'Bob'} into storage...
+# [AUDIT LOG] Recorded INSERT operation with data: {'id': 2, 'name': 'Bob'}
+# [VALIDATION] Warning: Inserted row is missing an email field!
+```
+
