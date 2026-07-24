@@ -11,6 +11,9 @@ This group manages the data-constituent components (Schemas, Tables, Constraints
 | **Medium High** | **Database Objects** | **Prototype** | Enables cloning of an existing Table or Schema structure without creating from scratch. |
 | **Medium** | **Database Objects** | **Iterator** | Provides sequential access to traverse all objects in a schema transparently. |
 | **Medium** | **Database Objects** | **Proxy** | Acts as a placeholder for Table definitions to allow lazy-loading from disk. |
+| **High** | **Database Objects** | **Builder** | Constructs complex Table structures (columns, constraints) step-by-step. |
+| **Medium** | **Database Objects** | **Flyweight** | Shares common data type instances (e.g., INT) across millions of columns to save RAM. |
+| **Medium High** | **Database Objects** | **Visitor** | Walks the Database Object tree to perform operations like DDL generation without modifying classes. |
 | **High** | **Constraint Validation** | **Template Method** | `Validate()` defines the workflow, each constraint only implements `Check()`. |
 | **Medium** | **Constraint Validation** | **Decorator** | Dynamically attaches temporary constraints or properties to a Table during execution. |
 | **Medium** | **Constraint Validation** | **Visitor** | Traverses Views and Stored Procedures to check for broken dependencies when a base Table drops. |
@@ -1574,3 +1577,333 @@ users_table.insert({"id": 2, "name": "Bob"})
 # [VALIDATION] Warning: Inserted row is missing an email field!
 ```
 
+
+
+---
+
+## 11. Builder Pattern: Table Construction (High Priority)
+
+*   **Why choose Builder instead of a massive constructor?**
+    Creating a new `Table` object often requires defining a name, adding multiple columns (each with a specific type and constraints), setting a primary key, and defining foreign keys. If a constructor is used, it results in the "Telescoping Constructor Anti-Pattern" (e.g., `new Table("users", cols, pk, fks, indexes)`). The Builder pattern allows us to assemble this complex object step-by-step, making the API readable, fluent, and preventing partially initialized tables.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Table {
+        +String name
+        +List columns
+        +String primary_key
+        +add_column(c)
+        +set_primary_key(k)
+    }
+    
+    class TableBuilder {
+        -Table table
+        +TableBuilder(name)
+        +add_column(name, type) TableBuilder
+        +add_primary_key(col_name) TableBuilder
+        +build() Table
+    }
+
+    TableBuilder --> Table : builds
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant Builder as TableBuilder
+    participant Tbl as Table
+    
+    DB_Engine->>Builder: <<create>> TableBuilder("users")
+    activate Builder
+    Builder->>Tbl: <<create>> Table("users")
+    
+    DB_Engine->>Builder: add_column("id", "INT")
+    Builder->>Tbl: add_column(Column("id", "INT"))
+    Builder-->>DB_Engine: returns self
+    
+    DB_Engine->>Builder: add_primary_key("id")
+    Builder->>Tbl: set_primary_key("id")
+    Builder-->>DB_Engine: returns self
+    
+    DB_Engine->>Builder: build()
+    Builder-->>DB_Engine: returns Table
+    deactivate Builder
+```
+
+### TDD Code Example
+```python
+class Table:
+    def __init__(self, name):
+        self.name = name
+        self.columns = []
+        self.primary_key = None
+        
+    def __str__(self):
+        cols = ", ".join(self.columns)
+        return f"Table({self.name}) [Cols: {cols} | PK: {self.primary_key}]"
+
+class TableBuilder:
+    def __init__(self, name):
+        self.table = Table(name)
+        
+    def add_column(self, name, data_type):
+        self.table.columns.append(f"{name} {data_type}")
+        return self # Fluent interface
+        
+    def add_primary_key(self, col_name):
+        self.table.primary_key = col_name
+        return self
+        
+    def build(self):
+        return self.table
+
+# --- TEST CODE ---
+builder = TableBuilder("orders")
+# Fluent method chaining
+orders_table = (builder
+                .add_column("order_id", "INT")
+                .add_column("amount", "FLOAT")
+                .add_primary_key("order_id")
+                .build())
+
+print(orders_table)
+# Output: Table(orders) [Cols: order_id INT, amount FLOAT | PK: order_id]
+```
+
+---
+
+## 12. Flyweight Pattern: Data Type Sharing (Medium Priority)
+
+*   **Why choose Flyweight?**
+    A database might manage thousands of tables, combining to millions of columns. The vast majority of these columns share the exact same data types (e.g., standard `INT`, `VARCHAR(255)`). Creating a new `DataType` object for every single column consumes massive amounts of RAM for redundant information. Flyweight solves this by storing intrinsic (shared) state in a factory cache and passing out references to the exact same object.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class DataType {
+        <<interface>>
+        +get_name()* String
+        +get_size()* int
+    }
+    
+    class IntegerType {
+        +get_name() String
+        +get_size() int
+    }
+    
+    class DataTypeFactory {
+        -Map~String, DataType~ cache
+        +get_type(name) DataType
+    }
+    
+    class Column {
+        -String name
+        -DataType type
+    }
+
+    DataType <|.. IntegerType
+    DataTypeFactory *-- DataType : caches
+    Column o-- DataType : uses (shared)
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Factory as DataTypeFactory
+    participant Cache as HashMap
+    participant IntType as IntegerType
+    
+    Engine->>Factory: get_type("INT")
+    activate Factory
+    Factory->>Cache: check "INT"
+    Cache-->>Factory: not found
+    
+    Factory->>IntType: <<create>> IntegerType()
+    Factory->>Cache: store("INT", instance)
+    
+    Factory-->>Engine: IntType instance
+    deactivate Factory
+    
+    Engine->>Factory: get_type("INT")
+    activate Factory
+    Factory->>Cache: check "INT"
+    Cache-->>Factory: returns existing instance
+    Factory-->>Engine: IntType instance (shared)
+    deactivate Factory
+```
+
+### TDD Code Example
+```python
+class DataType:
+    def __init__(self, name, size):
+        self.name = name
+        self.size = size
+        
+class DataTypeFactory:
+    _cache = {}
+    
+    @staticmethod
+    def get_type(type_name):
+        type_name = type_name.upper()
+        if type_name not in DataTypeFactory._cache:
+            if type_name == "INT":
+                DataTypeFactory._cache[type_name] = DataType("INT", 4)
+            elif type_name == "BIGINT":
+                DataTypeFactory._cache[type_name] = DataType("BIGINT", 8)
+            else:
+                DataTypeFactory._cache[type_name] = DataType(type_name, 0)
+            print(f"[{type_name}] Instantiated new object.")
+        else:
+            print(f"[{type_name}] Returning cached object.")
+            
+        return DataTypeFactory._cache[type_name]
+
+# --- TEST CODE ---
+# Creating columns for Table A
+col1_type = DataTypeFactory.get_type("INT")
+col2_type = DataTypeFactory.get_type("BIGINT")
+
+# Creating columns for Table B
+col3_type = DataTypeFactory.get_type("INT")
+
+print(f"Is col1 type exactly the same object as col3 type? {col1_type is col3_type}")
+# Output: 
+# [INT] Instantiated new object.
+# [BIGINT] Instantiated new object.
+# [INT] Returning cached object.
+# Is col1 type exactly the same object as col3 type? True
+```
+
+---
+
+## 13. Visitor Pattern: Tree Operations (Medium High Priority)
+
+*   **Why choose Visitor instead of putting logic in the classes?**
+    The `Database -> Schema -> Table` structure is an established Composite tree. If we want to implement a new feature like "Generate DDL Script" or "Calculate Disk Usage" across the whole tree, adding `generate_ddl()` or `calculate_size()` to every single node class pollutes them with unrelated logic and violates the Single Responsibility Principle. Visitor extracts this logic into a separate `Visitor` class. The tree nodes just need to `accept(visitor)`, enabling us to add infinite new tree-walking operations without modifying the structure.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class DatabaseNode {
+        <<interface>>
+        +accept(Visitor v)*
+    }
+    
+    class Table {
+        +accept(Visitor v)
+    }
+    
+    class Column {
+        +accept(Visitor v)
+    }
+    
+    class Visitor {
+        <<interface>>
+        +visit_table(Table t)*
+        +visit_column(Column c)*
+    }
+    
+    class DDLGeneratorVisitor {
+        -String script
+        +visit_table(Table t)
+        +visit_column(Column c)
+        +get_script() String
+    }
+
+    DatabaseNode <|.. Table
+    DatabaseNode <|.. Column
+    Visitor <|.. DDLGeneratorVisitor
+    DatabaseNode --> Visitor : accepts
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Vis as DDLGeneratorVisitor
+    participant Tbl as Table
+    participant Col as Column
+    
+    Engine->>Tbl: accept(Vis)
+    activate Tbl
+    Tbl->>Vis: visit_table(self)
+    activate Vis
+    Note over Vis: Appends "CREATE TABLE..."
+    
+    loop For each column
+        Tbl->>Col: accept(Vis)
+        activate Col
+        Col->>Vis: visit_column(self)
+        Vis-->>Col: returns
+        deactivate Col
+    end
+    
+    Vis-->>Tbl: returns
+    deactivate Vis
+    Tbl-->>Engine: returns
+    deactivate Tbl
+```
+
+### TDD Code Example
+```python
+# The Visitor interface
+class DatabaseVisitor:
+    def visit_table(self, table): pass
+    def visit_column(self, column): pass
+
+# The Concrete Visitor for generating SQL
+class DDLGeneratorVisitor(DatabaseVisitor):
+    def __init__(self):
+        self.script = []
+        
+    def visit_table(self, table):
+        self.script.append(f"CREATE TABLE {table.name} (")
+        # Let the table tell its children to accept the visitor
+        for col in table.columns:
+            col.accept(self)
+        self.script.append(");")
+        
+    def visit_column(self, column):
+        self.script.append(f"    {column.name} {column.type},")
+        
+    def get_result(self):
+        return "
+".join(self.script)
+
+# Tree Nodes
+class Node:
+    def accept(self, visitor): pass
+
+class Column(Node):
+    def __init__(self, name, type_):
+        self.name = name
+        self.type = type_
+    def accept(self, visitor):
+        visitor.visit_column(self)
+
+class Table(Node):
+    def __init__(self, name):
+        self.name = name
+        self.columns = []
+    def accept(self, visitor):
+        visitor.visit_table(self)
+
+# --- TEST CODE ---
+tbl = Table("employees")
+tbl.columns.extend([Column("id", "INT"), Column("name", "VARCHAR")])
+
+visitor = DDLGeneratorVisitor()
+tbl.accept(visitor)
+
+print("Generated Script:")
+print(visitor.get_result())
+# Output:
+# Generated Script:
+# CREATE TABLE employees (
+#     id INT,
+#     name VARCHAR,
+# );
+```
