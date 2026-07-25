@@ -1303,6 +1303,175 @@ print(f"Columns in users: {cols2}")
 
 ---
 
+## 9. Command Pattern: DDL Commands (Medium Priority)
+
+*   **Why choose Command instead of running DDL logic directly?**
+    When a user issues `CREATE TABLE`, `DROP TABLE`, or `ALTER TABLE`, executing the creation logic directly inside the SQL Parser or Query Engine tightly couples those components. It also makes it very difficult to implement features like Transactional DDL (where a `CREATE TABLE` can be rolled back if a subsequent command fails) or Replicated DDL (sending the command to replica nodes).
+    
+    **The Command Pattern Solves This By:**
+    1. **Encapsulation:** Every DDL operation is wrapped into an object (e.g., `CreateTableCommand`) that contains all necessary information (table name, columns) to execute the action.
+    2. **Undo Capability:** Commands can implement an `undo()` method. E.g., the undo of `CreateTable` is `DROP TABLE`.
+    3. **Queueing & Logging:** Commands can be placed in a queue for sequential execution, or serialized to a Write-Ahead Log (WAL) before execution.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class DDLCommand {
+        <<interface>>
+        +execute()*
+        +undo()*
+    }
+    
+    class CreateTableCommand {
+        -String table_name
+        -Catalog receiver
+        +execute()
+        +undo()
+    }
+    
+    class DropTableCommand {
+        -String table_name
+        -Table backup
+        -Catalog receiver
+        +execute()
+        +undo()
+    }
+    
+    class Catalog {
+        +add_table(name)
+        +remove_table(name)
+    }
+
+    DDLCommand <|.. CreateTableCommand
+    DDLCommand <|.. DropTableCommand
+    CreateTableCommand --> Catalog : receiver
+    DropTableCommand --> Catalog : receiver
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant Cmd as CreateTableCommand
+    participant Cat as Catalog
+
+    DB_Engine->>Cmd: execute()
+    activate Cmd
+    
+    Note over Cmd: Receiver executes the actual work
+    Cmd->>Cat: add_table("users")
+    Cat-->>Cmd: success
+    
+    Cmd-->>DB_Engine: success
+    deactivate Cmd
+    
+    opt Transaction Abort
+        DB_Engine->>Cmd: undo()
+        activate Cmd
+        Cmd->>Cat: remove_table("users")
+        Cat-->>Cmd: success
+        Cmd-->>DB_Engine: rolled back
+        deactivate Cmd
+    end
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+# The Receiver
+class Catalog:
+    def __init__(self):
+        self.tables = set()
+        
+    def add_table(self, name):
+        print(f"[CATALOG] Creating table '{name}'")
+        self.tables.add(name)
+        
+    def remove_table(self, name):
+        print(f"[CATALOG] Dropping table '{name}'")
+        self.tables.remove(name)
+        
+    def __str__(self): return f"Current Tables: {self.tables}"
+
+# The Command Interface
+class DDLCommand(ABC):
+    @abstractmethod
+    def execute(self): pass
+    @abstractmethod
+    def undo(self): pass
+
+# Concrete Commands
+class CreateTableCommand(DDLCommand):
+    def __init__(self, catalog, table_name):
+        self.catalog = catalog
+        self.table_name = table_name
+        
+    def execute(self):
+        self.catalog.add_table(self.table_name)
+        
+    def undo(self):
+        print(f"-> UNDO CreateTableCommand({self.table_name})")
+        self.catalog.remove_table(self.table_name)
+
+class DropTableCommand(DDLCommand):
+    def __init__(self, catalog, table_name):
+        self.catalog = catalog
+        self.table_name = table_name
+        
+    def execute(self):
+        self.catalog.remove_table(self.table_name)
+        
+    def undo(self):
+        print(f"-> UNDO DropTableCommand({self.table_name})")
+        # In a real DBMS, this requires restoring the table from a Memento/Backup
+        self.catalog.add_table(self.table_name)
+
+# --- TEST CODE ---
+catalog = Catalog()
+history = [] # To keep track of executed commands for rollback
+
+print(catalog)
+
+cmd1 = CreateTableCommand(catalog, "users")
+cmd1.execute()
+history.append(cmd1)
+
+cmd2 = CreateTableCommand(catalog, "orders")
+cmd2.execute()
+history.append(cmd2)
+
+print(catalog)
+
+# Something went wrong, rollback the last transaction!
+print("
+[TRANSACTION FAILED] Rolling back changes...")
+while history:
+    last_cmd = history.pop()
+    last_cmd.undo()
+
+print(catalog)
+
+# Output:
+# Current Tables: set()
+# [CATALOG] Creating table 'users'
+# [CATALOG] Creating table 'orders'
+# Current Tables: {'users', 'orders'}
+# 
+# [TRANSACTION FAILED] Rolling back changes...
+# -> UNDO CreateTableCommand(orders)
+# [CATALOG] Dropping table 'orders'
+# -> UNDO CreateTableCommand(users)
+# [CATALOG] Dropping table 'users'
+# Current Tables: set()
+```
+
+---
+
+
+
+---
+
 
 
 ---
@@ -3038,173 +3207,3 @@ graph LR
     C6_3 --> T6_3_3["ToString_FormatsPermissionForLogging"]
     C6_3 --> T6_3_4["Matches_WhenActionIsDeny_OverridesGrant"]
 ```
-
----
-
-## 9. Command Pattern: DDL Commands (Medium Priority)
-
-*   **Why choose Command instead of running DDL logic directly?**
-    When a user issues `CREATE TABLE`, `DROP TABLE`, or `ALTER TABLE`, executing the creation logic directly inside the SQL Parser or Query Engine tightly couples those components. It also makes it very difficult to implement features like Transactional DDL (where a `CREATE TABLE` can be rolled back if a subsequent command fails) or Replicated DDL (sending the command to replica nodes).
-    
-    **The Command Pattern Solves This By:**
-    1. **Encapsulation:** Every DDL operation is wrapped into an object (e.g., `CreateTableCommand`) that contains all necessary information (table name, columns) to execute the action.
-    2. **Undo Capability:** Commands can implement an `undo()` method. E.g., the undo of `CreateTable` is `DROP TABLE`.
-    3. **Queueing & Logging:** Commands can be placed in a queue for sequential execution, or serialized to a Write-Ahead Log (WAL) before execution.
-
-### Class Diagram
-```mermaid
-classDiagram
-    class DDLCommand {
-        <<interface>>
-        +execute()*
-        +undo()*
-    }
-    
-    class CreateTableCommand {
-        -String table_name
-        -Catalog receiver
-        +execute()
-        +undo()
-    }
-    
-    class DropTableCommand {
-        -String table_name
-        -Table backup
-        -Catalog receiver
-        +execute()
-        +undo()
-    }
-    
-    class Catalog {
-        +add_table(name)
-        +remove_table(name)
-    }
-
-    DDLCommand <|.. CreateTableCommand
-    DDLCommand <|.. DropTableCommand
-    CreateTableCommand --> Catalog : receiver
-    DropTableCommand --> Catalog : receiver
-```
-
-### Sequence Diagram
-```mermaid
-sequenceDiagram
-    actor DB_Engine
-    participant Cmd as CreateTableCommand
-    participant Cat as Catalog
-
-    DB_Engine->>Cmd: execute()
-    activate Cmd
-    
-    Note over Cmd: Receiver executes the actual work
-    Cmd->>Cat: add_table("users")
-    Cat-->>Cmd: success
-    
-    Cmd-->>DB_Engine: success
-    deactivate Cmd
-    
-    opt Transaction Abort
-        DB_Engine->>Cmd: undo()
-        activate Cmd
-        Cmd->>Cat: remove_table("users")
-        Cat-->>Cmd: success
-        Cmd-->>DB_Engine: rolled back
-        deactivate Cmd
-    end
-```
-
-### TDD Code Example
-```python
-from abc import ABC, abstractmethod
-
-# The Receiver
-class Catalog:
-    def __init__(self):
-        self.tables = set()
-        
-    def add_table(self, name):
-        print(f"[CATALOG] Creating table '{name}'")
-        self.tables.add(name)
-        
-    def remove_table(self, name):
-        print(f"[CATALOG] Dropping table '{name}'")
-        self.tables.remove(name)
-        
-    def __str__(self): return f"Current Tables: {self.tables}"
-
-# The Command Interface
-class DDLCommand(ABC):
-    @abstractmethod
-    def execute(self): pass
-    @abstractmethod
-    def undo(self): pass
-
-# Concrete Commands
-class CreateTableCommand(DDLCommand):
-    def __init__(self, catalog, table_name):
-        self.catalog = catalog
-        self.table_name = table_name
-        
-    def execute(self):
-        self.catalog.add_table(self.table_name)
-        
-    def undo(self):
-        print(f"-> UNDO CreateTableCommand({self.table_name})")
-        self.catalog.remove_table(self.table_name)
-
-class DropTableCommand(DDLCommand):
-    def __init__(self, catalog, table_name):
-        self.catalog = catalog
-        self.table_name = table_name
-        
-    def execute(self):
-        self.catalog.remove_table(self.table_name)
-        
-    def undo(self):
-        print(f"-> UNDO DropTableCommand({self.table_name})")
-        # In a real DBMS, this requires restoring the table from a Memento/Backup
-        self.catalog.add_table(self.table_name)
-
-# --- TEST CODE ---
-catalog = Catalog()
-history = [] # To keep track of executed commands for rollback
-
-print(catalog)
-
-cmd1 = CreateTableCommand(catalog, "users")
-cmd1.execute()
-history.append(cmd1)
-
-cmd2 = CreateTableCommand(catalog, "orders")
-cmd2.execute()
-history.append(cmd2)
-
-print(catalog)
-
-# Something went wrong, rollback the last transaction!
-print("
-[TRANSACTION FAILED] Rolling back changes...")
-while history:
-    last_cmd = history.pop()
-    last_cmd.undo()
-
-print(catalog)
-
-# Output:
-# Current Tables: set()
-# [CATALOG] Creating table 'users'
-# [CATALOG] Creating table 'orders'
-# Current Tables: {'users', 'orders'}
-# 
-# [TRANSACTION FAILED] Rolling back changes...
-# -> UNDO CreateTableCommand(orders)
-# [CATALOG] Dropping table 'orders'
-# -> UNDO CreateTableCommand(users)
-# [CATALOG] Dropping table 'users'
-# Current Tables: set()
-```
-
----
-
-
-
