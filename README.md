@@ -1177,6 +1177,136 @@ print(f"Backup  : {backup}") # Backup should NOT have 'created_at'
 
 ---
 
+## 8. Proxy Pattern: Metadata Caching (Medium Priority)
+
+*   **Why choose Proxy instead of loading everything on startup?**
+    An enterprise DBMS may have tens of thousands of tables, views, and procedures. If the DBMS Engine tries to load the full metadata (columns, data types, constraints) of every single object into RAM at startup, it will cause immense memory bloat and unacceptable startup times.
+    
+    **The Proxy Pattern Solves This By:**
+    1. **Lazy Loading:** A `TableProxy` acts as a lightweight placeholder. It only contains the table's name. It implements the same interface as the `RealTable`.
+    2. **Transparent Access:** When the Query Optimizer queries the proxy for the table's columns (e.g., calling `get_columns()`), the proxy intercepts the call, fetches the heavy metadata from the disk catalog, instantiates the `RealTable`, and caches it for future calls.
+    3. **Memory Efficiency:** Only the metadata of actively queried tables resides in memory.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class ITable {
+        <<interface>>
+        +get_columns()* List
+        +get_row_count()* int
+    }
+    
+    class RealTable {
+        -List columns
+        -int row_count
+        +get_columns() List
+        +get_row_count() int
+    }
+    
+    class TableProxy {
+        -String table_name
+        -RealTable real_table
+        -load_from_disk()
+        +get_columns() List
+        +get_row_count() int
+    }
+
+    ITable <|.. RealTable
+    ITable <|.. TableProxy
+    TableProxy o-- RealTable : caches
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Optimizer
+    participant Proxy as TableProxy("users")
+    participant Disk as SystemCatalog (Disk)
+    participant Real as RealTable("users")
+
+    Optimizer->>Proxy: get_columns()
+    activate Proxy
+    
+    opt If real_table is None
+        Proxy->>Disk: read_metadata("users")
+        Disk-->>Proxy: metadata
+        Proxy->>Real: <<create>> RealTable(metadata)
+    end
+    
+    Proxy->>Real: get_columns()
+    Real-->>Proxy: [id, name, email]
+    
+    Proxy-->>Optimizer: [id, name, email]
+    deactivate Proxy
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+class ITable(ABC):
+    @abstractmethod
+    def get_columns(self): pass
+
+class RealTable(ITable):
+    def __init__(self, table_name):
+        print(f"[DISK I/O] Loading heavy metadata for table '{table_name}' from disk...")
+        self.table_name = table_name
+        # Simulate loading columns
+        self.columns = ["id", "username", "email"]
+        
+    def get_columns(self):
+        return self.columns
+
+class TableProxy(ITable):
+    def __init__(self, table_name):
+        self.table_name = table_name
+        self.real_table = None # Cache is initially empty
+        print(f"[PROXY] Created lightweight placeholder for '{table_name}'.")
+        
+    def _load(self):
+        if self.real_table is None:
+            self.real_table = RealTable(self.table_name)
+            
+    def get_columns(self):
+        self._load() # Ensure real object exists
+        return self.real_table.get_columns()
+
+# --- TEST CODE ---
+# Startup phase: Creating proxies is very fast
+users_table = TableProxy("users")
+orders_table = TableProxy("orders")
+
+print("
+--- Processing Query: SELECT email FROM users ---")
+# First access triggers disk load
+cols = users_table.get_columns()
+print(f"Columns in users: {cols}")
+
+print("
+--- Processing Query: SELECT username FROM users ---")
+# Second access uses cache (no disk I/O)
+cols2 = users_table.get_columns()
+print(f"Columns in users: {cols2}")
+
+# Output:
+# [PROXY] Created lightweight placeholder for 'users'.
+# [PROXY] Created lightweight placeholder for 'orders'.
+#
+# --- Processing Query: SELECT email FROM users ---
+# [DISK I/O] Loading heavy metadata for table 'users' from disk...
+# Columns in users: ['id', 'username', 'email']
+#
+# --- Processing Query: SELECT username FROM users ---
+# Columns in users: ['id', 'username', 'email']
+```
+
+---
+
+
+
+---
+
 
 
 
