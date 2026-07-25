@@ -1468,6 +1468,150 @@ print(catalog)
 
 ---
 
+## 10. Observer Pattern: Trigger Notification (Medium Priority)
+
+*   **Why choose Observer instead of hardcoding trigger logic inside `Table.insert()`?**
+    Database Triggers are custom logic executed automatically when a table undergoes an `INSERT`, `UPDATE`, or `DELETE`. If a `Table` class explicitly calls `AuditLog.write()` or `NotificationService.send()` whenever a row is inserted, the `Table` becomes tightly coupled to arbitrary services and violates the Single Responsibility Principle.
+    
+    **The Observer Pattern Solves This By:**
+    1. **Loose Coupling:** The `Table` acts as a Subject. It maintains a list of `Trigger` observers. It doesn't know what the triggers do.
+    2. **Dynamic Subscription:** Triggers can be dynamically attached (created) or detached (dropped) at runtime via `attach()` and `detach()`.
+    3. **Event Broadcasting:** When `Table.insert()` finishes, it simply iterates through its observers and calls `trigger.update(row_data)`.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Subject {
+        <<interface>>
+        +attach(Observer o)*
+        +detach(Observer o)*
+        +notify(event, data)*
+    }
+    
+    class Table {
+        -List~Trigger~ triggers
+        +attach(Trigger t)
+        +detach(Trigger t)
+        +notify(event, data)
+        +insert(row)
+    }
+    
+    class Trigger {
+        <<interface>>
+        +update(event, data)*
+    }
+    
+    class AuditLogTrigger {
+        +update(event, data)
+    }
+    
+    class ValidationTrigger {
+        +update(event, data)
+    }
+
+    Subject <|.. Table
+    Trigger <|.. AuditLogTrigger
+    Trigger <|.. ValidationTrigger
+    Table o-- Trigger : notifies
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor User
+    participant Tbl as Table("users")
+    participant Aud as AuditLogTrigger
+    participant Val as ValidationTrigger
+
+    User->>Tbl: insert( {id: 1, name: "Alice"} )
+    activate Tbl
+    
+    Note over Tbl: Inserts row into storage
+    
+    Tbl->>Tbl: notify("INSERT", data)
+    activate Tbl
+    
+    Tbl->>Aud: update("INSERT", data)
+    Aud-->>Tbl: success
+    
+    Tbl->>Val: update("INSERT", data)
+    Val-->>Tbl: success
+    
+    deactivate Tbl
+    
+    Tbl-->>User: Row inserted
+    deactivate Tbl
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+# The Observer Interface
+class Trigger(ABC):
+    @abstractmethod
+    def update(self, event_type, row_data): pass
+
+# Concrete Observers
+class AuditLogTrigger(Trigger):
+    def update(self, event_type, row_data):
+        print(f"[AUDIT LOG] Recorded {event_type} operation with data: {row_data}")
+
+class ValidationTrigger(Trigger):
+    def update(self, event_type, row_data):
+        if event_type == "INSERT" and "email" not in row_data:
+            print(f"[VALIDATION] Warning: Inserted row is missing an email field!")
+
+# The Subject
+class Table:
+    def __init__(self, name):
+        self.name = name
+        self.triggers = [] # List of observers
+        
+    def attach(self, trigger: Trigger):
+        self.triggers.append(trigger)
+        
+    def detach(self, trigger: Trigger):
+        self.triggers.remove(trigger)
+        
+    def notify(self, event_type, row_data):
+        # Broadcast to all attached observers
+        for trigger in self.triggers:
+            trigger.update(event_type, row_data)
+            
+    def insert(self, row_data):
+        print(f"\nTable '{self.name}': Inserting row {row_data} into storage...")
+        # (Storage logic goes here)
+        
+        # Notify observers that an insert happened
+        self.notify("INSERT", row_data)
+
+# --- TEST CODE ---
+users_table = Table("users")
+
+# Create triggers (Observers)
+audit_trigger = AuditLogTrigger()
+val_trigger = ValidationTrigger()
+
+# Attach triggers to the table (Subscription)
+users_table.attach(audit_trigger)
+users_table.attach(val_trigger)
+
+# Perform operation
+users_table.insert({"id": 1, "name": "Alice", "email": "alice@gmail.com"})
+
+users_table.insert({"id": 2, "name": "Bob"})
+
+```
+
+
+
+---
+
+
+
+---
+
 
 
 ---
