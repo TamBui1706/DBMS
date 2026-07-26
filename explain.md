@@ -1166,6 +1166,61 @@ sequenceDiagram
 - **Giải pháp Abstract Factory:** Tạo ra các "Lò Đúc" (Factory) chuyên biệt. Nếu bạn gọi `InnoDBFactory`, nó sẽ trả ra một bộ đồng phục hoàn chỉnh: `InnoDBTable` và `InnoDBIndex`. Các thành phần này đảm bảo 100% tương thích với nhau.
 - **Sự linh hoạt:** Client (Query Engine) không bao giờ cần biết mình đang dùng InnoDB hay Memory. Nó chỉ bảo Lò Đúc: "Cho tôi 1 cái Bảng và 1 cái Index". Lò Đúc sẽ tự động nhả ra đồ đồng bộ. Thêm một Engine mới chỉ việc thêm một Factory mới.
 
+
+### Giải thích Sơ đồ Class và Sequence (Abstract Factory)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class StorageFactory {
+        <<interface>>
+        +create_table(name)* Table
+        +create_index(col)* Index
+    }
+    class InnoDBFactory {
+        +create_table(name) Table
+        +create_index(col) Index
+    }
+    class MemoryFactory {
+        +create_table(name) Table
+        +create_index(col) Index
+    }
+    
+    class Table { <<interface>> }
+    class InnoDBTable
+    class MemoryTable
+    
+    StorageFactory <|.. InnoDBFactory
+    StorageFactory <|.. MemoryFactory
+    Table <|.. InnoDBTable
+    Table <|.. MemoryTable
+    
+    InnoDBFactory --> InnoDBTable : creates
+    MemoryFactory --> MemoryTable : creates
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** `StorageFactory` định nghĩa một bộ khung (hợp đồng) yêu cầu mọi Factory phải biết tạo Bảng (`create_table`) và tạo Index (`create_index`).
+- **Quan hệ (Relationships):** Các Factory cụ thể (`InnoDBFactory`, `MemoryFactory`) chịu trách nhiệm khởi tạo (creates) các đối tượng cụ thể tương ứng. Nhờ vậy, đối tượng Bảng và Index sinh ra luôn cùng "gia tộc" và tương thích 100%.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Factory as InnoDBFactory
+    participant Tbl as InnoDBTable
+    
+    Engine->>Factory: create_table("users")
+    activate Factory
+    Factory->>Tbl: <<create>>
+    Factory-->>Engine: returns InnoDBTable
+    deactivate Factory
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Engine đóng vai trò khách hàng. Nó không quan tâm nó đang gọi ai, nó chỉ gọi `create_table()`.
+2. `InnoDBFactory` đứng ra tiếp nhận, khởi tạo đúng loại `InnoDBTable` và trả về cho Engine.
+
+
+
 ## 15. Singleton Pattern (Độc Tôn Thiên Hạ)
 **Mục tiêu:** Đảm bảo một Class chỉ có duy nhất MỘT thực thể (Instance) tồn tại trong suốt vòng đời của chương trình và cung cấp một điểm truy cập toàn cầu tới nó.
 
@@ -1173,11 +1228,107 @@ sequenceDiagram
 - **Giải pháp Singleton:** Chặn đứng cửa khởi tạo `new`. Class sẽ tự ẩn mình đi, và cung cấp hàm `get_instance()`. Bên trong hàm này, nó kiểm tra: Nếu tôi chưa ra đời, tôi sẽ tự tạo ra tôi. Nếu tôi đã tồn tại, tôi sẽ trả về chính tôi của ngày hôm qua. Không ai có thể tạo ra bản sao thứ 2.
 - **Lưu ý tử huyệt:** Khi triển khai Singleton trong môi trường đa luồng (Multi-threading của Database), phải cực kỳ cẩn thận dùng khoá (Mutex/Lock) trong hàm khởi tạo, nếu không 2 luồng cùng lúc gọi `get_instance()` lúc nó đang rỗng sẽ vô tình đẻ ra 2 đối tượng!
 
+
+### Giải thích Sơ đồ Class và Sequence (Singleton)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class TransactionManager {
+        -static TransactionManager _instance
+        -Map locks
+        -TransactionManager()
+        +get_instance()$ TransactionManager
+        +acquire_lock(table)
+    }
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Hàm `get_instance()` là hàm Static (cấp độ Class). Hàm khởi tạo `TransactionManager()` bị giấu đi (private/protected).
+- **Quan hệ (Relationships):** Class này tự giữ một con trỏ trỏ đến chính nó (`_instance`). Đây là cách duy nhất để lấy được đối tượng.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Thread1
+    actor Thread2
+    participant TM as TransactionManager (Class)
+    
+    Thread1->>TM: get_instance()
+    activate TM
+    Note over TM: Creates new Instance
+    TM-->>Thread1: returns Instance_A
+    deactivate TM
+    
+    Thread2->>TM: get_instance()
+    activate TM
+    Note over TM: Returns existing Instance
+    TM-->>Thread2: returns Instance_A
+    deactivate TM
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Luồng 1 (Thread 1) xin đối tượng. Vì là lần đầu, hệ thống tạo đối tượng mới (`Instance_A`).
+2. Luồng 2 (Thread 2) xin đối tượng. Lúc này hệ thống phát hiện đã có, nên trả về luôn `Instance_A`. Cả 2 luồng đều dùng chung một bộ quản lý duy nhất.
+
+
+
 ## 16. Adapter Pattern (Kẻ Chuyển Đổi Phích Cắm)
 **Mục tiêu:** Giúp 2 Interface không tương thích có thể làm việc trơn tru với nhau thông qua một lớp bọc (Adapter).
 
 - **Vấn đề:** Động cơ truy vấn (Query Engine) được lập trình cứng để chỉ làm việc với lớp `Table` nội bộ (gọi hàm `get_rows()`). Bỗng một ngày đẹp trời, sếp yêu cầu Engine phải có khả năng đọc dữ liệu từ một file `data.csv` bên ngoài. Nhưng hàm đọc CSV lại là `read_lines()`. Động cơ SQL không hiểu hàm này!
 - **Giải pháp Adapter:** Thay vì đập bỏ Động cơ SQL để sửa lại code, ta tạo ra một "Phích cắm chuyển đổi" tên là `CSVTableAdapter`. Cái phích cắm này ngụy trang bề ngoài y hệt một lớp `Table` tiêu chuẩn (Có hàm `get_rows()`). Nhưng bên trong ruột, nó lén gọi hàm `read_lines()` của CSV, sau đó gọt giũa dữ liệu thô thành định dạng chuẩn của Database rồi mới trả ra. Động cơ SQL bị lừa một cách ngoạn mục!
+
+
+### Giải thích Sơ đồ Class và Sequence (Adapter)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class ITable {
+        <<interface>>
+        +get_rows()* List
+    }
+    class InternalTable {
+        +get_rows() List
+    }
+    class CSVReader {
+        +read_lines() String
+    }
+    class CSVTableAdapter {
+        -CSVReader adaptee
+        +get_rows() List
+    }
+    
+    ITable <|.. InternalTable
+    ITable <|.. CSVTableAdapter
+    CSVTableAdapter --> CSVReader : wraps
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** `CSVTableAdapter` bắt buộc phải triển khai hàm `get_rows()` để lừa Engine. Bên trong hàm này, nó gọi `read_lines()` của hệ thống bên ngoài.
+- **Quan hệ (Relationships):** Adapter bọc (wraps) cái `CSVReader` lại. Nó đứng giữa làm cầu nối ngôn ngữ giữa `ITable` và `CSVReader`.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Adapter as CSVTableAdapter
+    participant Reader as CSVReader
+    
+    Engine->>Adapter: get_rows()
+    activate Adapter
+    Adapter->>Reader: read_lines()
+    activate Reader
+    Reader-->>Adapter: "1,Alice\n2,Bob"
+    deactivate Reader
+    Note over Adapter: Parses CSV to dictionary format
+    Adapter-->>Engine: [{"id":1, "name":"Alice"}]
+    deactivate Adapter
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Engine gọi `get_rows()` hệt như gọi một Table bình thường.
+2. Adapter lén thò tay gọi hệ thống CSV đọc file thô.
+3. Adapter biến đổi dữ liệu thô thành định dạng chuẩn rồi mới trả về. Engine hoàn toàn không biết sự tồn tại của CSV.
+
+
 
 ## 17. Bridge Pattern (Cây Cầu Nối Logic và Vật Lý)
 **Mục tiêu:** Tách rời phần Logic trừu tượng (Abstraction) ra khỏi phần Cài đặt vật lý (Implementation) để cả 2 có thể phát triển độc lập.
@@ -1185,6 +1336,68 @@ sequenceDiagram
 - **Vấn đề:** Một Bảng (Table) có 2 khía cạnh: (1) Tính chất Logic (Bảng thường, Bảng phân mảnh - Partitioned, Bảng tạm - Temp). (2) Tính chất Vật lý (Lưu bằng cây B-Tree, Lưu bằng bảng băm Hash). Nếu bạn dùng tính kế thừa (Inheritance), bạn sẽ phải tạo ra một ma trận các Class kết hợp: `TempBTreeTable`, `TempHashTable`, `PartitionBTreeTable`, `PartitionHashTable`... Mới có 2 đặc tính mà đã sinh ra 4 class. Nếu có 10 đặc tính, bạn sẽ có hàng trăm Class! Code nổ tung.
 - **Giải pháp Bridge:** Chặt đứt sự kế thừa. Tách chúng ra làm 2 cây phân cấp độc lập: Một cây dành cho Logic (`LogicalTable`) và một cây dành cho Vật lý (`StorageEngine`). Sau đó bắc một "Cây Cầu" (Con trỏ) nối từ Logic sang Vật lý.
 - **Sự linh hoạt:** Bây giờ, bạn muốn một "Bảng Tạm" xài "B-Tree"? Đơn giản, lấy object `TempTable` cắm object `BTreeStorage` vào ruột nó. Bạn có thể mix-and-match (phối ghép) vô hạn các đặc tính mà không cần phải viết thêm bất kỳ class lai tạo nào.
+
+
+### Giải thích Sơ đồ Class và Sequence (Bridge)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class StorageEngine {
+        <<interface>>
+        +store(data)*
+    }
+    class BTreeStorage {
+        +store(data)
+    }
+    class HashStorage {
+        +store(data)
+    }
+    
+    class LogicalTable {
+        <<abstract>>
+        #StorageEngine storage
+        +insert(data)*
+    }
+    class StandardTable {
+        +insert(data)
+    }
+    class PartitionedTable {
+        +insert(data)
+    }
+    
+    LogicalTable o-- StorageEngine : uses
+    StorageEngine <|.. BTreeStorage
+    StorageEngine <|.. HashStorage
+    LogicalTable <|-- StandardTable
+    LogicalTable <|-- PartitionedTable
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Cả hai nhánh độc lập. Nhánh `LogicalTable` quản lý các loại Bảng (Logic). Nhánh `StorageEngine` quản lý cách lưu đĩa (Vật lý).
+- **Quan hệ (Relationships):** Nút thắt chính là con trỏ `storage` bên trong `LogicalTable`. Thay vì kế thừa chồng chéo, cái Bảng chỉ đơn giản là Gắn (Composition) công cụ lưu trữ vào ruột của nó.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Client
+    participant Tbl as PartitionedTable
+    participant Store as BTreeStorage
+    
+    Client->>Tbl: insert(data)
+    activate Tbl
+    Note over Tbl: Determines which partition to use
+    Tbl->>Store: store(partitioned_data)
+    activate Store
+    Store-->>Tbl: success
+    deactivate Store
+    Tbl-->>Client: success
+    deactivate Tbl
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Client gọi hàm `insert()` trên `PartitionedTable`.
+2. Đối tượng Logic (Bảng phân mảnh) tự xử lý việc chia nhỏ dữ liệu. Xong xuôi, nó quăng dữ liệu qua Cây Cầu, gọi hàm `store()` của phần Vật Lý (BTreeStorage) để ghi đĩa thực sự.
+
+
 
 
 
@@ -1198,6 +1411,71 @@ sequenceDiagram
 - **Giải pháp Decorator:** Đừng sửa object cũ. Hãy tạo ra một cái Vỏ Bọc (Decorator) tên là `ReadOnlyDecorator`. Cái vỏ bọc này có hình dạng y hệt cái Table (Cùng interface). Khi đến giờ Backup, bạn thò tay tóm lấy object `Table`, bọc cái vỏ `ReadOnlyDecorator` ra ngoài nó.
 - **Sự linh hoạt:** Khi người dùng gửi lệnh `insert()`, lệnh này sẽ đập vào cái vỏ bọc trước. Cái vỏ lập tức hét lên: "Lỗi! Đang Read-Only!". Khi quá trình Backup xong, bạn chỉ cần gỡ cái vỏ bọc vứt đi, object `Table` bên trong lại `insert()` bình thường mà không hề bị tổn thương. Bạn có thể bọc vô số lớp: Lớp Auditing (Ghi log bảo mật) bọc ngoài lớp Read-Only bọc ngoài Table!
 
+
+### Giải thích Sơ đồ Class và Sequence (Decorator)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class ITable {
+        <<interface>>
+        +insert(row)*
+        +get_name()* String
+    }
+    class ConcreteTable {
+        +insert(row)
+        +get_name() String
+    }
+    
+    class TableDecorator {
+        <<abstract>>
+        #ITable wrapped_table
+        +insert(row)
+        +get_name() String
+    }
+    class ReadOnlyDecorator {
+        +insert(row)
+    }
+    class AuditingDecorator {
+        +insert(row)
+    }
+    
+    ITable <|.. ConcreteTable
+    ITable <|.. TableDecorator
+    TableDecorator o-- ITable : wraps
+    TableDecorator <|-- ReadOnlyDecorator
+    TableDecorator <|-- AuditingDecorator
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Lớp `TableDecorator` triển khai y hệt giao diện `ITable` (giúp nó nguỵ trang thành một cái Bảng). Nó giữ một con trỏ trỏ tới bảng thật (`wrapped_table`) và có trách nhiệm chuyển tiếp (forward) các lời gọi hàm.
+- **Quan hệ (Relationships):** Các Vỏ bọc cụ thể (`ReadOnlyDecorator`) khi được gọi `insert()` có thể chọn cách ném lỗi để chặn, hoặc thêm logic trước khi gọi tiếp vào bên trong.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Dec as ReadOnlyDecorator
+    participant Tbl as ConcreteTable
+    
+    Engine->>Dec: insert(row)
+    activate Dec
+    Note over Dec: Intercepts request
+    Dec-->>Engine: throws Exception("Table is Read-Only!")
+    deactivate Dec
+    
+    Engine->>Dec: get_name()
+    activate Dec
+    Dec->>Tbl: get_name()
+    Tbl-->>Dec: "users"
+    Dec-->>Engine: "users"
+    deactivate Dec
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Engine tưởng đang gọi bảng thật, nên gọi lệnh `insert()`. Vỏ bọc ReadOnly chặn đứng và báo lỗi.
+2. Khi Engine gọi `get_name()`, vỏ bọc thấy không nguy hiểm nên đẩy lệnh xuyên qua vỏ vào bảng thật bên trong. Bảng thật trả ra "users".
+
+
+
 ## 19. Facade Pattern (Mặt Tiền Đồng Nhất)
 **Mục tiêu:** Cung cấp một giao diện đơn giản duy nhất để giao tiếp với cả một hệ thống nội bộ khổng lồ và phức tạp.
 
@@ -1205,12 +1483,141 @@ sequenceDiagram
 - **Giải pháp Facade:** Xây một cái "Mặt tiền" (Facade) đẹp đẽ tên là `DBMSClient`. Mặt tiền này chỉ có đúng 1 cửa sổ giao dịch: hàm `execute(sql)`. Người dùng ném câu SQL qua cửa sổ. Bên trong Facade, các nhân viên tự gọi điện cho Lexer, Parser, Optimizer loạn xạ với nhau, xử lý xong xuôi thì ném trả kết quả ra ngoài.
 - **Sự linh hoạt:** Người dùng (Client) bị cô lập hoàn toàn khỏi sự phức tạp của hệ thống. Dù bạn có nâng cấp, đập bỏ thay mới Optimizer, người dùng cũng không bao giờ biết và code của họ không bao giờ bị lỗi.
 
+
+### Giải thích Sơ đồ Class và Sequence (Facade)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class DBMSFacade {
+        -Parser parser
+        -Optimizer optimizer
+        -Executor executor
+        +execute(query) Result
+    }
+    
+    class Parser { +parse(query) AST }
+    class Optimizer { +optimize(ast) Plan }
+    class Executor { +run(plan) Result }
+    
+    DBMSFacade --> Parser
+    DBMSFacade --> Optimizer
+    DBMSFacade --> Executor
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** `DBMSFacade` tạo ra cái hàm `execute(query)` cực kỳ đơn giản để cho Client dùng.
+- **Quan hệ (Relationships):** Facade giữ con trỏ đến toàn bộ các phòng ban. Từ ngoài nhìn vào chỉ thấy Mặt tiền, không ai thấy được bộ máy rườm rà phía sau.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor AppDeveloper
+    participant Facade as DBMSFacade
+    participant P as Parser
+    participant O as Optimizer
+    participant E as Executor
+    
+    AppDeveloper->>Facade: execute("SELECT * FROM users")
+    activate Facade
+    Facade->>P: parse(query)
+    P-->>Facade: AST
+    Facade->>O: optimize(AST)
+    O-->>Facade: ExecutionPlan
+    Facade->>E: run(ExecutionPlan)
+    E-->>Facade: ResultSet
+    Facade-->>AppDeveloper: ResultSet
+    deactivate Facade
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Lập trình viên App ném câu Query vào Mặt tiền.
+2. Mặt tiền lẳng lặng chuyển cho Parser cắt chữ, mang sang Optimizer tối ưu, rồi ném cho Executor chạy. Xong đâu vào đấy thì cầm kết quả vứt ra cho Lập trình viên. Cực kỳ nhàn nhã!
+
+
+
 ## 20. Mediator Pattern (Nhà Hoà Giải Trung Tâm)
 **Mục tiêu:** Giảm bớt sự giao tiếp hỗn loạn chằng chịt giữa các đối tượng bằng cách ép chúng giao tiếp qua một trung tâm điều phối.
 
 - **Vấn đề:** Trong thế giới giao dịch (Transaction) của Database, sự an toàn là trên hết. Khi một `Transaction` muốn ghi dữ liệu, nó gọi `LockManager` để xin khoá. Nhận khoá xong nó gọi `Table` để ghi. Ghi xong `Table` gọi `LogManager` để lưu lịch sử. Nếu có hàng trăm Transaction chạy cùng lúc, các đối tượng này gọi nhau tạo thành một mạng nhện (Spaghetti code) cực kỳ rối rắm. Nguy cơ Deadlock (Khoá chéo nhau) là 99%.
 - **Giải pháp Mediator:** Cấm tuyệt đối các phòng ban tự ý nói chuyện với nhau! Bổ nhiệm một ông `TransactionCoordinator` (Nhà Hoà Giải). Khi Transaction muốn ghi, nó nhắn tin cho Coordinator. Coordinator sẽ tự mình đi xin Lock, tự mình ghi Log, rồi mới báo lại cho Transaction.
 - **Sự linh hoạt:** Mọi logic phối hợp phức tạp nhất, logic chống Deadlock, logic huỷ giao dịch (Rollback)... đều được nhét chung vào một chỗ duy nhất là Coordinator. Các phòng ban khác chỉ làm đúng một việc của mình, code cực kỳ sáng sủa và dễ maintain.
+
+
+### Giải thích Sơ đồ Class và Sequence (Mediator)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class IMediator {
+        <<interface>>
+        +notify(sender, event, context)*
+    }
+    
+    class TransactionCoordinator {
+        -LockManager lock_mgr
+        -LogManager log_mgr
+        -StorageEngine storage
+        +notify(sender, event, context)
+    }
+    
+    class Component {
+        <<abstract>>
+        #IMediator mediator
+    }
+    
+    class Transaction {
+        +execute_query()
+    }
+    class LockManager {
+        +acquire_lock()
+    }
+    class LogManager {
+        +write_log()
+    }
+    
+    IMediator <|.. TransactionCoordinator
+    Component <|-- Transaction
+    Component <|-- LockManager
+    Component <|-- LogManager
+    TransactionCoordinator --> Component : coordinates
+    Component --> IMediator : notifies
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Mọi nút thắt hội tụ ở hàm `notify()`. Bất cứ Component nào có biến đều phải gióng trống bẩm báo qua hàm này.
+- **Quan hệ (Relationships):** Các Component KHÔNG lưu số điện thoại của nhau (không có đường mũi tên nối với nhau). Chúng chỉ lưu đúng số điện thoại của ông `IMediator`. Đây là sức mạnh chống Deadlock tuyệt đối.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Tx as Transaction
+    participant Med as Coordinator (Mediator)
+    participant Lock as LockManager
+    participant Log as LogManager
+    
+    Engine->>Tx: execute_query("UPDATE users")
+    activate Tx
+    Tx->>Med: notify(self, "REQUEST_WRITE", "users")
+    activate Med
+    
+    Med->>Lock: acquire_lock("users", WRITE)
+    Lock-->>Med: success
+    
+    Med->>Log: write_log("Tx started writing to users")
+    Log-->>Med: success
+    
+    Med-->>Tx: granted
+    deactivate Med
+    
+    Note over Tx: Transaction performs write operation
+    Tx-->>Engine: done
+    deactivate Tx
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Transaction xin ghi đĩa. Thay vì lao tới bàn LockManager, nó nhắn tin lên cho Coordinator (Mediator).
+2. Coordinator đích thân chạy qua LockManager xin khoá, rồi chạy qua LogManager ghi nhật ký.
+3. Lo liệu êm xuôi, Coordinator bật đèn xanh cho Transaction tiến hành ghi.
+
+
 
 
 
@@ -1223,6 +1630,75 @@ sequenceDiagram
 - **Giải pháp Memento:** Khái niệm Memento (Kỷ vật) ra đời. Trước khi đụng dao kéo vào Bảng, Bảng sẽ tự chụp X-Quang chính mình, đóng gói toàn bộ trạng thái vào một hộp đen gọi là `TableMemento`. Hộp đen này được giao cho Trình quản lý giao dịch cất giữ. Nếu mổ xẻ thất bại, Trình quản lý giao dịch ném cái hộp đen đó lại cho Bảng. Bảng mở hộp ra và tự động hồi phục lại y chang trạng thái cũ.
 - **Sự linh hoạt:** Chỉ có Bảng mới được quyền mở hộp `TableMemento` của chính nó (nhờ class lồng nhau hoặc quyền truy cập đặc biệt). Kẻ giữ hộp đen (Caretaker) không hề biết bên trong hộp chứa gì, bảo mật tuyệt đối!
 
+
+### Giải thích Sơ đồ Class và Sequence (Memento)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class Table {
+        -String name
+        -List columns
+        +save_state() TableMemento
+        +restore_state(TableMemento m)
+        +alter_table()
+    }
+    
+    class TableMemento {
+        -String state_snapshot
+        +get_state() String
+    }
+    
+    class DDLTransaction {
+        -TableMemento history
+        +execute_alter(Table t)
+        +undo(Table t)
+    }
+    
+    Table --> TableMemento : creates
+    DDLTransaction o-- TableMemento : stores (Caretaker)
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Bảng có 2 quyền năng: `save_state` (nhả ra kén Memento) và `restore_state` (ăn lại kén Memento để hoá giải).
+- **Quan hệ (Relationships):** `DDLTransaction` (Caretaker) chỉ được phép CẦM cái Hộp Đen (Stores) chứ không được mở ra xem. Sự đóng gói được đảm bảo hoàn toàn.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Tx as DDLTransaction
+    participant Tbl as Table
+    participant Mem as TableMemento
+    
+    Engine->>Tx: execute_alter(Tbl)
+    activate Tx
+    Tx->>Tbl: save_state()
+    activate Tbl
+    Tbl->>Mem: <<create>>
+    Tbl-->>Tx: returns Memento
+    deactivate Tbl
+    Note over Tx: Stores Memento in history
+    
+    Tx->>Tbl: alter_table(drop_column)
+    Note over Tbl: Fails with Error!
+    
+    Tx->>Tbl: restore_state(Memento)
+    activate Tbl
+    Tbl->>Mem: get_state()
+    Mem-->>Tbl: previous schema
+    Note over Tbl: Restores old schema
+    Tbl-->>Tx: done
+    deactivate Tbl
+    Tx-->>Engine: Transaction Aborted, safely rolled back
+    deactivate Tx
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Transaction bảo Table: Mày lưu bản nháp lại đi. Table nhả ra cái kén `Memento` quăng cho Transaction giữ.
+2. Xoá cột thất bại, báo lỗi tung toé.
+3. Transaction ném cái kén lại cho Table, gọi `restore_state()`. Table bung kén và quay trở lại hình dáng cũ y hệt lúc chưa bị lỗi. Quá an toàn!
+
+
+
 ## 22. State Pattern (Máy Trạng Thái Vạn Năng)
 **Mục tiêu:** Cho phép một đối tượng thay đổi hành vi của nó khi trạng thái nội bộ của nó thay đổi. Nhìn từ ngoài vào, dường như class của đối tượng đã bị thay đổi.
 
@@ -1230,12 +1706,135 @@ sequenceDiagram
 - **Giải pháp State:** Bóc tách mỗi trạng thái ra thành 1 Class riêng biệt (`ActiveState`, `AbortedState`). Transaction bây giờ chỉ là một cái vỏ, ruột của nó là 1 con trỏ chỉ vào 1 trong các State này. Khi gọi `tx.commit()`, Transaction ném quả bóng trách nhiệm đó cho State hiện tại xử lý.
 - **Sự linh hoạt:** Nếu ruột đang là `ActiveState`, gọi `commit()` sẽ chạy ghi đĩa. Nhưng nếu ruột đang là `AbortedState`, gọi `commit()` sẽ lập tức văng lỗi Exception. Code không hề có 1 chữ `if/else` nào, cực kỳ sạch sẽ và dễ dàng thêm Trạng thái mới.
 
+
+### Giải thích Sơ đồ Class và Sequence (State)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class Transaction {
+        -ITxState state
+        +set_state(state)
+        +commit()
+        +rollback()
+    }
+    
+    class ITxState {
+        <<interface>>
+        +commit(tx)*
+        +rollback(tx)*
+    }
+    
+    class ActiveState {
+        +commit(tx)
+        +rollback(tx)
+    }
+    class AbortedState {
+        +commit(tx)
+        +rollback(tx)
+    }
+    
+    Transaction *-- ITxState : current state
+    ITxState <|.. ActiveState
+    ITxState <|.. AbortedState
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Mọi hàm như `commit()`, `rollback()` trong class State đều yêu cầu truyền chính cái vỏ `tx` vào. Tại sao? Để State có thể tự gọi hàm `tx.set_state(Trạng Thái Mới)` để tự động biến hình cái vỏ.
+- **Quan hệ (Relationships):** Lớp `Transaction` chỉ là bức bình phong, chứa đúng 1 thuộc tính là cái lõi (state) hiện hành. Lõi quyết định hình dáng.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Client
+    participant Tx as Transaction
+    participant State as ActiveState
+    participant NewState as AbortedState
+    
+    Client->>Tx: rollback()
+    activate Tx
+    Tx->>State: rollback(self)
+    activate State
+    Note over State: Transitions to Aborted
+    State->>Tx: set_state(new AbortedState())
+    State-->>Tx: success
+    deactivate State
+    Tx-->>Client: success
+    deactivate Tx
+    
+    Client->>Tx: commit()
+    activate Tx
+    Note over Tx: State is now AbortedState
+    Tx->>NewState: commit(self)
+    NewState-->>Tx: throws Exception("Cannot commit aborted Tx")
+    Tx-->>Client: Error
+    deactivate Tx
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Client đòi Rollback, cái vỏ bọc `Tx` ngoan ngoãn chuyền lệnh cho `ActiveState`. Nó làm xong thì tự động lột xác thành `AbortedState`.
+2. Lát sau Client lỡ tay gọi Commit. Vì lõi đang là `AbortedState`, nó quăng thẳng ngoại lệ (Exception) thẳng mặt Client mà không cần tới dòng lệnh `if (state == Aborted)` nào.
+
+
+
 ## 23. Interpreter Pattern (Kẻ Thông Dịch Ngôn Ngữ)
 **Mục tiêu:** Cung cấp một cách để đánh giá (evaluate) các biểu thức ngôn ngữ (như SQL) bằng cách xây dựng một cây cú pháp trừu tượng (Abstract Syntax Tree - AST).
 
 - **Vấn đề:** Khi Động cơ CSDL nhận được câu lệnh `WHERE age > 18 AND status = 'ACTIVE'`. Làm sao để máy tính hiểu được câu tiếng người này để đi lọc dữ liệu?
 - **Giải pháp Interpreter:** Parser sẽ phân tích câu lệnh này thành một Cây Cú Pháp. Tại các nút lá là `GreaterThan(age, 18)` và `Equals(status, 'ACTIVE')`. Nút gốc là `And()`. Mọi nút trên cây đều có một hàm duy nhất tên là `evaluate(row_data)`.
 - **Sự linh hoạt:** Khi cần kiểm tra một Dòng dữ liệu, hệ thống nhét dòng đó vào Nút Gốc `And`. Nút `And` sẽ truyền xuống cho 2 đứa con. Nếu cả 2 con đều trả về `True`, Nút `And` sẽ phán quyết `True`. Động cơ SQL không cần phải đau đầu suy nghĩ, nó cứ đẩy dữ liệu vào Cây và Cây sẽ tự "Thông dịch" ra câu trả lời đúng sai!
+
+
+### Giải thích Sơ đồ Class và Sequence (Interpreter)
+
+#### Class Diagram
+```mermaid
+classDiagram
+    class Expression {
+        <<interface>>
+        +evaluate(row)* bool
+    }
+    class GreaterThanExpression {
+        -String col
+        -int val
+        +evaluate(row) bool
+    }
+    class AndExpression {
+        -Expression left
+        -Expression right
+        +evaluate(row) bool
+    }
+    
+    Expression <|.. GreaterThanExpression
+    Expression <|.. AndExpression
+    AndExpression o-- Expression : contains 2
+```
+**Giải thích Chi tiết (Phân tích Logic, Quan hệ, và Method):**
+- **Method (Phương thức cốt lõi):** Điểm mạnh nhất của Interpreter nằm ở hàm đệ quy `evaluate(row)`. Mọi nút lá (Greater Than) hay nút nhánh (And) đều phải sở hữu hàm này.
+- **Quan hệ (Relationships):** Nút nhánh (`AndExpression`) chứa (Aggregation) hai nút con. Cứ thế lồng ghép vô hạn để xử lý các câu SQL dài cả chục dòng.
+
+#### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant And as AndExpression
+    participant GT as GreaterThanExpression
+    participant EQ as EqualsExpression
+    
+    Engine->>And: evaluate(row)
+    activate And
+    And->>GT: evaluate(row)
+    GT-->>And: True (age > 18)
+    And->>EQ: evaluate(row)
+    EQ-->>And: True (status = ACTIVE)
+    And-->>Engine: True (Keep row)
+    deactivate And
+```
+**Giải thích Chi tiết Sơ đồ Động:**
+1. Engine thả Dữ liệu của Dòng 1 vào Nút gốc (AndExpression).
+2. Nút And đá bóng sang trái cho Nút GT: "Mày check xem tuổi lớn hơn 18 không?". Nút GT bẩm báo "Dạ đúng (True)".
+3. Nút And đá bóng sang phải cho Nút EQ: "Check trạng thái ACTIVE". Nút EQ bẩm "Dạ đúng".
+4. Nút And tổng hợp lại `True AND True = True`. Báo về cho Engine. Dòng 1 được giữ lại ở kết quả.
+
+
 
 
 ---
