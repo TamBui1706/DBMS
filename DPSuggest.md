@@ -25,6 +25,13 @@ This group manages the data-constituent components (Schemas, Tables, Constraints
 | **Medium** | **DDL Command** | **Memento** | Captures Table schema state before an `ALTER` operation to allow rollback on failure. |
 | **Medium** | **Views & Triggers** | **Strategy** | Allows switching between `Immediate`, `Deferred`, or `OnDemand` view materialization algorithms. |
 | **Medium** | **Views & Triggers** | **Observer** | When a row changes, the Table notifies all attached Triggers to execute their custom logic. |
+| **High** | **Object Creation** | **Abstract Factory** | Creates families of related storage objects (e.g., InnoDBTable vs MyISAMTable). |
+| **Highest** | **Database Server Core** | **Singleton** | Ensures core managers like SystemCatalog or TransactionManager have only one instance. |
+| **Medium** | **External Interfaces** | **Adapter** | Wraps external data sources (CSV/JSON) to implement the standard internal Table interface. |
+| **High** | **Storage Engine** | **Bridge** | Decouples logical Table abstraction from physical storage implementation (BTree vs Hash). |
+| **Medium** | **Security / Operations** | **Decorator** | Dynamically wraps a Table with temporary behaviors (e.g., ReadOnlyDecorator during backups). |
+| **High** | **Client Interface** | **Facade** | Provides a simplified `DBMSClient` that hides the complex orchestration of Parser, Optimizer, and Executor. |
+| **High** | **Transaction Management** | **Mediator** | `TransactionCoordinator` centrally manages Locks, Logs, and Tables to prevent deadlocks. |
 
 ## 2. Database Management & Connectivity
 This group provides the external interface and manages the database lifecycle.
@@ -1893,4 +1900,363 @@ tbl.accept(visitor)
 
 print("Generated Script:")
 print(visitor.get_result())
+```
+
+---
+
+## 14. Abstract Factory Pattern: Storage Families (High Priority)
+
+*   **Why choose Abstract Factory?**
+    A modern DBMS supports multiple storage engines (e.g., InnoDB, MyISAM, Memory). Each engine requires its own specific implementations of Tables and Indexes. If the Engine uses direct instantiation or simple factories, the code will be littered with `if engine == "InnoDB"`. Abstract Factory provides an interface for creating families of related or dependent objects without specifying their concrete classes.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class StorageFactory {
+        <<interface>>
+        +create_table(name)* Table
+        +create_index(col)* Index
+    }
+    class InnoDBFactory {
+        +create_table(name) Table
+        +create_index(col) Index
+    }
+    class MemoryFactory {
+        +create_table(name) Table
+        +create_index(col) Index
+    }
+    
+    class Table { <<interface>> }
+    class InnoDBTable
+    class MemoryTable
+    
+    StorageFactory <|.. InnoDBFactory
+    StorageFactory <|.. MemoryFactory
+    Table <|.. InnoDBTable
+    Table <|.. MemoryTable
+    
+    InnoDBFactory --> InnoDBTable : creates
+    MemoryFactory --> MemoryTable : creates
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Factory as InnoDBFactory
+    participant Tbl as InnoDBTable
+    
+    Engine->>Factory: create_table("users")
+    activate Factory
+    Factory->>Tbl: <<create>>
+    Factory-->>Engine: returns InnoDBTable
+    deactivate Factory
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+class Table(ABC):
+    @abstractmethod
+    def insert(self, row): pass
+
+class InnoDBTable(Table):
+    def insert(self, row): print(f"[InnoDB] Writing {row} to disk safely.")
+
+class MemoryTable(Table):
+    def insert(self, row): print(f"[Memory] Writing {row} to fast volatile RAM.")
+
+class StorageFactory(ABC):
+    @abstractmethod
+    def create_table(self) -> Table: pass
+
+class InnoDBFactory(StorageFactory):
+    def create_table(self): return InnoDBTable()
+
+class MemoryFactory(StorageFactory):
+    def create_table(self): return MemoryTable()
+
+# --- TEST CODE ---
+config_engine = "Memory" # Could be read from config
+factory = MemoryFactory() if config_engine == "Memory" else InnoDBFactory()
+
+# Client code only depends on abstractions
+table = factory.create_table()
+table.insert({"id": 1, "name": "Alice"})
+# Output: [Memory] Writing {'id': 1, 'name': 'Alice'} to fast volatile RAM.
+```
+
+---
+
+## 15. Singleton Pattern: Global Managers (Highest Priority)
+
+*   **Why choose Singleton?**
+    Certain components in a DBMS *must* have exactly one instance. For example, the `TransactionManager` coordinates locks. If two instances of `TransactionManager` exist, they will have conflicting lock tables, resulting in immediate data corruption and deadlocks. Singleton guarantees that a class has only one instance and provides a global point of access to it.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class TransactionManager {
+        -static TransactionManager _instance
+        -Map locks
+        -TransactionManager()
+        +get_instance()$ TransactionManager
+        +acquire_lock(table)
+    }
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Thread1
+    actor Thread2
+    participant TM as TransactionManager (Class)
+    
+    Thread1->>TM: get_instance()
+    activate TM
+    Note over TM: Creates new Instance
+    TM-->>Thread1: returns Instance_A
+    deactivate TM
+    
+    Thread2->>TM: get_instance()
+    activate TM
+    Note over TM: Returns existing Instance
+    TM-->>Thread2: returns Instance_A
+    deactivate TM
+```
+
+### TDD Code Example
+```python
+import threading
+
+class TransactionManager:
+    _instance = None
+    _lock = threading.Lock() # Thread-safe initialization
+    
+    def __new__(cls):
+        with cls._lock:
+            if cls._instance is None:
+                print("Initializing the Global Transaction Manager...")
+                cls._instance = super(TransactionManager, cls).__new__(cls)
+                cls._instance.active_transactions = 0
+        return cls._instance
+        
+    def begin_transaction(self):
+        self.active_transactions += 1
+        print(f"Active transactions: {self.active_transactions}")
+
+# --- TEST CODE ---
+tm1 = TransactionManager()
+tm1.begin_transaction()
+
+tm2 = TransactionManager()
+tm2.begin_transaction()
+
+print(f"Are tm1 and tm2 the exact same object? {tm1 is tm2}")
+# Output:
+# Initializing the Global Transaction Manager...
+# Active transactions: 1
+# Active transactions: 2
+# Are tm1 and tm2 the exact same object? True
+```
+
+---
+
+## 16. Adapter Pattern: External Data (Medium Priority)
+
+*   **Why choose Adapter?**
+    The SQL Query Engine is hardcoded to interact with the internal `ITable` interface (calling `get_rows()`, `get_columns()`). If we want to allow users to run SQL queries directly on an external CSV file, we can't rewrite the Query Engine. Instead, we use an Adapter to wrap the CSV reader and make it "look like" a standard Database Table to the Engine.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class ITable {
+        <<interface>>
+        +get_rows()* List
+    }
+    class InternalTable {
+        +get_rows() List
+    }
+    class CSVReader {
+        +read_lines() String
+    }
+    class CSVTableAdapter {
+        -CSVReader adaptee
+        +get_rows() List
+    }
+    
+    ITable <|.. InternalTable
+    ITable <|.. CSVTableAdapter
+    CSVTableAdapter --> CSVReader : wraps
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Adapter as CSVTableAdapter
+    participant Reader as CSVReader
+    
+    Engine->>Adapter: get_rows()
+    activate Adapter
+    Adapter->>Reader: read_lines()
+    activate Reader
+    Reader-->>Adapter: "1,Alice
+2,Bob"
+    deactivate Reader
+    Note over Adapter: Parses CSV to dictionary format
+    Adapter-->>Engine: [{"id":1, "name":"Alice"}]
+    deactivate Adapter
+```
+
+### TDD Code Example
+```python
+# The Target Interface that the Engine expects
+class ITable:
+    def get_rows(self): pass
+
+# The Incompatible External Library/System
+class CSVReader:
+    def __init__(self, filename):
+        self.filename = filename
+    def read_lines(self):
+        return ["1,Alice", "2,Bob"] # Simulated raw CSV text
+
+# The Adapter
+class CSVTableAdapter(ITable):
+    def __init__(self, filename):
+        self.adaptee = CSVReader(filename)
+        
+    def get_rows(self):
+        raw_lines = self.adaptee.read_lines()
+        parsed_rows = []
+        for line in raw_lines:
+            parts = line.split(',')
+            parsed_rows.append({"id": int(parts[0]), "name": parts[1]})
+        return parsed_rows
+
+# --- TEST CODE ---
+# The Engine is completely oblivious to the fact it's reading a CSV
+def execute_select_all(table: ITable):
+    print("Executing SELECT * ...")
+    for row in table.get_rows():
+        print(f"Row: {row}")
+
+csv_table = CSVTableAdapter("data.csv")
+execute_select_all(csv_table)
+# Output:
+# Executing SELECT * ...
+# Row: {'id': 1, 'name': 'Alice'}
+# Row: {'id': 2, 'name': 'Bob'}
+```
+
+---
+
+## 17. Bridge Pattern: Logical & Physical Separation (High Priority)
+
+*   **Why choose Bridge?**
+    A Table has logical features (e.g., Partitioned Table, Temporary Table). It also has physical storage implementations (e.g., BTree Storage, Hash Storage). If we use inheritance, we end up with a Cartesian product of classes: `PartitionedBTreeTable`, `TemporaryBTreeTable`, `PartitionedHashTable`, etc. Bridge solves this by separating the Abstraction (Logical Table) from the Implementation (Physical Storage) using composition.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class StorageEngine {
+        <<interface>>
+        +store(data)*
+    }
+    class BTreeStorage {
+        +store(data)
+    }
+    class HashStorage {
+        +store(data)
+    }
+    
+    class LogicalTable {
+        <<abstract>>
+        #StorageEngine storage
+        +insert(data)*
+    }
+    class StandardTable {
+        +insert(data)
+    }
+    class PartitionedTable {
+        +insert(data)
+    }
+    
+    LogicalTable o-- StorageEngine : uses
+    StorageEngine <|.. BTreeStorage
+    StorageEngine <|.. HashStorage
+    LogicalTable <|-- StandardTable
+    LogicalTable <|-- PartitionedTable
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Client
+    participant Tbl as PartitionedTable
+    participant Store as BTreeStorage
+    
+    Client->>Tbl: insert(data)
+    activate Tbl
+    Note over Tbl: Determines which partition to use
+    Tbl->>Store: store(partitioned_data)
+    activate Store
+    Store-->>Tbl: success
+    deactivate Store
+    Tbl-->>Client: success
+    deactivate Tbl
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+# IMPLEMENTATION (Physical)
+class StorageEngine(ABC):
+    @abstractmethod
+    def store(self, data): pass
+
+class BTreeStorage(StorageEngine):
+    def store(self, data): print(f"[BTree] Inserting {data} into tree nodes.")
+
+class HashStorage(StorageEngine):
+    def store(self, data): print(f"[Hash] Hashing {data} and placing in bucket.")
+
+# ABSTRACTION (Logical)
+class LogicalTable(ABC):
+    def __init__(self, name, storage: StorageEngine):
+        self.name = name
+        self.storage = storage
+        
+    @abstractmethod
+    def insert(self, data): pass
+
+class StandardTable(LogicalTable):
+    def insert(self, data):
+        print(f"Table '{self.name}': Preparing standard insert.")
+        self.storage.store(data)
+
+class PartitionedTable(LogicalTable):
+    def insert(self, data):
+        print(f"Table '{self.name}': Routing {data} to partition {data['id'] % 2}.")
+        self.storage.store(data)
+
+# --- TEST CODE ---
+# We can mix and match ANY logical table with ANY physical storage!
+btree_storage = BTreeStorage()
+hash_storage = HashStorage()
+
+table1 = StandardTable("users", btree_storage)
+table1.insert({"id": 1, "name": "Alice"})
+
+table2 = PartitionedTable("logs", hash_storage)
+table2.insert({"id": 2, "msg": "Error"})
+
+# Output:
+# Table 'users': Preparing standard insert.
+# [BTree] Inserting {'id': 1, 'name': 'Alice'} into tree nodes.
+# Table 'logs': Routing {'id': 2, 'msg': 'Error'} to partition 0.
+# [Hash] Hashing {'id': 2, 'msg': 'Error'} and placing in bucket.
 ```

@@ -1156,6 +1156,38 @@ sequenceDiagram
 
 
 
+
+---
+
+## 14. Abstract Factory Pattern (Lò Đúc Chuyên Biệt)
+**Mục tiêu:** Tạo ra một gia tộc các đối tượng có liên quan chặt chẽ với nhau mà không cần chỉ định lớp cụ thể của chúng.
+
+- **Vấn đề:** Hệ thống DBMS hỗ trợ nhiều Storage Engine như `InnoDB` (Lưu đĩa, an toàn) và `Memory` (Lưu RAM, siêu tốc). Mỗi Engine đòi hỏi một kiểu cấu trúc Table và Index riêng biệt (Ví dụ: InnoDBTable đi kèm với InnoDBIndex). Nếu bạn tạo Table bằng InnoDB nhưng lại lỡ gán cho nó MemoryIndex, toàn bộ hệ thống sẽ sụp đổ vì xung đột.
+- **Giải pháp Abstract Factory:** Tạo ra các "Lò Đúc" (Factory) chuyên biệt. Nếu bạn gọi `InnoDBFactory`, nó sẽ trả ra một bộ đồng phục hoàn chỉnh: `InnoDBTable` và `InnoDBIndex`. Các thành phần này đảm bảo 100% tương thích với nhau.
+- **Sự linh hoạt:** Client (Query Engine) không bao giờ cần biết mình đang dùng InnoDB hay Memory. Nó chỉ bảo Lò Đúc: "Cho tôi 1 cái Bảng và 1 cái Index". Lò Đúc sẽ tự động nhả ra đồ đồng bộ. Thêm một Engine mới chỉ việc thêm một Factory mới.
+
+## 15. Singleton Pattern (Độc Tôn Thiên Hạ)
+**Mục tiêu:** Đảm bảo một Class chỉ có duy nhất MỘT thực thể (Instance) tồn tại trong suốt vòng đời của chương trình và cung cấp một điểm truy cập toàn cầu tới nó.
+
+- **Vấn đề:** Trong DBMS, có những thứ không thể có hai. Ví dụ: `TransactionManager` (Người quản lý khoá Lock). Giả sử hệ thống vô tình tạo ra 2 ông `TransactionManager`. Ông A cấp quyền cho luồng 1 ghi đè dữ liệu. Ông B cũng cấp quyền cho luồng 2 ghi đè dữ liệu đó. Hậu quả: Dữ liệu bị hỏng hoàn toàn (Race condition).
+- **Giải pháp Singleton:** Chặn đứng cửa khởi tạo `new`. Class sẽ tự ẩn mình đi, và cung cấp hàm `get_instance()`. Bên trong hàm này, nó kiểm tra: Nếu tôi chưa ra đời, tôi sẽ tự tạo ra tôi. Nếu tôi đã tồn tại, tôi sẽ trả về chính tôi của ngày hôm qua. Không ai có thể tạo ra bản sao thứ 2.
+- **Lưu ý tử huyệt:** Khi triển khai Singleton trong môi trường đa luồng (Multi-threading của Database), phải cực kỳ cẩn thận dùng khoá (Mutex/Lock) trong hàm khởi tạo, nếu không 2 luồng cùng lúc gọi `get_instance()` lúc nó đang rỗng sẽ vô tình đẻ ra 2 đối tượng!
+
+## 16. Adapter Pattern (Kẻ Chuyển Đổi Phích Cắm)
+**Mục tiêu:** Giúp 2 Interface không tương thích có thể làm việc trơn tru với nhau thông qua một lớp bọc (Adapter).
+
+- **Vấn đề:** Động cơ truy vấn (Query Engine) được lập trình cứng để chỉ làm việc với lớp `Table` nội bộ (gọi hàm `get_rows()`). Bỗng một ngày đẹp trời, sếp yêu cầu Engine phải có khả năng đọc dữ liệu từ một file `data.csv` bên ngoài. Nhưng hàm đọc CSV lại là `read_lines()`. Động cơ SQL không hiểu hàm này!
+- **Giải pháp Adapter:** Thay vì đập bỏ Động cơ SQL để sửa lại code, ta tạo ra một "Phích cắm chuyển đổi" tên là `CSVTableAdapter`. Cái phích cắm này ngụy trang bề ngoài y hệt một lớp `Table` tiêu chuẩn (Có hàm `get_rows()`). Nhưng bên trong ruột, nó lén gọi hàm `read_lines()` của CSV, sau đó gọt giũa dữ liệu thô thành định dạng chuẩn của Database rồi mới trả ra. Động cơ SQL bị lừa một cách ngoạn mục!
+
+## 17. Bridge Pattern (Cây Cầu Nối Logic và Vật Lý)
+**Mục tiêu:** Tách rời phần Logic trừu tượng (Abstraction) ra khỏi phần Cài đặt vật lý (Implementation) để cả 2 có thể phát triển độc lập.
+
+- **Vấn đề:** Một Bảng (Table) có 2 khía cạnh: (1) Tính chất Logic (Bảng thường, Bảng phân mảnh - Partitioned, Bảng tạm - Temp). (2) Tính chất Vật lý (Lưu bằng cây B-Tree, Lưu bằng bảng băm Hash). Nếu bạn dùng tính kế thừa (Inheritance), bạn sẽ phải tạo ra một ma trận các Class kết hợp: `TempBTreeTable`, `TempHashTable`, `PartitionBTreeTable`, `PartitionHashTable`... Mới có 2 đặc tính mà đã sinh ra 4 class. Nếu có 10 đặc tính, bạn sẽ có hàng trăm Class! Code nổ tung.
+- **Giải pháp Bridge:** Chặt đứt sự kế thừa. Tách chúng ra làm 2 cây phân cấp độc lập: Một cây dành cho Logic (`LogicalTable`) và một cây dành cho Vật lý (`StorageEngine`). Sau đó bắc một "Cây Cầu" (Con trỏ) nối từ Logic sang Vật lý.
+- **Sự linh hoạt:** Bây giờ, bạn muốn một "Bảng Tạm" xài "B-Tree"? Đơn giản, lấy object `TempTable` cắm object `BTreeStorage` vào ruột nó. Bạn có thể mix-and-match (phối ghép) vô hạn các đặc tính mà không cần phải viết thêm bất kỳ class lai tạo nào.
+
+
+
 ---
 
 ## TỔNG HỢP: Danh sách Thuộc tính và Phương thức cần thêm vào Code/Test
@@ -1376,3 +1408,37 @@ Dưới đây là bảng liệt kê chi tiết những **Thuộc tính (Properti
 *   **Class `Table`, `Column`:**
     *   **Phương thức:**
         *   `+ accept(Visitor v)`: Viết đúng 1 dòng logic chuẩn mực: `v.visit_table(self)` (với Table) hoặc `v.visit_column(self)` (với Column). Đẩy trách nhiệm xử lý sang cho ông Visitor.
+
+
+### 14. Thuộc cho Abstract Factory Pattern (Lò Đúc Chuyên Biệt)
+**Mục tiêu:** Sinh ra một cụm đối tượng tương thích với nhau.
+
+*   **Interface `StorageFactory`:**
+    *   **Phương thức:** `+ create_table() -> Table`, `+ create_index() -> Index`
+*   **Các Class Con (`InnoDBFactory`, `MemoryFactory`):**
+    *   **Logic:** Hàm `create_table()` của InnoDB bắt buộc phải trả về `InnoDBTable`. Cấm trả về đồ của Engine khác.
+
+### 15. Thuộc cho Singleton Pattern (Độc Tôn Thiên Hạ)
+**Mục tiêu:** Giữ hệ thống an toàn bằng cách không bao giờ cho phép 2 nhà quản lý (Manager) cùng tồn tại.
+
+*   **Class `TransactionManager`:**
+    *   **Thuộc tính:** `- static _instance: TransactionManager` (Biến tĩnh lưu bản thân).
+    *   **Phương thức:** `+ static get_instance() -> TransactionManager` (Kiểm tra nếu null thì tạo, có rồi thì trả về). Chú ý phải có cơ chế Lock Thread-safe.
+    *   **Cấm kỵ:** Constructor phải bị private/ẩn đi để cấm gọi hàm `new()`.
+
+### 16. Thuộc cho Adapter Pattern (Kẻ Chuyển Đổi Phích Cắm)
+**Mục tiêu:** Ép dữ liệu dị biệt (như CSV) chui lọt qua lỗ kim tiêu chuẩn của hệ thống.
+
+*   **Class `CSVTableAdapter` (Adapter):**
+    *   **Kế thừa:** Bắt buộc phải implement giao diện chuẩn nội bộ (VD: `ITable`).
+    *   **Thuộc tính:** `- adaptee: CSVReader` (Con trỏ trỏ tới hệ thống ngoại lai cần tương tác).
+    *   **Phương thức `get_rows()`:** Hàm này che đậy sự xấu xí bên trong. Nó gọi hệ thống ngoại lai, lấy chuỗi String, dùng vòng lặp cắt chuỗi (split) và đúc thành Dictionary chuẩn hóa rồi mới return cho Query Engine.
+
+### 17. Thuộc cho Bridge Pattern (Cây Cầu Nối Logic và Vật Lý)
+**Mục tiêu:** Xoá bỏ ma trận kế thừa lùng nhùng bằng cách dùng Composition (Chứa chấp) thay vì Kế thừa.
+
+*   **Interface `StorageEngine` (Phần Vật Lý):**
+    *   **Phương thức:** `+ store(data)`
+*   **Abstract Class `LogicalTable` (Phần Logic):**
+    *   **Thuộc tính cốt lõi:** `protected StorageEngine storage` (Đây chính là Cây Cầu).
+    *   **Phương thức:** `+ insert(data)` (Hàm này có thể tuỳ biến logic chia partition, nhưng khâu lưu đĩa cuối cùng MÃI MÃI phải đẩy qua cầu: `self.storage.store(data)`).
