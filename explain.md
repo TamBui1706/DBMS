@@ -1213,6 +1213,31 @@ sequenceDiagram
 - **Sự linh hoạt:** Mọi logic phối hợp phức tạp nhất, logic chống Deadlock, logic huỷ giao dịch (Rollback)... đều được nhét chung vào một chỗ duy nhất là Coordinator. Các phòng ban khác chỉ làm đúng một việc của mình, code cực kỳ sáng sủa và dễ maintain.
 
 
+
+---
+
+## 21. Memento Pattern (Kỷ Vật Quay Ngược Thời Gian)
+**Mục tiêu:** Lưu giữ lại trạng thái cũ của một đối tượng để có thể khôi phục (Rollback) khi xảy ra sự cố, mà không làm lộ các biến nội bộ bên trong đối tượng đó.
+
+- **Vấn đề:** Khi quản trị viên gõ lệnh `ALTER TABLE users DROP COLUMN age`. Hệ thống bắt đầu xoá cột. Nhưng xoá được một nửa thì báo lỗi ổ cứng đầy. Lúc này Bảng Users đang ở trạng thái méo mó (nửa mới nửa cũ). Hệ thống bắt buộc phải thực hiện lệnh ROLLBACK để đưa Bảng về trạng thái y hệt như trước khi xoá. Nếu lưu từng biến (tên cột, danh sách index, constraints) ra bên ngoài thì code rất bẩn và phá vỡ nguyên lý Đóng gói (Encapsulation).
+- **Giải pháp Memento:** Khái niệm Memento (Kỷ vật) ra đời. Trước khi đụng dao kéo vào Bảng, Bảng sẽ tự chụp X-Quang chính mình, đóng gói toàn bộ trạng thái vào một hộp đen gọi là `TableMemento`. Hộp đen này được giao cho Trình quản lý giao dịch cất giữ. Nếu mổ xẻ thất bại, Trình quản lý giao dịch ném cái hộp đen đó lại cho Bảng. Bảng mở hộp ra và tự động hồi phục lại y chang trạng thái cũ.
+- **Sự linh hoạt:** Chỉ có Bảng mới được quyền mở hộp `TableMemento` của chính nó (nhờ class lồng nhau hoặc quyền truy cập đặc biệt). Kẻ giữ hộp đen (Caretaker) không hề biết bên trong hộp chứa gì, bảo mật tuyệt đối!
+
+## 22. State Pattern (Máy Trạng Thái Vạn Năng)
+**Mục tiêu:** Cho phép một đối tượng thay đổi hành vi của nó khi trạng thái nội bộ của nó thay đổi. Nhìn từ ngoài vào, dường như class của đối tượng đã bị thay đổi.
+
+- **Vấn đề:** Một Giao dịch (Transaction) có 4 trạng thái: `Active` (Đang chạy), `PartiallyCommitted` (Sắp xong), `Committed` (Đã chốt), `Aborted` (Đã huỷ). Nếu người dùng gọi hàm `tx.commit()`, hệ thống phải check: Nếu đang Active thì cho commit, nếu đã Aborted thì chửi vào mặt người dùng. Dùng hàng loạt câu lệnh `if/else` để kiểm tra state sẽ biến code thành bãi rác không thể bảo trì.
+- **Giải pháp State:** Bóc tách mỗi trạng thái ra thành 1 Class riêng biệt (`ActiveState`, `AbortedState`). Transaction bây giờ chỉ là một cái vỏ, ruột của nó là 1 con trỏ chỉ vào 1 trong các State này. Khi gọi `tx.commit()`, Transaction ném quả bóng trách nhiệm đó cho State hiện tại xử lý.
+- **Sự linh hoạt:** Nếu ruột đang là `ActiveState`, gọi `commit()` sẽ chạy ghi đĩa. Nhưng nếu ruột đang là `AbortedState`, gọi `commit()` sẽ lập tức văng lỗi Exception. Code không hề có 1 chữ `if/else` nào, cực kỳ sạch sẽ và dễ dàng thêm Trạng thái mới.
+
+## 23. Interpreter Pattern (Kẻ Thông Dịch Ngôn Ngữ)
+**Mục tiêu:** Cung cấp một cách để đánh giá (evaluate) các biểu thức ngôn ngữ (như SQL) bằng cách xây dựng một cây cú pháp trừu tượng (Abstract Syntax Tree - AST).
+
+- **Vấn đề:** Khi Động cơ CSDL nhận được câu lệnh `WHERE age > 18 AND status = 'ACTIVE'`. Làm sao để máy tính hiểu được câu tiếng người này để đi lọc dữ liệu?
+- **Giải pháp Interpreter:** Parser sẽ phân tích câu lệnh này thành một Cây Cú Pháp. Tại các nút lá là `GreaterThan(age, 18)` và `Equals(status, 'ACTIVE')`. Nút gốc là `And()`. Mọi nút trên cây đều có một hàm duy nhất tên là `evaluate(row_data)`.
+- **Sự linh hoạt:** Khi cần kiểm tra một Dòng dữ liệu, hệ thống nhét dòng đó vào Nút Gốc `And`. Nút `And` sẽ truyền xuống cho 2 đứa con. Nếu cả 2 con đều trả về `True`, Nút `And` sẽ phán quyết `True`. Động cơ SQL không cần phải đau đầu suy nghĩ, nó cứ đẩy dữ liệu vào Cây và Cây sẽ tự "Thông dịch" ra câu trả lời đúng sai!
+
+
 ---
 
 ## TỔNG HỢP: Danh sách Thuộc tính và Phương thức cần thêm vào Code/Test
@@ -1495,3 +1520,41 @@ Dưới đây là bảng liệt kê chi tiết những **Thuộc tính (Properti
 *   **Các Class `Transaction`, `LockManager` (Đàn em):**
     *   **Thuộc tính:** Chứa duy nhất 1 con trỏ trỏ về sếp `mediator`.
     *   **Quy tắc:** Không bao giờ lưu con trỏ của các đàn em khác. Cần gì thì gọi `self.mediator.notify(...)`.
+
+
+### 21. Thuộc cho Memento Pattern (Kỷ Vật Quay Ngược Thời Gian)
+**Mục tiêu:** Hỗ trợ tính năng ROLLBACK DDL bằng cách chụp snapshot an toàn.
+
+*   **Class `TableMemento` (Kỷ Vật - Hộp Đen):**
+    *   **Thuộc tính:** Chứa bản sao chép sâu (Deep Copy) của danh sách Cột, Index...
+    *   **Quy tắc:** Tuyệt đối KHÔNG có hàm `set()`. Hộp đen này là Bất biến (Immutable) một khi đã được tạo ra.
+*   **Class `Table` (Kẻ Lưu Giữ Lịch Sử - Originator):**
+    *   **Phương thức:** 
+        *   `+ save_state() -> TableMemento`: Đóng gói trạng thái hiện tại thả vào Memento.
+        *   `+ restore_state(m: TableMemento)`: Moi dữ liệu từ Memento ra đè lên trạng thái hiện tại.
+*   **Class `DDLTransaction` (Kẻ Giữ Hộp - Caretaker):**
+    *   **Thuộc tính:** `- history: TableMemento`. Chỉ giữ con trỏ, không bao giờ gọi hàm sửa đổi Memento.
+
+### 22. Thuộc cho State Pattern (Máy Trạng Thái Vạn Năng)
+**Mục tiêu:** Quản lý vòng đời Transaction (Active, Committed, Aborted) không cần `if/else`.
+
+*   **Interface `ITxState` (Trạng Thái):**
+    *   **Phương thức:** Định nghĩa mọi hành động có thể xảy ra: `commit(tx)`, `rollback(tx)`.
+*   **Các Class `ActiveState`, `AbortedState`:**
+    *   **Logic:** Tự xử lý logic tuỳ thuộc vào bản thân. Ví dụ `AbortedState.commit()` ném lỗi.
+    *   **Chuyển trạng thái:** Thường tự gọi `tx.set_state(new_state)` để biến hình cái Transaction.
+*   **Class `Transaction` (Máy Trạng Thái):**
+    *   **Thuộc tính:** `- current_state: ITxState`.
+    *   **Phương thức:** Chuyển tiếp (Delegate) toàn bộ lệnh gọi từ ngoài vào cho thằng `current_state` xử lý.
+
+### 23. Thuộc cho Interpreter Pattern (Kẻ Thông Dịch Ngôn Ngữ)
+**Mục tiêu:** Duyệt cây AST để lọc điều kiện `WHERE` của câu SQL.
+
+*   **Interface `Expression` (Biểu Thức):**
+    *   **Phương thức:** `+ evaluate(row: Dict) -> bool`. Chìa khoá của mẫu này là hàm `evaluate`.
+*   **Class `AndExpression` (Nút Trung Gian):**
+    *   **Thuộc tính:** Giữ 2 con trỏ `left_expr`, `right_expr`.
+    *   **Hàm `evaluate`:** `return left_expr.evaluate(row) && right_expr.evaluate(row)`.
+*   **Class `GreaterThanExpression` (Nút Lá):**
+    *   **Thuộc tính:** Tên cột (`col_name`), giá trị chuẩn (`value`).
+    *   **Hàm `evaluate`:** `return row[col_name] > value`.
