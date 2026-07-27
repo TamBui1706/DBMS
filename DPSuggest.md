@@ -381,8 +381,7 @@ sequenceDiagram
     activate Adapter
     Adapter->>Reader: read_lines()
     activate Reader
-    Reader-->>Adapter: "1,Alice
-2,Bob"
+    Reader-->>Adapter: "1,Alice; 2,Bob"
     deactivate Reader
     Note over Adapter: Parses CSV to dictionary format
     Adapter-->>Engine: [{"id":1, "name":"Alice"}]
