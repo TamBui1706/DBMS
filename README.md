@@ -1620,9 +1620,1379 @@ users_table.insert({"id": 2, "name": "Bob"})
 
 ---
 
+---
+
+## 11. Builder Pattern: Table Construction (High Priority)
+
+*   **Why choose Builder instead of a massive constructor?**
+    Creating a new `Table` object often requires defining a name, adding multiple columns (each with a specific type and constraints), setting a primary key, and defining foreign keys. If a constructor is used, it results in the "Telescoping Constructor Anti-Pattern" (e.g., `new Table("users", cols, pk, fks, indexes)`). The Builder pattern allows us to assemble this complex object step-by-step, making the API readable, fluent, and preventing partially initialized tables.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Table {
+        +String name
+        +List columns
+        +String primary_key
+        +add_column(c)
+        +set_primary_key(k)
+    }
+    
+    class TableBuilder {
+        -Table table
+        +TableBuilder(name)
+        +add_column(name, type) TableBuilder
+        +add_primary_key(col_name) TableBuilder
+        +build() Table
+    }
+
+    TableBuilder --> Table : builds
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor DB_Engine
+    participant Builder as TableBuilder
+    participant Tbl as Table
+    
+    DB_Engine->>Builder: <<create>> TableBuilder("users")
+    activate Builder
+    Builder->>Tbl: <<create>> Table("users")
+    
+    DB_Engine->>Builder: add_column("id", "INT")
+    Builder->>Tbl: add_column(Column("id", "INT"))
+    Builder-->>DB_Engine: returns self
+    
+    DB_Engine->>Builder: add_primary_key("id")
+    Builder->>Tbl: set_primary_key("id")
+    Builder-->>DB_Engine: returns self
+    
+    DB_Engine->>Builder: build()
+    Builder-->>DB_Engine: returns Table
+    deactivate Builder
+```
+
+### TDD Code Example
+```python
+class Table:
+    def __init__(self, name):
+        self.name = name
+        self.columns = []
+        self.primary_key = None
+        
+    def __str__(self):
+        cols = ", ".join(self.columns)
+        return f"Table({self.name}) [Cols: {cols} | PK: {self.primary_key}]"
+
+class TableBuilder:
+    def __init__(self, name):
+        self.table = Table(name)
+        
+    def add_column(self, name, data_type):
+        self.table.columns.append(f"{name} {data_type}")
+        return self # Fluent interface
+        
+    def add_primary_key(self, col_name):
+        self.table.primary_key = col_name
+        return self
+        
+    def build(self):
+        return self.table
+
+# --- TEST CODE ---
+builder = TableBuilder("orders")
+# Fluent method chaining
+orders_table = (builder
+                .add_column("order_id", "INT")
+                .add_column("amount", "FLOAT")
+                .add_primary_key("order_id")
+                .build())
+
+print(orders_table)
+# Output: Table(orders) [Cols: order_id INT, amount FLOAT | PK: order_id]
+```
+
+---
+
+## 12. Flyweight Pattern: Data Type Sharing (Medium Priority)
+
+*   **Why choose Flyweight?**
+    A database might manage thousands of tables, combining to millions of columns. The vast majority of these columns share the exact same data types (e.g., standard `INT`, `VARCHAR(255)`). Creating a new `DataType` object for every single column consumes massive amounts of RAM for redundant information. Flyweight solves this by storing intrinsic (shared) state in a factory cache and passing out references to the exact same object.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class DataType {
+        <<interface>>
+        +get_name()* String
+        +get_size()* int
+    }
+    
+    class IntegerType {
+        +get_name() String
+        +get_size() int
+    }
+    
+    class DataTypeFactory {
+        -Map~String, DataType~ cache
+        +get_type(name) DataType
+    }
+    
+    class Column {
+        -String name
+        -DataType type
+    }
+
+    DataType <|.. IntegerType
+    DataTypeFactory *-- DataType : caches
+    Column o-- DataType : uses (shared)
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Factory as DataTypeFactory
+    participant Cache as HashMap
+    participant IntType as IntegerType
+    
+    Engine->>Factory: get_type("INT")
+    activate Factory
+    Factory->>Cache: check "INT"
+    Cache-->>Factory: not found
+    
+    Factory->>IntType: <<create>> IntegerType()
+    Factory->>Cache: store("INT", instance)
+    
+    Factory-->>Engine: IntType instance
+    deactivate Factory
+    
+    Engine->>Factory: get_type("INT")
+    activate Factory
+    Factory->>Cache: check "INT"
+    Cache-->>Factory: returns existing instance
+    Factory-->>Engine: IntType instance (shared)
+    deactivate Factory
+```
+
+### TDD Code Example
+```python
+class DataType:
+    def __init__(self, name, size):
+        self.name = name
+        self.size = size
+        
+class DataTypeFactory:
+    _cache = {}
+    
+    @staticmethod
+    def get_type(type_name):
+        type_name = type_name.upper()
+        if type_name not in DataTypeFactory._cache:
+            if type_name == "INT":
+                DataTypeFactory._cache[type_name] = DataType("INT", 4)
+            elif type_name == "BIGINT":
+                DataTypeFactory._cache[type_name] = DataType("BIGINT", 8)
+            else:
+                DataTypeFactory._cache[type_name] = DataType(type_name, 0)
+            print(f"[{type_name}] Instantiated new object.")
+        else:
+            print(f"[{type_name}] Returning cached object.")
+            
+        return DataTypeFactory._cache[type_name]
+
+# --- TEST CODE ---
+# Creating columns for Table A
+col1_type = DataTypeFactory.get_type("INT")
+col2_type = DataTypeFactory.get_type("BIGINT")
+
+# Creating columns for Table B
+col3_type = DataTypeFactory.get_type("INT")
+
+print(f"Is col1 type exactly the same object as col3 type? {col1_type is col3_type}")
+# Output: 
+# [INT] Instantiated new object.
+# [BIGINT] Instantiated new object.
+# [INT] Returning cached object.
+# Is col1 type exactly the same object as col3 type? True
+```
+
+---
+
+## 13. Visitor Pattern: Tree Operations (Medium High Priority)
+
+*   **Why choose Visitor instead of putting logic in the classes?**
+    The `Database -> Schema -> Table` structure is an established Composite tree. If we want to implement a new feature like "Generate DDL Script" or "Calculate Disk Usage" across the whole tree, adding `generate_ddl()` or `calculate_size()` to every single node class pollutes them with unrelated logic and violates the Single Responsibility Principle. Visitor extracts this logic into a separate `Visitor` class. The tree nodes just need to `accept(visitor)`, enabling us to add infinite new tree-walking operations without modifying the structure.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class DatabaseNode {
+        <<interface>>
+        +accept(Visitor v)*
+    }
+    
+    class Table {
+        +accept(Visitor v)
+    }
+    
+    class Column {
+        +accept(Visitor v)
+    }
+    
+    class Visitor {
+        <<interface>>
+        +visit_table(Table t)*
+        +visit_column(Column c)*
+    }
+    
+    class DDLGeneratorVisitor {
+        -String script
+        +visit_table(Table t)
+        +visit_column(Column c)
+        +get_script() String
+    }
+
+    DatabaseNode <|.. Table
+    DatabaseNode <|.. Column
+    Visitor <|.. DDLGeneratorVisitor
+    DatabaseNode --> Visitor : accepts
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Vis as DDLGeneratorVisitor
+    participant Tbl as Table
+    participant Col as Column
+    
+    Engine->>Tbl: accept(Vis)
+    activate Tbl
+    Tbl->>Vis: visit_table(self)
+    activate Vis
+    Note over Vis: Appends "CREATE TABLE..."
+    
+    loop For each column
+        Tbl->>Col: accept(Vis)
+        activate Col
+        Col->>Vis: visit_column(self)
+        Vis-->>Col: returns
+        deactivate Col
+    end
+    
+    Vis-->>Tbl: returns
+    deactivate Vis
+    Tbl-->>Engine: returns
+    deactivate Tbl
+```
+
+### TDD Code Example
+```python
+# The Visitor interface
+class DatabaseVisitor:
+    def visit_table(self, table): pass
+    def visit_column(self, column): pass
+
+# The Concrete Visitor for generating SQL
+class DDLGeneratorVisitor(DatabaseVisitor):
+    def __init__(self):
+        self.script = []
+        
+    def visit_table(self, table):
+        self.script.append(f"CREATE TABLE {table.name} (")
+        # Let the table tell its children to accept the visitor
+        for col in table.columns:
+            col.accept(self)
+        self.script.append(");")
+        
+    def visit_column(self, column):
+        self.script.append(f"    {column.name} {column.type},")
+        
+    def get_result(self):
+        return "
+".join(self.script)
+
+# Tree Nodes
+class Node:
+    def accept(self, visitor): pass
+
+class Column(Node):
+    def __init__(self, name, type_):
+        self.name = name
+        self.type = type_
+    def accept(self, visitor):
+        visitor.visit_column(self)
+
+class Table(Node):
+    def __init__(self, name):
+        self.name = name
+        self.columns = []
+    def accept(self, visitor):
+        visitor.visit_table(self)
+
+# --- TEST CODE ---
+tbl = Table("employees")
+tbl.columns.extend([Column("id", "INT"), Column("name", "VARCHAR")])
+
+visitor = DDLGeneratorVisitor()
+tbl.accept(visitor)
+
+print("Generated Script:")
+print(visitor.get_result())
+```
+
+---
+
+## 14. Abstract Factory Pattern: Storage Families (High Priority)
+
+*   **Why choose Abstract Factory?**
+    A modern DBMS supports multiple storage engines (e.g., InnoDB, MyISAM, Memory). Each engine requires its own specific implementations of Tables and Indexes. If the Engine uses direct instantiation or simple factories, the code will be littered with `if engine == "InnoDB"`. Abstract Factory provides an interface for creating families of related or dependent objects without specifying their concrete classes.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class StorageFactory {
+        <<interface>>
+        +create_table(name)* Table
+        +create_index(col)* Index
+    }
+    class InnoDBFactory {
+        +create_table(name) Table
+        +create_index(col) Index
+    }
+    class MemoryFactory {
+        +create_table(name) Table
+        +create_index(col) Index
+    }
+    
+    class Table { <<interface>> }
+    class InnoDBTable
+    class MemoryTable
+    
+    StorageFactory <|.. InnoDBFactory
+    StorageFactory <|.. MemoryFactory
+    Table <|.. InnoDBTable
+    Table <|.. MemoryTable
+    
+    InnoDBFactory --> InnoDBTable : creates
+    MemoryFactory --> MemoryTable : creates
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Factory as InnoDBFactory
+    participant Tbl as InnoDBTable
+    
+    Engine->>Factory: create_table("users")
+    activate Factory
+    Factory->>Tbl: <<create>>
+    Factory-->>Engine: returns InnoDBTable
+    deactivate Factory
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+class Table(ABC):
+    @abstractmethod
+    def insert(self, row): pass
+
+class InnoDBTable(Table):
+    def insert(self, row): print(f"[InnoDB] Writing {row} to disk safely.")
+
+class MemoryTable(Table):
+    def insert(self, row): print(f"[Memory] Writing {row} to fast volatile RAM.")
+
+class StorageFactory(ABC):
+    @abstractmethod
+    def create_table(self) -> Table: pass
+
+class InnoDBFactory(StorageFactory):
+    def create_table(self): return InnoDBTable()
+
+class MemoryFactory(StorageFactory):
+    def create_table(self): return MemoryTable()
+
+# --- TEST CODE ---
+config_engine = "Memory" # Could be read from config
+factory = MemoryFactory() if config_engine == "Memory" else InnoDBFactory()
+
+# Client code only depends on abstractions
+table = factory.create_table()
+table.insert({"id": 1, "name": "Alice"})
+# Output: [Memory] Writing {'id': 1, 'name': 'Alice'} to fast volatile RAM.
+```
+
+---
+
+## 15. Singleton Pattern: Global Managers (Highest Priority)
+
+*   **Why choose Singleton?**
+    Certain components in a DBMS *must* have exactly one instance. For example, the `TransactionManager` coordinates locks. If two instances of `TransactionManager` exist, they will have conflicting lock tables, resulting in immediate data corruption and deadlocks. Singleton guarantees that a class has only one instance and provides a global point of access to it.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class TransactionManager {
+        -static TransactionManager _instance
+        -Map locks
+        -TransactionManager()
+        +get_instance()$ TransactionManager
+        +acquire_lock(table)
+    }
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Thread1
+    actor Thread2
+    participant TM as TransactionManager (Class)
+    
+    Thread1->>TM: get_instance()
+    activate TM
+    Note over TM: Creates new Instance
+    TM-->>Thread1: returns Instance_A
+    deactivate TM
+    
+    Thread2->>TM: get_instance()
+    activate TM
+    Note over TM: Returns existing Instance
+    TM-->>Thread2: returns Instance_A
+    deactivate TM
+```
+
+### TDD Code Example
+```python
+import threading
+
+class TransactionManager:
+    _instance = None
+    _lock = threading.Lock() # Thread-safe initialization
+    
+    def __new__(cls):
+        with cls._lock:
+            if cls._instance is None:
+                print("Initializing the Global Transaction Manager...")
+                cls._instance = super(TransactionManager, cls).__new__(cls)
+                cls._instance.active_transactions = 0
+        return cls._instance
+        
+    def begin_transaction(self):
+        self.active_transactions += 1
+        print(f"Active transactions: {self.active_transactions}")
+
+# --- TEST CODE ---
+tm1 = TransactionManager()
+tm1.begin_transaction()
+
+tm2 = TransactionManager()
+tm2.begin_transaction()
+
+print(f"Are tm1 and tm2 the exact same object? {tm1 is tm2}")
+# Output:
+# Initializing the Global Transaction Manager...
+# Active transactions: 1
+# Active transactions: 2
+# Are tm1 and tm2 the exact same object? True
+```
+
+---
+
+## 16. Adapter Pattern: External Data (Medium Priority)
+
+*   **Why choose Adapter?**
+    The SQL Query Engine is hardcoded to interact with the internal `ITable` interface (calling `get_rows()`, `get_columns()`). If we want to allow users to run SQL queries directly on an external CSV file, we can't rewrite the Query Engine. Instead, we use an Adapter to wrap the CSV reader and make it "look like" a standard Database Table to the Engine.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class ITable {
+        <<interface>>
+        +get_rows()* List
+    }
+    class InternalTable {
+        +get_rows() List
+    }
+    class CSVReader {
+        +read_lines() String
+    }
+    class CSVTableAdapter {
+        -CSVReader adaptee
+        +get_rows() List
+    }
+    
+    ITable <|.. InternalTable
+    ITable <|.. CSVTableAdapter
+    CSVTableAdapter --> CSVReader : wraps
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Adapter as CSVTableAdapter
+    participant Reader as CSVReader
+    
+    Engine->>Adapter: get_rows()
+    activate Adapter
+    Adapter->>Reader: read_lines()
+    activate Reader
+    Reader-->>Adapter: "1,Alice
+2,Bob"
+    deactivate Reader
+    Note over Adapter: Parses CSV to dictionary format
+    Adapter-->>Engine: [{"id":1, "name":"Alice"}]
+    deactivate Adapter
+```
+
+### TDD Code Example
+```python
+# The Target Interface that the Engine expects
+class ITable:
+    def get_rows(self): pass
+
+# The Incompatible External Library/System
+class CSVReader:
+    def __init__(self, filename):
+        self.filename = filename
+    def read_lines(self):
+        return ["1,Alice", "2,Bob"] # Simulated raw CSV text
+
+# The Adapter
+class CSVTableAdapter(ITable):
+    def __init__(self, filename):
+        self.adaptee = CSVReader(filename)
+        
+    def get_rows(self):
+        raw_lines = self.adaptee.read_lines()
+        parsed_rows = []
+        for line in raw_lines:
+            parts = line.split(',')
+            parsed_rows.append({"id": int(parts[0]), "name": parts[1]})
+        return parsed_rows
+
+# --- TEST CODE ---
+# The Engine is completely oblivious to the fact it's reading a CSV
+def execute_select_all(table: ITable):
+    print("Executing SELECT * ...")
+    for row in table.get_rows():
+        print(f"Row: {row}")
+
+csv_table = CSVTableAdapter("data.csv")
+execute_select_all(csv_table)
+# Output:
+# Executing SELECT * ...
+# Row: {'id': 1, 'name': 'Alice'}
+# Row: {'id': 2, 'name': 'Bob'}
+```
+
+---
+
+## 17. Bridge Pattern: Logical & Physical Separation (High Priority)
+
+*   **Why choose Bridge?**
+    A Table has logical features (e.g., Partitioned Table, Temporary Table). It also has physical storage implementations (e.g., BTree Storage, Hash Storage). If we use inheritance, we end up with a Cartesian product of classes: `PartitionedBTreeTable`, `TemporaryBTreeTable`, `PartitionedHashTable`, etc. Bridge solves this by separating the Abstraction (Logical Table) from the Implementation (Physical Storage) using composition.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class StorageEngine {
+        <<interface>>
+        +store(data)*
+    }
+    class BTreeStorage {
+        +store(data)
+    }
+    class HashStorage {
+        +store(data)
+    }
+    
+    class LogicalTable {
+        <<abstract>>
+        #StorageEngine storage
+        +insert(data)*
+    }
+    class StandardTable {
+        +insert(data)
+    }
+    class PartitionedTable {
+        +insert(data)
+    }
+    
+    LogicalTable o-- StorageEngine : uses
+    StorageEngine <|.. BTreeStorage
+    StorageEngine <|.. HashStorage
+    LogicalTable <|-- StandardTable
+    LogicalTable <|-- PartitionedTable
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Client
+    participant Tbl as PartitionedTable
+    participant Store as BTreeStorage
+    
+    Client->>Tbl: insert(data)
+    activate Tbl
+    Note over Tbl: Determines which partition to use
+    Tbl->>Store: store(partitioned_data)
+    activate Store
+    Store-->>Tbl: success
+    deactivate Store
+    Tbl-->>Client: success
+    deactivate Tbl
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+# IMPLEMENTATION (Physical)
+class StorageEngine(ABC):
+    @abstractmethod
+    def store(self, data): pass
+
+class BTreeStorage(StorageEngine):
+    def store(self, data): print(f"[BTree] Inserting {data} into tree nodes.")
+
+class HashStorage(StorageEngine):
+    def store(self, data): print(f"[Hash] Hashing {data} and placing in bucket.")
+
+# ABSTRACTION (Logical)
+class LogicalTable(ABC):
+    def __init__(self, name, storage: StorageEngine):
+        self.name = name
+        self.storage = storage
+        
+    @abstractmethod
+    def insert(self, data): pass
+
+class StandardTable(LogicalTable):
+    def insert(self, data):
+        print(f"Table '{self.name}': Preparing standard insert.")
+        self.storage.store(data)
+
+class PartitionedTable(LogicalTable):
+    def insert(self, data):
+        print(f"Table '{self.name}': Routing {data} to partition {data['id'] % 2}.")
+        self.storage.store(data)
+
+# --- TEST CODE ---
+# We can mix and match ANY logical table with ANY physical storage!
+btree_storage = BTreeStorage()
+hash_storage = HashStorage()
+
+table1 = StandardTable("users", btree_storage)
+table1.insert({"id": 1, "name": "Alice"})
+
+table2 = PartitionedTable("logs", hash_storage)
+table2.insert({"id": 2, "msg": "Error"})
+
+# Output:
+# Table 'users': Preparing standard insert.
+# [BTree] Inserting {'id': 1, 'name': 'Alice'} into tree nodes.
+# Table 'logs': Routing {'id': 2, 'msg': 'Error'} to partition 0.
+# [Hash] Hashing {'id': 2, 'msg': 'Error'} and placing in bucket.
+```
 
 
+---
 
+## 18. Decorator Pattern: Dynamic Table Wrappers (Medium Priority)
+
+*   **Why choose Decorator?**
+    Sometimes we need to add temporary responsibilities to a Table without modifying its underlying class or affecting other instances. For example, during a live database backup, a specific table needs to be strictly Read-Only. Using inheritance (`ReadOnlyTable`) is static and inflexible. The Decorator pattern allows us to wrap the original `Table` object dynamically at runtime with a `ReadOnlyDecorator`, intercepting calls to `insert()` or `update()`.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class ITable {
+        <<interface>>
+        +insert(row)*
+        +get_name()* String
+    }
+    class ConcreteTable {
+        +insert(row)
+        +get_name() String
+    }
+    
+    class TableDecorator {
+        <<abstract>>
+        #ITable wrapped_table
+        +insert(row)
+        +get_name() String
+    }
+    class ReadOnlyDecorator {
+        +insert(row)
+    }
+    class AuditingDecorator {
+        +insert(row)
+    }
+    
+    ITable <|.. ConcreteTable
+    ITable <|.. TableDecorator
+    TableDecorator o-- ITable : wraps
+    TableDecorator <|-- ReadOnlyDecorator
+    TableDecorator <|-- AuditingDecorator
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Dec as ReadOnlyDecorator
+    participant Tbl as ConcreteTable
+    
+    Engine->>Dec: insert(row)
+    activate Dec
+    Note over Dec: Intercepts request
+    Dec-->>Engine: throws Exception("Table is Read-Only!")
+    deactivate Dec
+    
+    Engine->>Dec: get_name()
+    activate Dec
+    Dec->>Tbl: get_name()
+    Tbl-->>Dec: "users"
+    Dec-->>Engine: "users"
+    deactivate Dec
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+class ITable(ABC):
+    @abstractmethod
+    def insert(self, row): pass
+    @abstractmethod
+    def get_name(self): pass
+
+class ConcreteTable(ITable):
+    def __init__(self, name):
+        self.name = name
+    def insert(self, row):
+        print(f"Table '{self.name}': Successfully inserted {row}")
+    def get_name(self):
+        return self.name
+
+# Base Decorator
+class TableDecorator(ITable):
+    def __init__(self, table: ITable):
+        self.wrapped = table
+    def insert(self, row):
+        self.wrapped.insert(row)
+    def get_name(self):
+        return self.wrapped.get_name()
+
+# Concrete Decorators
+class ReadOnlyDecorator(TableDecorator):
+    def insert(self, row):
+        raise PermissionError(f"DENIED: Table '{self.get_name()}' is currently in READ-ONLY mode (e.g., backing up).")
+
+class AuditingDecorator(TableDecorator):
+    def insert(self, row):
+        print(f"[SECURITY AUDIT] Attempting to insert into {self.get_name()}...")
+        super().insert(row)
+        print(f"[SECURITY AUDIT] Insert completed.")
+
+# --- TEST CODE ---
+original_table = ConcreteTable("employees")
+
+# Wrap with Audit
+audited_table = AuditingDecorator(original_table)
+audited_table.insert({"id": 1, "name": "Bob"})
+# Output:
+# [SECURITY AUDIT] Attempting to insert into employees...
+# Table 'employees': Successfully inserted {'id': 1, 'name': 'Bob'}
+# [SECURITY AUDIT] Insert completed.
+
+# Suddenly, a backup starts! Wrap the audited table with Read-Only
+locked_table = ReadOnlyDecorator(audited_table)
+
+try:
+    locked_table.insert({"id": 2, "name": "Alice"})
+except Exception as e:
+    print(e)
+# Output:
+# DENIED: Table 'employees' is currently in READ-ONLY mode (e.g., backing up).
+```
+
+---
+
+## 19. Facade Pattern: Unified Client Connection (High Priority)
+
+*   **Why choose Facade?**
+    Executing a simple SQL query internally requires coordinating dozens of complex subsystems: The Lexer, Parser, AST Builder, Query Optimizer, Execution Engine, and Storage Manager. Forcing an external application (like a Python or Java backend) to interact with all these subsystems directly is a nightmare. Facade provides a single, unified `DBMSClient` class with a simple `execute(query)` method, completely hiding the internal orchestration.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class DBMSFacade {
+        -Parser parser
+        -Optimizer optimizer
+        -Executor executor
+        +execute(query) Result
+    }
+    
+    class Parser { +parse(query) AST }
+    class Optimizer { +optimize(ast) Plan }
+    class Executor { +run(plan) Result }
+    
+    DBMSFacade --> Parser
+    DBMSFacade --> Optimizer
+    DBMSFacade --> Executor
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor AppDeveloper
+    participant Facade as DBMSFacade
+    participant P as Parser
+    participant O as Optimizer
+    participant E as Executor
+    
+    AppDeveloper->>Facade: execute("SELECT * FROM users")
+    activate Facade
+    Facade->>P: parse(query)
+    P-->>Facade: AST
+    Facade->>O: optimize(AST)
+    O-->>Facade: ExecutionPlan
+    Facade->>E: run(ExecutionPlan)
+    E-->>Facade: ResultSet
+    Facade-->>AppDeveloper: ResultSet
+    deactivate Facade
+```
+
+### TDD Code Example
+```python
+# --- Complex Internal Subsystems ---
+class Parser:
+    def parse(self, sql):
+        print("Parser: Breaking SQL into tokens and building AST...")
+        return {"type": "SELECT", "table": "users"}
+
+class Optimizer:
+    def optimize(self, ast):
+        print("Optimizer: Finding best execution path (Index Scan vs Full Scan)...")
+        return "Plan(IndexScan on users)"
+
+class Executor:
+    def run(self, plan):
+        print(f"Executor: Running {plan}...")
+        return [{"id": 1, "name": "Alice"}]
+
+# --- The Facade ---
+class DBMSFacade:
+    def __init__(self):
+        # Initializes the complex web of subsystems
+        self.parser = Parser()
+        self.optimizer = Optimizer()
+        self.executor = Executor()
+        
+    def execute(self, sql_query):
+        print(f"--- Facade received query: '{sql_query}' ---")
+        ast = self.parser.parse(sql_query)
+        plan = self.optimizer.optimize(ast)
+        result = self.executor.run(plan)
+        return result
+
+# --- TEST CODE ---
+# The App Developer's code is extremely clean!
+db = DBMSFacade()
+rows = db.execute("SELECT * FROM users")
+print(f"Result: {rows}")
+# Output:
+# --- Facade received query: 'SELECT * FROM users' ---
+# Parser: Breaking SQL into tokens and building AST...
+# Optimizer: Finding best execution path (Index Scan vs Full Scan)...
+# Executor: Running Plan(IndexScan on users)...
+# Result: [{'id': 1, 'name': 'Alice'}]
+```
+
+---
+
+## 20. Mediator Pattern: Transaction Coordination (High Priority)
+
+*   **Why choose Mediator?**
+    In a concurrent DBMS, Transactions, Locks, and Recovery Logs must communicate continuously. If `Transaction A` directly asks the `LockManager` for a lock, and the `LockManager` directly talks to the `Table` to apply it, and the `Table` directly talks to the `LogManager` to record it... the system becomes a chaotic web of tight dependencies (Spaghetti code). Mediator introduces a `TransactionCoordinator`. Components only communicate with the Coordinator, which handles the complex routing and deadlock prevention.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class IMediator {
+        <<interface>>
+        +notify(sender, event, context)*
+    }
+    
+    class TransactionCoordinator {
+        -LockManager lock_mgr
+        -LogManager log_mgr
+        -StorageEngine storage
+        +notify(sender, event, context)
+    }
+    
+    class Component {
+        <<abstract>>
+        #IMediator mediator
+    }
+    
+    class Transaction {
+        +execute_query()
+    }
+    class LockManager {
+        +acquire_lock()
+    }
+    class LogManager {
+        +write_log()
+    }
+    
+    IMediator <|.. TransactionCoordinator
+    Component <|-- Transaction
+    Component <|-- LockManager
+    Component <|-- LogManager
+    TransactionCoordinator --> Component : coordinates
+    Component --> IMediator : notifies
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Tx as Transaction
+    participant Med as Coordinator (Mediator)
+    participant Lock as LockManager
+    participant Log as LogManager
+    
+    Engine->>Tx: execute_query("UPDATE users")
+    activate Tx
+    Tx->>Med: notify(self, "REQUEST_WRITE", "users")
+    activate Med
+    
+    Med->>Lock: acquire_lock("users", WRITE)
+    Lock-->>Med: success
+    
+    Med->>Log: write_log("Tx started writing to users")
+    Log-->>Med: success
+    
+    Med-->>Tx: granted
+    deactivate Med
+    
+    Note over Tx: Transaction performs write operation
+    Tx-->>Engine: done
+    deactivate Tx
+```
+
+### TDD Code Example
+```python
+# The Mediator Interface
+class IMediator:
+    def notify(self, sender, event, context): pass
+
+# Base Component
+class BaseComponent:
+    def __init__(self, mediator: IMediator = None):
+        self.mediator = mediator
+
+# Concrete Components
+class Transaction(BaseComponent):
+    def execute_write(self, table_name):
+        print(f"Tx: I want to write to '{table_name}'. Asking Coordinator...")
+        self.mediator.notify(self, "REQUEST_WRITE", table_name)
+
+class LockManager(BaseComponent):
+    def acquire_lock(self, table_name):
+        print(f"LockManager: Locking table '{table_name}' for write.")
+        return True
+
+class LogManager(BaseComponent):
+    def write_log(self, message):
+        print(f"LogManager: [LOG] {message}")
+
+# Concrete Mediator
+class TransactionCoordinator(IMediator):
+    def __init__(self):
+        self.lock_mgr = LockManager(self)
+        self.log_mgr = LogManager(self)
+        
+    def notify(self, sender, event, context):
+        if event == "REQUEST_WRITE":
+            table_name = context
+            # Centralized coordination logic
+            self.log_mgr.write_log(f"Transaction requested write lock on {table_name}")
+            if self.lock_mgr.acquire_lock(table_name):
+                self.log_mgr.write_log(f"Write lock granted for {table_name}")
+                print(f"Coordinator: Permission granted to Transaction.")
+
+# --- TEST CODE ---
+coordinator = TransactionCoordinator()
+tx1 = Transaction(coordinator)
+
+tx1.execute_write("employees")
+# Output:
+# Tx: I want to write to 'employees'. Asking Coordinator...
+# LogManager: [LOG] Transaction requested write lock on employees
+# LockManager: Locking table 'employees' for write.
+# LogManager: [LOG] Write lock granted for employees
+# Coordinator: Permission granted to Transaction.
+```
+
+
+---
+
+## 21. Memento Pattern: DDL Rollback (Medium Priority)
+
+*   **Why choose Memento?**
+    When a user issues an `ALTER TABLE` command (like dropping a column or changing a data type), the operation might fail halfway due to constraints or disk space. If it fails, the Database must roll back the table to its exact previous state. Storing all the previous variables manually is error-prone. Memento allows us to capture the entire internal state of the `Table` (the schema snapshot) into a `TableMemento` object before making changes, and restore it later without breaking encapsulation.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Table {
+        -String name
+        -List columns
+        +save_state() TableMemento
+        +restore_state(TableMemento m)
+        +alter_table()
+    }
+    
+    class TableMemento {
+        -String state_snapshot
+        +get_state() String
+    }
+    
+    class DDLTransaction {
+        -TableMemento history
+        +execute_alter(Table t)
+        +undo(Table t)
+    }
+    
+    Table --> TableMemento : creates
+    DDLTransaction o-- TableMemento : stores (Caretaker)
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant Tx as DDLTransaction
+    participant Tbl as Table
+    participant Mem as TableMemento
+    
+    Engine->>Tx: execute_alter(Tbl)
+    activate Tx
+    Tx->>Tbl: save_state()
+    activate Tbl
+    Tbl->>Mem: <<create>>
+    Tbl-->>Tx: returns Memento
+    deactivate Tbl
+    Note over Tx: Stores Memento in history
+    
+    Tx->>Tbl: alter_table(drop_column)
+    Note over Tbl: Fails with Error!
+    
+    Tx->>Tbl: restore_state(Memento)
+    activate Tbl
+    Tbl->>Mem: get_state()
+    Mem-->>Tbl: previous schema
+    Note over Tbl: Restores old schema
+    Tbl-->>Tx: done
+    deactivate Tbl
+    Tx-->>Engine: Transaction Aborted, safely rolled back
+    deactivate Tx
+```
+
+### TDD Code Example
+```python
+import copy
+
+class TableMemento:
+    def __init__(self, columns):
+        # Deep copy is essential so future modifications don't alter the snapshot
+        self._columns_snapshot = copy.deepcopy(columns)
+        
+    def get_saved_columns(self):
+        return self._columns_snapshot
+
+class Table:
+    def __init__(self, name):
+        self.name = name
+        self.columns = ["id", "username"]
+        
+    def save_state(self):
+        print(f"Table '{self.name}': Saving schema state to Memento...")
+        return TableMemento(self.columns)
+        
+    def restore_state(self, memento):
+        print(f"Table '{self.name}': Restoring schema state from Memento...")
+        self.columns = memento.get_saved_columns()
+        
+    def drop_column(self, col_name):
+        print(f"Table '{self.name}': Attempting to drop column '{col_name}'...")
+        if col_name == "id":
+            raise Exception("Cannot drop Primary Key!")
+        self.columns.remove(col_name)
+
+class DDLTransaction:
+    def __init__(self):
+        self.history = None
+        
+    def execute_alter(self, table, col_to_drop):
+        self.history = table.save_state()
+        try:
+            table.drop_column(col_to_drop)
+            print("Transaction Committed.")
+        except Exception as e:
+            print(f"Error: {e}. Rolling back...")
+            table.restore_state(self.history)
+
+# --- TEST CODE ---
+users = Table("users")
+print(f"Initial columns: {users.columns}")
+
+tx = DDLTransaction()
+# Attempt to drop PK (Will Fail)
+tx.execute_alter(users, "id")
+
+print(f"Final columns: {users.columns}")
+# Output:
+# Initial columns: ['id', 'username']
+# Table 'users': Saving schema state to Memento...
+# Table 'users': Attempting to drop column 'id'...
+# Error: Cannot drop Primary Key!. Rolling back...
+# Table 'users': Restoring schema state from Memento...
+# Final columns: ['id', 'username']
+```
+
+---
+
+## 22. State Pattern: Transaction Lifecycle (Medium Priority)
+
+*   **Why choose State?**
+    A Database Transaction has different lifecycle states: `Active`, `PartiallyCommitted`, `Committed`, and `Aborted`. If you call `commit()` on a Transaction that is already `Aborted`, it should throw an error. If we use `if/else` statements inside the Transaction class (`if state == "Aborted": ...`), the code becomes a massive state machine. The State pattern extracts each state into its own class (`ActiveState`, `AbortedState`), encapsulating the specific behaviors and transitions.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Transaction {
+        -ITxState state
+        +set_state(state)
+        +commit()
+        +rollback()
+    }
+    
+    class ITxState {
+        <<interface>>
+        +commit(tx)*
+        +rollback(tx)*
+    }
+    
+    class ActiveState {
+        +commit(tx)
+        +rollback(tx)
+    }
+    class AbortedState {
+        +commit(tx)
+        +rollback(tx)
+    }
+    
+    Transaction *-- ITxState : current state
+    ITxState <|.. ActiveState
+    ITxState <|.. AbortedState
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Client
+    participant Tx as Transaction
+    participant State as ActiveState
+    participant NewState as AbortedState
+    
+    Client->>Tx: rollback()
+    activate Tx
+    Tx->>State: rollback(self)
+    activate State
+    Note over State: Transitions to Aborted
+    State->>Tx: set_state(new AbortedState())
+    State-->>Tx: success
+    deactivate State
+    Tx-->>Client: success
+    deactivate Tx
+    
+    Client->>Tx: commit()
+    activate Tx
+    Note over Tx: State is now AbortedState
+    Tx->>NewState: commit(self)
+    NewState-->>Tx: throws Exception("Cannot commit aborted Tx")
+    Tx-->>Client: Error
+    deactivate Tx
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+class ITxState(ABC):
+    @abstractmethod
+    def commit(self, tx): pass
+    @abstractmethod
+    def rollback(self, tx): pass
+
+class ActiveState(ITxState):
+    def commit(self, tx):
+        print("[ActiveState] Writing REDO logs and committing...")
+        tx.set_state(CommittedState())
+        
+    def rollback(self, tx):
+        print("[ActiveState] Reverting changes and aborting...")
+        tx.set_state(AbortedState())
+
+class CommittedState(ITxState):
+    def commit(self, tx):
+        print("[CommittedState] Ignored. Already committed.")
+    def rollback(self, tx):
+        raise Exception("Cannot rollback a transaction that is already committed!")
+
+class AbortedState(ITxState):
+    def commit(self, tx):
+        raise Exception("Cannot commit a transaction that has been aborted!")
+    def rollback(self, tx):
+        print("[AbortedState] Ignored. Already aborted.")
+
+class Transaction:
+    def __init__(self):
+        self.state = ActiveState()
+        
+    def set_state(self, new_state):
+        self.state = new_state
+        
+    def commit(self):
+        self.state.commit(self)
+        
+    def rollback(self):
+        self.state.rollback(self)
+
+# --- TEST CODE ---
+tx = Transaction()
+tx.rollback() # Moves to AbortedState
+
+try:
+    tx.commit() # Will fail because it's aborted
+except Exception as e:
+    print(f"Error: {e}")
+
+# Output:
+# [ActiveState] Reverting changes and aborting...
+# Error: Cannot commit a transaction that has been aborted!
+```
+
+---
+
+## 23. Interpreter Pattern: SQL Evaluation (High Priority)
+
+*   **Why choose Interpreter?**
+    When the SQL Parser reads a `WHERE` clause like `age > 18 AND status = 'ACTIVE'`, it builds an Abstract Syntax Tree (AST). The Query Execution Engine needs to evaluate this tree against millions of rows to filter them. The Interpreter pattern defines a class for each grammatical rule (e.g., `AndExpression`, `GreaterThanExpression`). Each node has an `evaluate(row_data)` method, allowing the AST to naturally interpret the truth value of the row.
+
+### Class Diagram
+```mermaid
+classDiagram
+    class Expression {
+        <<interface>>
+        +evaluate(row)* bool
+    }
+    class GreaterThanExpression {
+        -String col
+        -int val
+        +evaluate(row) bool
+    }
+    class AndExpression {
+        -Expression left
+        -Expression right
+        +evaluate(row) bool
+    }
+    
+    Expression <|.. GreaterThanExpression
+    Expression <|.. AndExpression
+    AndExpression o-- Expression : contains 2
+```
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    actor Engine
+    participant And as AndExpression
+    participant GT as GreaterThanExpression
+    participant EQ as EqualsExpression
+    
+    Engine->>And: evaluate(row)
+    activate And
+    And->>GT: evaluate(row)
+    GT-->>And: True (age > 18)
+    And->>EQ: evaluate(row)
+    EQ-->>And: True (status = ACTIVE)
+    And-->>Engine: True (Keep row)
+    deactivate And
+```
+
+### TDD Code Example
+```python
+from abc import ABC, abstractmethod
+
+# The Abstract Expression
+class Expression(ABC):
+    @abstractmethod
+    def evaluate(self, row: dict) -> bool: pass
+
+# Terminal Expressions (Leaves)
+class GreaterThanExpression(Expression):
+    def __init__(self, column, value):
+        self.column = column
+        self.value = value
+    def evaluate(self, row):
+        return row.get(self.column, 0) > self.value
+
+class EqualsExpression(Expression):
+    def __init__(self, column, value):
+        self.column = column
+        self.value = value
+    def evaluate(self, row):
+        return row.get(self.column) == self.value
+
+# Non-Terminal Expression (Node)
+class AndExpression(Expression):
+    def __init__(self, expr1: Expression, expr2: Expression):
+        self.expr1 = expr1
+        self.expr2 = expr2
+    def evaluate(self, row):
+        return self.expr1.evaluate(row) and self.expr2.evaluate(row)
+
+# --- TEST CODE ---
+# SQL: WHERE age > 18 AND status = 'ACTIVE'
+# The Parser builds this AST:
+ast_root = AndExpression(
+    GreaterThanExpression("age", 18),
+    EqualsExpression("status", "ACTIVE")
+)
+
+# Execution Engine tests rows against the AST
+row1 = {"id": 1, "age": 20, "status": "ACTIVE"}
+row2 = {"id": 2, "age": 16, "status": "ACTIVE"}
+
+print(f"Row 1 Matches? {ast_root.evaluate(row1)}")
+print(f"Row 2 Matches? {ast_root.evaluate(row2)}")
+
+# Output:
+# Row 1 Matches? True
+# Row 2 Matches? False
+```
 
 
 ## 📐 Class Diagrams
