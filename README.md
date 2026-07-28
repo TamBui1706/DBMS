@@ -119,20 +119,20 @@ This document outlines the **12 core Gang of Four (GoF) Design Patterns** applie
 
 ## Summary Table
 
-| Group | Pattern Name | DBMS Use Case |
-| :--- | :--- | :--- |
-| **Creational** | **1. Singleton** | Ensures core managers like TransactionManager have only one instance. |
-| **Creational** | **2. Factory Method** | Centralizes instantiation logic for metadata objects like Indexes. |
-| **Creational** | **3. Builder** | Constructs complex Table structures (columns, constraints) step-by-step. |
-| **Structural** | **4. Adapter** | Wraps external data sources (CSV/JSON) to implement internal Table interface. |
-| **Structural** | **5. Facade** | Provides a simplified `DBMSClient` that hides Parser, Optimizer, and Executor. |
-| **Structural** | **6. Decorator** | Dynamically wraps a Table with temporary behaviors (e.g., ReadOnlyDecorator). |
-| **Structural** | **7. Composite** | Database contains Schemas, Schema contains Tables, treated uniformly. |
-| **Behavioral** | **8. Chain of Responsibility** | Passes permission checks sequentially from Database -> Schema -> Table. |
-| **Behavioral** | **9. Observer** | When a row changes, the Table notifies attached Triggers to execute logic. |
-| **Behavioral** | **10. Strategy** | Selects Cascade, Restrict, SetNull behavior when deleting rows. |
-| **Behavioral** | **11. Command** | `CreateTable`, `DropTable` operations are encapsulated into executable objects. |
-| **Behavioral** | **12. Template Method** | `Validate()` defines workflow, constraints only implement `Check()`. |
+| Priority | Feature | Group | Pattern Name | DBMS Use Case |
+| :--- | :--- | :--- | :--- | :--- |
+| Highest Priority | Global Managers | **Creational** | **1. Singleton** | Ensures core managers like TransactionManager have only one instance. |
+| High Priority | Object Creation | **Creational** | **2. Factory Method** | Centralizes instantiation logic for metadata objects like Indexes. |
+| High Priority | Table Construction | **Creational** | **3. Builder** | Constructs complex Table structures (columns, constraints) step-by-step. |
+| Medium Priority | External Data | **Structural** | **4. Adapter** | Wraps external data sources (CSV/JSON) to implement internal Table interface. |
+| High Priority | Unified Client Connection | **Structural** | **5. Facade** | Provides a simplified `DBMSClient` that hides Parser, Optimizer, and Executor. |
+| Medium Priority | Dynamic Table Wrappers | **Structural** | **6. Decorator** | Dynamically wraps a Table with temporary behaviors (e.g., ReadOnlyDecorator). |
+| Highest Priority | Database Objects | **Structural** | **7. Composite** | Database contains Schemas, Schema contains Tables, treated uniformly. |
+| Medium High Priority | Privilege Checking | **Behavioral** | **8. Chain of Responsibility** | Passes permission checks sequentially from Database -> Schema -> Table. |
+| Medium Priority | Trigger Notification | **Behavioral** | **9. Observer** | When a row changes, the Table notifies attached Triggers to execute logic. |
+| Medium High Priority | Referential Action | **Behavioral** | **10. Strategy** | Selects Cascade, Restrict, SetNull behavior when deleting rows. |
+| Medium Priority | DDL Commands | **Behavioral** | **11. Command** | `CreateTable`, `DropTable` operations are encapsulated into executable objects. |
+| High Priority | Constraint Validation | **Behavioral** | **12. Template Method** | `Validate()` defines workflow, constraints only implement `Check()`. |
 
 
 ---
