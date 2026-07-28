@@ -134,9 +134,6 @@ This document outlines the **12 core Gang of Four (GoF) Design Patterns** applie
 | Medium Priority | DDL Commands | **Behavioral** | **11. Command** | `CreateTable`, `DropTable` operations are encapsulated into executable objects. |
 | High Priority | Constraint Validation | **Behavioral** | **12. Template Method** | `Validate()` defines workflow, constraints only implement `Check()`. |
 
-
----
-
 ## 1. Singleton Pattern: Global Managers (Highest Priority)
 
 *   **Why choose Singleton?**

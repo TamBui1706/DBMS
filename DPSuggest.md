@@ -2,25 +2,93 @@
 
 This document outlines the **12 core Gang of Four (GoF) Design Patterns** applied to the Database Management System (DBMS).
 
-## Summary Table
+## Massive Feature-to-Pattern Mapping Matrix
 
-| Priority | Feature | Group | Pattern Name | DBMS Use Case |
+Below is a comprehensive architectural mapping matrix representing approximately 60 distinct internal DBMS features. The features are logically grouped by their core functional subsystems. Each row strictly maps **exactly one concrete DBMS feature** to **exactly one GoF Design Pattern**, illustrating how the 12 core patterns are highly reused across the entire database architecture.
+
+### 1. Database Objects & Architecture
+This subsystem focuses on the structural instantiation, dynamic modification, and hierarchical representation of core physical and logical database components.
+
+| Concrete Feature | Priority | Design Pattern | Explanation | Meaning / Architectural Impact |
 | :--- | :--- | :--- | :--- | :--- |
-| Highest Priority | Global Managers | **Creational** | **1. Singleton** | Ensures core managers like TransactionManager have only one instance. |
-| High Priority | Object Creation | **Creational** | **2. Factory Method** | Centralizes instantiation logic for metadata objects like Indexes. |
-| High Priority | Table Construction | **Creational** | **3. Builder** | Constructs complex Table structures (columns, constraints) step-by-step. |
-| Medium Priority | External Data | **Structural** | **4. Adapter** | Wraps external data sources (CSV/JSON) to implement internal Table interface. |
-| High Priority | Unified Client Connection | **Structural** | **5. Facade** | Provides a simplified `DBMSClient` that hides Parser, Optimizer, and Executor. |
-| Medium Priority | Dynamic Table Wrappers | **Structural** | **6. Decorator** | Dynamically wraps a Table with temporary behaviors (e.g., ReadOnlyDecorator). |
-| Highest Priority | Database Objects | **Structural** | **7. Composite** | Database contains Schemas, Schema contains Tables, treated uniformly. |
-| Medium High Priority | Privilege Checking | **Behavioral** | **8. Chain of Responsibility** | Passes permission checks sequentially from Database -> Schema -> Table. |
-| Medium Priority | Trigger Notification | **Behavioral** | **9. Observer** | When a row changes, the Table notifies attached Triggers to execute logic. |
-| Medium High Priority | Referential Action | **Behavioral** | **10. Strategy** | Selects Cascade, Restrict, SetNull behavior when deleting rows. |
-| Medium Priority | DDL Commands | **Behavioral** | **11. Command** | `CreateTable`, `DropTable` operations are encapsulated into executable objects. |
-| High Priority | Constraint Validation | **Behavioral** | **12. Template Method** | `Validate()` defines workflow, constraints only implement `Check()`. |
+| **Table Construction** | High | **3. Builder** | Exposes `with_name()`, `add_column()` to build a Table. | Prevents telescoping constructors when creating entities with dozens of optional schema definitions. |
+| **View Construction** | High | **3. Builder** | Provides an API to assemble a virtual Materialized View step-by-step. | Safely initializes complex View objects before they are exposed to the execution engine. |
+| **Index Plan Building** | High | **3. Builder** | Constructs a multi-column indexing strategy sequentially. | Guarantees that all index keys are validated and structured correctly before memory allocation. |
+| **Recursive Schema Mapping** | Highest | **7. Composite** | A Database contains Schemas, and Schemas contain Tables (all implement `Component`). | Allows recursive operations like calculating total DB size gracefully without deep `if/else` checks. |
+| **Partition Tree Management** | Highest | **7. Composite** | Treats individual partitions and composite partitions uniformly. | Simplifies query execution routing over partitioned tables, boosting horizontal scalability. |
+| **Table Read-Only Wrapping** | Medium | **6. Decorator** | Wraps a Table object in a `ReadOnlyDecorator` to intercept `insert()` calls. | Allows temporary injection of read-lock constraints on the fly without altering core table code. |
+| **Soft-Delete Row Wrapping** | Medium | **6. Decorator** | Wraps entities to filter out deleted rows automatically at runtime. | Implements soft-deletion transparently, protecting legacy queries from breaking. |
+| **Auditing & Logging Hooks** | Medium | **6. Decorator** | Injects an `AuditingDecorator` around sensitive tables to log data access. | Seamlessly fulfills strict compliance and security auditing requirements dynamically. |
+| **Encryption Wrappers** | Medium | **6. Decorator** | Wraps a column object to automatically encrypt/decrypt payload data. | Secures data at rest transparently without rewriting the underlying storage logic. |
+| **Virtual Column Building** | High | **3. Builder** | Instantiates computed columns by assembling calculation expressions. | Provides a robust way to construct non-persistent data structures during query compilation. |
+| **Nested Constraint Aggregation**| Highest | **7. Composite** | Groups multiple Check Constraints into a single evaluable Composite Constraint. | Enables complex `AND/OR` constraint logic validation over table rows with simple recursive calls. |
+| **Table Cloning** | High | **Prototype** | Uses `clone()` to duplicate table schemas for temporary table creation. | Rapidly creates isolated #temp tables by copying existing structures, saving massive overhead. |
+| **Index Cloning** | High | **Prototype** | Duplicates B-Tree node structures to support concurrent snapshot isolation. | Accelerates transaction processing by avoiding lock contention on read-heavy index scans. |
+| **Data Type Sharing** | Medium | **Flyweight** | Shares common data type objects (e.g., `INT`, `VARCHAR`) across all columns. | Massively reduces memory footprint since thousands of columns reference the same type objects. |
+| **Syntax Tree Node Visiting** | Med High| **Visitor** | Traverses the AST components to generate optimized execution paths. | Separates query optimization logic from the actual structural nodes of the AST. |
 
+### 2. Database Management & Security
+This subsystem is responsible for centralized resource allocation, concurrency control, transaction safety, and tiered privilege authorization.
 
----
+| Concrete Feature | Priority | Design Pattern | Explanation | Meaning / Architectural Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| **Global Transaction Manager** | Highest | **1. Singleton** | Ensures exactly one `TransactionManager` assigns TxIDs globally. | Completely prevents catastrophic overlap of transaction IDs and race conditions. |
+| **Distributed Lock Manager** | Highest | **1. Singleton** | Maintains a single, synchronized global lock registry. | Eradicates scattered lock states, ensuring deadlocks can be accurately detected. |
+| **Buffer Pool Manager** | Highest | **1. Singleton** | Keeps one centralized memory cache pool for all page reads/writes. | Maximizes cache hit ratios and tightly controls memory exhaustion limits. |
+| **System Catalog Manager** | Highest | **1. Singleton** | Centralizes access to system metadata tables (e.g., `pg_class`). | Guarantees all threads see exactly the same schema definitions at any given moment. |
+| **Object Privilege Checking** | Med High | **8. Chain of Resp** | Passes Table -> Schema -> DB authority checks up the chain. | Promotes decoupled security. Missing table-level rights seamlessly escalate to admin checks. |
+| **Row-Level Security Filtering** | Med High | **8. Chain of Resp** | Adds a row-filter check before evaluating column-level access. | Allows highly granular security policies without hardcoding authentication rules in the engine. |
+| **Connection Quota Checking** | Med High | **8. Chain of Resp** | Verifies user limits, then IP limits, then global system limits. | Dynamically rejects connections early, preventing DDoS and resource starvation. |
+| **DDL Table Alteration** | Medium | **11. Command** | Packages `AddColumn` into an executable/undoable Command object. | Enables perfect schema rollbacks if an `ALTER TABLE` crashes halfway through execution. |
+| **Transaction Rollback Cmd** | Medium | **11. Command** | Wraps inverse data mutations (e.g., Delete -> Insert) into commands. | Forms the absolute backbone of the MVCC and WAL (Write-Ahead Log) recovery system. |
+| **Replication Log Entry** | Medium | **11. Command** | Serializes DML operations into Command objects shipped to replicas. | Ensures distributed high availability by executing identical Command objects on follower nodes. |
+| **Query Plan Caching** | High | **Proxy** | Uses a Proxy around the Optimizer to return cached execution plans. | Drastically drops CPU usage by bypassing the expensive parsing phase for frequent queries. |
+| **Lazy Loading Remote Data** | High | **Proxy** | Replaces remote tables with a Proxy that fetches data only on demand. | Enables Federated Databases (like Postgres FDW) without choking network bandwidth. |
+| **Configuration Manager** | Highest | **1. Singleton** | Centralizes the loading and overriding of database config files (e.g., `my.cnf`). | Ensures runtime parameters are uniform and updated safely without server restarts. |
+| **Connection Pooling** | Highest | **1. Singleton** | Maintains a single thread-safe queue of reusable database connections. | Eliminates the massive latency overhead of TCP handshakes for every client request. |
+| **Background Vacuuming** | Medium | **11. Command** | Schedules dead-tuple garbage collection as a background Command. | Allows the DBMS to throttle or pause cleanup operations based on current system load. |
+
+### 3. Storage & Metadata Engine
+This subsystem handles the lowest level of data persistence, memory layout creation, and stringent data integrity validations.
+
+| Concrete Feature | Priority | Design Pattern | Explanation | Meaning / Architectural Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| **B-Tree Index Instantiation** | High | **2. Factory Method** | Subclasses decide how to instantiate optimized B-Tree structures. | Isolates the complex memory allocation logic from the generic query execution path. |
+| **Hash Index Instantiation** | High | **2. Factory Method** | Delegates the creation of memory-optimized Hash indexes to factories. | Enables rapid integration of new indexing algorithms without modifying the core parser. |
+| **Memory Page Allocation** | High | **2. Factory Method** | Storage engines generate specific 4KB or 8KB memory page objects. | Keeps the OS-level storage implementations highly decoupled from the logical table manager. |
+| **WAL Record Creation** | High | **2. Factory Method** | Factories stamp out specific Write-Ahead Log records based on operation type. | Ensures crash recovery systems can strictly rely on standardized log formats. |
+| **Primary Key Validation** | High | **12. Template Method**| Skeleton checks nulls, subclasses implement unique lookups. | Enforces a strict, unbreakable pipeline for validating the most critical database keys. |
+| **Foreign Key Validation** | High | **12. Template Method**| Skeleton validates existence, subclasses implement cascading lock checks. | Maximizes code reuse and eliminates bugs when implementing complex referential integrity. |
+| **Check Constraint Execution**| High | **12. Template Method**| Standardizes the extraction of row values before executing custom expressions. | Ensures that arbitrary user-defined functions are safely sandboxed during validation. |
+| **Data Type Parsing** | High | **12. Template Method**| Skeleton handles empty strings, subclasses cast strings to int/date. | Hardens the system against crashes caused by malformed user input parsing. |
+| **Page Checksum Validation** | High | **12. Template Method**| Defines the byte-reading process, subclasses provide specific hashing algorithms. | Detects disk corruption immediately upon page load, preventing silent data loss. |
+| **Heap Tuple Iterator** | High | **Iterator** | Provides sequential access to raw rows stored in a Heap file. | Allows full table scans without loading entire massive files into RAM. |
+| **B-Tree Leaf Iterator** | High | **Iterator** | Navigates the linked list of leaf nodes in a B-Tree structure. | Enables lightning-fast range queries (`BETWEEN`) by traversing already-sorted nodes. |
+| **Bitmap Scan Iterator** | High | **Iterator** | Yields row IDs by iterating over bitwise AND/OR operations on bitmaps. | Supercharges complex `WHERE` clauses containing multiple heavily duplicated conditions. |
+| **Sort Merge Iterator** | High | **Iterator** | Steps through two sorted inputs simultaneously to yield joined rows. | Forms the foundation of the Volcano Execution Engine for performing high-speed joins. |
+| **Index Key Formatting** | Med High| **Strategy** | Plugs in different serialization algorithms depending on data types. | Reduces index fragmentation by heavily compressing specific types of keys dynamically. |
+| **Page Replacement Policy** | Med High| **Strategy** | Hot-swaps LRU (Least Recently Used) with Clock-Sweep algorithms. | Allows database administrators to tune caching behaviors to match specific workload patterns. |
+
+### 4. Query & Data Operations
+This subsystem governs how the DBMS receives client queries, communicates with external unstructured files, processes automated triggers, and handles referential integrity.
+
+| Concrete Feature | Priority | Design Pattern | Explanation | Meaning / Architectural Impact |
+| :--- | :--- | :--- | :--- | :--- |
+| **Unified Execution Endpoint** | High | **5. Facade** | `DBMSFacade.execute()` hides Parser, Optimizer, and Executor complexity. | Dramatically simplifies the client driver API, abstracting away compiler theory from developers. |
+| **Admin Control Panel API** | High | **5. Facade** | Provides a single entry point for starting/stopping database instances. | Secures system operations by hiding internal thread management from UI dashboards. |
+| **Backup Utilities Interface** | High | **5. Facade** | Orchestrates lock acquisition, flushing, and disk writing behind one command. | Ensures physical backups are perfectly consistent without relying on human sequence execution. |
+| **External CSV Parsing** | Medium | **4. Adapter** | Wraps a CSV file reader to conform to the internal `ITable` interface. | Empowers the DBMS to run native SQL `SELECT` queries directly on external text files. |
+| **External JSON Parsing** | Medium | **4. Adapter** | Translates unstructured JSON document APIs into tabular row-sets. | Bridges the gap between NoSQL data lakes and strict relational query engines seamlessly. |
+| **Legacy Database Wrapping** | Medium | **4. Adapter** | Translates internal SQL dialects into foreign API calls (e.g., Oracle to MySQL). | Drives robust Federated Database features (dblink/FDW) for cross-platform data joining. |
+| **Materialized View Refresh** | Medium | **9. Observer** | Subscribes a View object to a Table; updates trigger automatic view invalidation. | Keeps complex aggregated dashboards perfectly synced with underlying mutating data. |
+| **Audit Log Triggering** | Medium | **9. Observer** | Registers a security trigger to fire asynchronously upon row insertion. | Isolates compliance logging from the critical transaction path, improving write latency. |
+| **Index Auto-Updating** | Medium | **9. Observer** | Indexes observe Tables to instantly reflect new key insertions. | Ensures that secondary indexes never return stale or orphaned pointers to the user. |
+| **Cascade Delete Execution** | Med High| **10. Strategy** | Executes a plugged-in strategy to recursively wipe dependent child rows. | Eliminates gigantic `switch/case` statements; execution dynamically follows the foreign key rule. |
+| **Restrict Delete Execution** | Med High| **10. Strategy** | Swaps to a strategy that strictly halts and throws errors if children exist. | Safely enforces data integrity rules without rewriting the core physical deletion loop. |
+| **Set-Null Delete Execution** | Med High| **10. Strategy** | Plugs in a strategy to update child pointers to `NULL` instead of dropping them. | Provides flexible schema design options for gracefully handling orphaned relationships. |
+| **Join Algorithm Selection** | Med High| **10. Strategy** | Optimizer hot-swaps between Nested Loop, Hash Join, and Merge Join. | Guarantees the absolute fastest execution path based on real-time table statistics. |
+| **String Collation Sorting** | Med High| **Strategy** | Plugs in different Unicode sorting rules based on regional language settings. | Empowers the engine to handle globalized text data comparisons natively and accurately. |
+| **Query Cancellation** | Medium | **9. Observer** | Subscribes running queries to a timeout event; cancels execution gracefully. | Prevents runaway analytical queries from completely locking up database worker threads. |
 
 ## 1. Singleton Pattern: Global Managers (Highest Priority)
 
