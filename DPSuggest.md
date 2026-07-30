@@ -1,10 +1,9 @@
 # Design Pattern Analysis: Database Architecture
 
-This document outlines the **10 core Gang of Four (GoF) Design Patterns** applied to the Database Management System (DBMS), based on the selection from `10DP.md`.
 
 ## Massive Feature-to-Pattern Mapping Matrix
 
-Below is a comprehensive architectural mapping matrix representing the internal DBMS features mapping to the 10 core patterns. Each row strictly maps **exactly one concrete DBMS feature** to **exactly one GoF Design Pattern**.
+Below is a comprehensive architectural mapping matrix representing the internal DBMS features mapping to the 10 core patterns. Each group contains exactly **15 distinct features** to demonstrate extensive real-world DBMS applications.
 
 ### 1. Database Objects & Architecture
 This subsystem focuses on the structural instantiation, dynamic modification, and hierarchical representation of core physical and logical database components.
@@ -14,10 +13,18 @@ This subsystem focuses on the structural instantiation, dynamic modification, an
 | **Table Construction** | High | **3. Builder** | Exposes `set_name()`, `add_column()` to build a Table. | Prevents telescoping constructors when creating entities with dozens of optional schema definitions. |
 | **View Construction** | High | **3. Builder** | Provides an API to assemble a virtual Materialized View step-by-step. | Safely initializes complex View objects before they are exposed to the execution engine. |
 | **Index Plan Building** | High | **3. Builder** | Constructs a multi-column indexing strategy sequentially. | Guarantees that all index keys are validated and structured correctly before memory allocation. |
+| **Virtual Column Building** | High | **3. Builder** | Instantiates computed columns by assembling calculation expressions. | Provides a robust way to construct non-persistent data structures during query compilation. |
+| **Physical Schema Assembly** | High | **3. Builder** | Steps through the physical layout configuration to allocate initial database file headers. | Prevents incomplete schema registration by validating schema boundaries before disk write. |
+| **Query Plan Graph Assembly** | High | **3. Builder** | Assembles query execution steps sequentially for the execution engine. | Abstractly builds step execution sequences, separating plan creation from engine runtimes. |
 | **Recursive Schema Mapping** | Highest | **10. Composite** | A Database contains Schemas, and Schemas contain Tables (all implement `DBObject`). | Allows recursive operations like calculating total DB size gracefully without deep `if/else` checks. |
 | **Partition Tree Management** | Highest | **10. Composite** | Treats individual partitions and composite partitions uniformly. | Simplifies query execution routing over partitioned tables, boosting horizontal scalability. |
-| **Virtual Column Building** | High | **3. Builder** | Instantiates computed columns by assembling calculation expressions. | Provides a robust way to construct non-persistent data structures during query compilation. |
 | **Nested Constraint Aggregation**| Highest | **10. Composite** | Groups multiple Check Constraints into a single evaluable Composite Constraint. | Enables complex `AND/OR` constraint logic validation over table rows with simple recursive calls. |
+| **Composite Expression Tree** | Highest | **10. Composite** | Combines binary, unary, and logical expressions inside query predicates. | Allows evaluation engines to compute nested WHERE predicates uniformly through node recursion. |
+| **Directory Structure Traversal** | Highest | **10. Composite** | Represents file system folders and data pages recursively. | Unifies storage layout parsing on disk, simplifying low-level physical file catalog searches. |
+| **Logical Query AST Tree** | Highest | **10. Composite** | Structures nested subqueries, joins, and filters into a uniform Syntax Tree. | Parser can walk and optimize queries recursively using standard node traversal logic. |
+| **Catalog Registry Composition** | Highest | **10. Composite** | Compiles system catalogs, data dictionaries, and user schemas under one node. | Streamlines system metadata operations by treating system tables and user tables uniformly. |
+| **Materialized View Hierarchy** | Highest | **10. Composite** | Manages views built on other views in a recursive dependency graph. | Simplifies cascading refresh operations by recursively propagating data updates. |
+| **Query Execution Node Plan** | Highest | **10. Composite** | Nests index scans, hash joins, and sorting operations into an execution plan. | Allows Volcano-style engine iterators to pull rows recursively from child nodes. |
 
 ### 2. Database Management & Security
 This subsystem is responsible for centralized resource allocation, concurrency control, transaction safety, and tiered privilege authorization.
@@ -28,12 +35,17 @@ This subsystem is responsible for centralized resource allocation, concurrency c
 | **Distributed Lock Manager** | Highest | **1. Singleton** | Maintains a single, synchronized global lock registry. | Eradicates scattered lock states, ensuring deadlocks can be accurately detected. |
 | **Buffer Pool Manager** | Highest | **1. Singleton** | Keeps one centralized memory cache pool for all page reads/writes. | Maximizes cache hit ratios and tightly controls memory exhaustion limits. |
 | **System Catalog Manager** | Highest | **1. Singleton** | Centralizes access to system metadata tables (e.g., `pg_class`). | Guarantees all threads see exactly the same schema definitions at any given moment. |
+| **Configuration Manager** | Highest | **1. Singleton** | Centralizes the loading and overriding of database config files. | Ensures runtime parameters are uniform and updated safely without server restarts. |
+| **Connection Pooling Manager** | Highest | **1. Singleton** | Maintains a single thread-safe queue of reusable database connections. | Eliminates the massive latency overhead of TCP handshakes for every client request. |
+| **Execution Statistics Collector** | Highest | **1. Singleton** | Aggregates all query performance counters globally in memory. | Provides a single, clean source of telemetry data for DBAs and query planners. |
+| **Shared Memory Segment Manager**| Highest | **1. Singleton** | Controls allocation of shared buffer pools among background processes. | Prevents memory allocation overlap, protecting against system crashes. |
 | **DDL Table Alteration** | Medium | **8. Command** | Packages `DropTableCommand` into an executable/undoable Command object. | Enables perfect schema rollbacks if a DDL statement crashes halfway through execution. |
 | **Transaction Rollback Cmd** | Medium | **8. Command** | Wraps inverse data mutations (e.g., Delete -> Insert) into commands. | Forms the absolute backbone of the MVCC and WAL (Write-Ahead Log) recovery system. |
 | **Replication Log Entry** | Medium | **8. Command** | Serializes DML operations into Command objects shipped to replicas. | Ensures distributed high availability by executing identical Command objects on follower nodes. |
-| **Configuration Manager** | Highest | **1. Singleton** | Centralizes the loading and overriding of database config files (e.g., `my.cnf`). | Ensures runtime parameters are uniform and updated safely without server restarts. |
-| **Connection Pooling** | Highest | **1. Singleton** | Maintains a single thread-safe queue of reusable database connections. | Eliminates the massive latency overhead of TCP handshakes for every client request. |
 | **Background Vacuuming** | Medium | **8. Command** | Schedules dead-tuple garbage collection as a background Command. | Allows the DBMS to throttle or pause cleanup operations based on current system load. |
+| **Flush Cache Buffer To Disk** | Medium | **8. Command** | Packages dirty-page writing tasks into Command queues. | Enables asynchronous write optimizations without blocking active transaction logs. |
+| **Index Rebuild Command** | Medium | **8. Command** | Wraps index defragmentation requests into transactional operations. | Allows clean scheduling and cancellation of heavy maintenance tasks. |
+| **User Access Authorization Log** | Medium | **8. Command** | Encapsulates user session creation and audit logging steps. | Secures tracking of DDL changes by treating audit write operations as commands. |
 
 ### 3. Storage & Metadata Engine
 This subsystem handles the lowest level of data persistence, memory layout creation, and data integrity validations.
@@ -44,6 +56,7 @@ This subsystem handles the lowest level of data persistence, memory layout creat
 | **Hash Index Instantiation** | High | **2. Factory Method** | Delegates the creation of memory-optimized Hash indexes to factories. | Enables rapid integration of new indexing algorithms without modifying the core parser. |
 | **Memory Page Allocation** | High | **2. Factory Method** | Storage engines generate specific memory page objects. | Keeps the OS-level storage implementations highly decoupled from the logical table manager. |
 | **WAL Record Creation** | High | **2. Factory Method** | Factories stamp out specific Write-Ahead Log records based on operation type. | Ensures crash recovery systems can strictly rely on standardized log formats. |
+| **Storage Node Instantiation** | High | **2. Factory Method** | Allocates concrete data blocks depending on disk storage type. | Allows transparent support for both HDD heap files and SSD log-structured storage. |
 | **Primary Key Validation** | High | **9. Template Method**| Skeleton checks nulls, subclasses implement unique lookups. | Enforces a strict, unbreakable pipeline for validating the most critical database keys. |
 | **Foreign Key Validation** | High | **9. Template Method**| Skeleton validates existence, subclasses implement cascading lock checks. | Maximizes code reuse and eliminates bugs when implementing complex referential integrity. |
 | **Check Constraint Execution**| High | **9. Template Method**| Standardizes the extraction of row values before executing custom expressions. | Ensures that arbitrary user-defined functions are safely sandboxed during validation. |
@@ -51,6 +64,9 @@ This subsystem handles the lowest level of data persistence, memory layout creat
 | **Page Checksum Validation** | High | **9. Template Method**| Defines the byte-reading process, subclasses provide specific hashing algorithms. | Detects disk corruption immediately upon page load, preventing silent data loss. |
 | **Index Key Formatting** | Med High| **7. Strategy** | Plugs in different serialization algorithms depending on data types. | Reduces index fragmentation by heavily compressing specific types of keys dynamically. |
 | **Page Replacement Policy** | Med High| **7. Strategy** | Hot-swaps LRU (Least Recently Used) with Clock-Sweep algorithms. | Allows database administrators to tune caching behaviors to match specific workload patterns. |
+| **Data Compression Selection** | Med High| **7. Strategy** | Dynamically chooses ZSTD, GZIP, or Snappy based on columns. | Optimizes disk space consumption dynamically according to real-time query latencies. |
+| **Disk Write Scheduling Policy** | Med High| **7. Strategy** | Changes flush ordering between FIFO and SSTF (Shortest Seek Time First). | Improves physical drive lifecycle and reduces disk write-amplification patterns. |
+| **Partition Hashing Selection** | Med High| **7. Strategy** | Swaps hash functions (MurmurHash, CRC32) for table partitioning. | Prevents data skew across shards by choosing the optimal distribution strategy. |
 
 ### 4. Query & Data Operations
 This subsystem governs how the DBMS receives client queries, communicates with external files, processes automated triggers, and handles referential integrity.
@@ -66,12 +82,12 @@ This subsystem governs how the DBMS receives client queries, communicates with e
 | **Materialized View Refresh** | Medium | **6. Observer** | Subscribes a View object to a Table; updates trigger automatic view invalidation. | Keeps complex aggregated dashboards perfectly synced with underlying mutating data. |
 | **Audit Log Triggering** | Medium | **6. Observer** | Registers a security trigger to fire asynchronously upon row insertion. | Isolates compliance logging from the critical transaction path, improving write latency. |
 | **Index Auto-Updating** | Medium | **6. Observer** | Indexes observe Tables to instantly reflect new key insertions. | Ensures that secondary indexes never return stale or orphaned pointers to the user. |
+| **Query Cancellation** | Medium | **6. Observer** | Subscribes running queries to a timeout event; cancels execution gracefully. | Prevents runaway analytical queries from completely locking up database worker threads. |
 | **Cascade Delete Execution** | Med High| **7. Strategy** | Executes a plugged-in strategy to recursively wipe dependent child rows. | Eliminates gigantic `switch/case` statements; execution dynamically follows the foreign key rule. |
 | **Restrict Delete Execution** | Med High| **7. Strategy** | Swaps to a strategy that strictly halts and throws errors if children exist. | Safely enforces data integrity rules without rewriting the core physical deletion loop. |
 | **Set-Null Delete Execution** | Med High| **7. Strategy** | Plugs in a strategy to update child pointers to `NULL` instead of dropping them. | Provides flexible schema design options for gracefully handling orphaned relationships. |
 | **Join Algorithm Selection** | Med High| **7. Strategy** | Optimizer hot-swaps between Nested Loop, Hash Join, and Merge Join. | Guarantees the absolute fastest execution path based on real-time table statistics. |
 | **String Collation Sorting** | Med High| **7. Strategy** | Plugs in different Unicode sorting rules based on regional language settings. | Empowers the engine to handle globalized text data comparisons natively and accurately. |
-| **Query Cancellation** | Medium | **6. Observer** | Subscribes running queries to a timeout event; cancels execution gracefully. | Prevents runaway analytical queries from completely locking up database worker threads. |
 
 ---
 
