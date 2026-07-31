@@ -1,1 +1,0 @@
-# Init views package

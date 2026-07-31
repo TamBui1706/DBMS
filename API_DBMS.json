@@ -1,0 +1,233 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "DBMS API",
+        "version": "1.0.0",
+        "description": "REST API documentation for the DBMS project."
+    },
+    "paths": {
+        "/api/v1/databases": {
+            "get": {
+                "operationId": "v1_databases_retrieve",
+                "description": "List databases or create a new database.",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_databases_create",
+                "description": "List databases or create a new database.",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/databases/{db}": {
+            "get": {
+                "operationId": "v1_databases_retrieve_2",
+                "description": "Get or delete a specific database.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "db",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_databases_destroy",
+                "description": "Get or delete a specific database.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "db",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/databases/{db}/close": {
+            "post": {
+                "operationId": "v1_databases_close_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "db",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/databases/{db}/open": {
+            "post": {
+                "operationId": "v1_databases_open_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "db",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/databases/{db}/readonly": {
+            "post": {
+                "operationId": "v1_databases_readonly_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "db",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/databases/{db}/recovery": {
+            "post": {
+                "operationId": "v1_databases_recovery_create",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "db",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/health": {
+            "get": {
+                "operationId": "v1_health_retrieve",
+                "description": "Check the database server health status using the DatabaseServer class.",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/metrics": {
+            "get": {
+                "operationId": "v1_metrics_retrieve",
+                "description": "Retrieve real-time database server performance metrics.",
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        }
+    },
+    "components": {}
+}
