@@ -1,76 +1,44 @@
 from Classes.DatabaseObjectManagement.schema import Schema
-from core.repositories.database_repository import DatabaseRepository
+from core.repositories.schema_repository import SchemaRepository
 
 class SchemaService:
     def __init__(self):
-        self.db_repository = DatabaseRepository()
-        self.db_repository.seed()
+        self.repository = SchemaRepository()
 
     def create_schema(self, db_name: str, schema_name: str):
-        db = self.db_repository.get_by_name(db_name)
-        if not db:
+        existing = self.repository.get_by_name(db_name, schema_name)
+        if existing:
             return None
-            
-        # Check if schema already exists in children
-        for child in db.children:
-            if getattr(child, "name", None) == schema_name:
-                return None
                 
         # Instantiate a real Schema class object
         schema = Schema(name=schema_name)
-        db.add_child(schema)
-        self.db_repository.save(db)
-        return self._map_to_dto(db_name, schema)
+        saved = self.repository.save(db_name, schema)
+        if not saved:
+            return None
+        return self._map_to_dto(db_name, saved)
 
     def list_schemas(self, db_name: str):
-        db = self.db_repository.get_by_name(db_name)
-        if not db:
+        schemas = self.repository.get_all(db_name)
+        if schemas is None:
             return None
-            
-        schemas = []
-        for child in db.children:
-            if type(child).__name__ == "Schema":
-                schemas.append(self._map_to_dto(db_name, child))
-        return schemas
+        return [self._map_to_dto(db_name, s) for s in schemas]
 
     def get_schema(self, db_name: str, schema_name: str):
-        db = self.db_repository.get_by_name(db_name)
-        if not db:
+        schema = self.repository.get_by_name(db_name, schema_name)
+        if not schema:
             return None
-            
-        for child in db.children:
-            if type(child).__name__ == "Schema" and getattr(child, "name", None) == schema_name:
-                return self._map_to_dto(db_name, child)
-        return None
+        return self._map_to_dto(db_name, schema)
 
     def update_schema(self, db_name: str, schema_name: str, new_name: str):
-        db = self.db_repository.get_by_name(db_name)
-        if not db:
+        schema = self.repository.get_by_name(db_name, schema_name)
+        if not schema:
             return None
-            
-        for child in db.children:
-            if type(child).__name__ == "Schema" and getattr(child, "name", None) == schema_name:
-                child.name = new_name
-                self.db_repository.save(db)
-                return self._map_to_dto(db_name, child)
-        return None
+        schema.name = new_name
+        self.repository.save(db_name, schema)
+        return self._map_to_dto(db_name, schema)
 
     def delete_schema(self, db_name: str, schema_name: str):
-        db = self.db_repository.get_by_name(db_name)
-        if not db:
-            return False
-            
-        target_schema = None
-        for child in db.children:
-            if type(child).__name__ == "Schema" and getattr(child, "name", None) == schema_name:
-                target_schema = child
-                break
-                
-        if target_schema:
-            db.children.remove(target_schema)
-            self.db_repository.save(db)
-            return True
-        return False
+        return self.repository.delete(db_name, schema_name)
 
     def _map_to_dto(self, db_name: str, schema: Schema) -> dict:
         metadata = schema.get_metadata()
