@@ -6,6 +6,7 @@ from core.controllers import (
     table_controller,
     column_controller,
     row_controller,
+    constraint_controller,
 )
 
 urlpatterns = [
@@ -36,7 +37,15 @@ urlpatterns = [
     # Row Data Endpoints
     path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/rows", row_controller.row_list, name="row_list"),
     path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/rows/<int:id>", row_controller.row_detail, name="row_detail"),
+
+    # Constraint Management Endpoints
+    path("constraints/check", constraint_controller.create_check_constraint, name="create_check_constraint"),
+    path("constraints/primarykey", constraint_controller.create_primary_key, name="create_primary_key"),
+    path("constraints/unique", constraint_controller.create_unique_constraint, name="create_unique_constraint"),
+    path("constraints/foreignkey", constraint_controller.create_foreign_key, name="create_foreign_key"),
+    path("constraints/<str:constraintId>", constraint_controller.constraint_detail, name="constraint_detail"),
 ]
+
 
 
 
