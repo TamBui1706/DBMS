@@ -1,14 +1,19 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from drf_spectacular.utils import extend_schema
 from core.services.row_service import RowService
 from core.dto.request.row_request import InsertRowRequest, UpdateRowRequest
 from core.dto.response.row_response import RowResponse
 
 row_service = RowService()
 
+@extend_schema(
+    request=InsertRowRequest,
+    responses={200: RowResponse(many=True), 201: RowResponse}
+)
 @api_view(["GET", "POST"])
-def row_list(request, table):
+def row_list(request, db, schema, table):
     if request.method == "GET":
         data = row_service.list_rows(table)
         if data is None:
@@ -28,8 +33,14 @@ def row_list(request, table):
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema(
+    request=UpdateRowRequest,
+    responses={200: RowResponse}
+)
 @api_view(["GET", "PUT", "DELETE"])
-def row_detail(request, table, id):
+def row_detail(request, db, schema, table, id):
+
+
     if request.method == "GET":
         data = row_service.get_row(table, id)
         if not data:

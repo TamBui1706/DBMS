@@ -11,12 +11,14 @@ ALLOWED_HOSTS = ["*"]
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
+    "corsheaders",
     "rest_framework",
     "drf_spectacular",
     "core",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -63,10 +65,16 @@ REST_FRAMEWORK = {
     ],
 }
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "DBMS API",
     "DESCRIPTION": "REST API documentation for the DBMS project.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SERVERS": [
+        {"url": "http://127.0.0.1:8000/api/v1", "description": "Local Development Server"},
+    ],
 }
+
 

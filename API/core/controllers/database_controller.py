@@ -1,12 +1,17 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from drf_spectacular.utils import extend_schema
 from core.services.database_service import DatabaseService
 from core.dto.request.database_request import CreateDatabaseRequest
 from core.dto.response.database_response import DatabaseResponse
 
 db_service = DatabaseService()
 
+@extend_schema(
+    request=CreateDatabaseRequest,
+    responses={200: DatabaseResponse(many=True), 201: DatabaseResponse}
+)
 @api_view(["GET", "POST"])
 def database_list(request):
     if request.method == "GET":
@@ -29,6 +34,7 @@ def database_list(request):
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema(responses={200: DatabaseResponse})
 @api_view(["GET", "DELETE"])
 def database_detail(request, db):
     if request.method == "GET":
@@ -44,6 +50,7 @@ def database_detail(request, db):
             return Response({"detail": f"Database '{db}' not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"Database '{db}' deleted successfully."}, status=status.HTTP_200_OK)
 
+@extend_schema(request=None, responses={200: DatabaseResponse})
 @api_view(["POST"])
 def open_database(request, db):
     data = db_service.open_database(db)
@@ -52,6 +59,7 @@ def open_database(request, db):
     serializer = DatabaseResponse(data)
     return Response(serializer.data)
 
+@extend_schema(request=None, responses={200: DatabaseResponse})
 @api_view(["POST"])
 def close_database(request, db):
     data = db_service.close_database(db)
@@ -60,6 +68,7 @@ def close_database(request, db):
     serializer = DatabaseResponse(data)
     return Response(serializer.data)
 
+@extend_schema(request=None, responses={200: DatabaseResponse})
 @api_view(["POST"])
 def set_readonly_database(request, db):
     data = db_service.set_readonly_database(db)
@@ -68,6 +77,7 @@ def set_readonly_database(request, db):
     serializer = DatabaseResponse(data)
     return Response(serializer.data)
 
+@extend_schema(request=None, responses={200: DatabaseResponse})
 @api_view(["POST"])
 def run_database_recovery(request, db):
     data = db_service.run_database_recovery(db)
@@ -75,3 +85,4 @@ def run_database_recovery(request, db):
         return Response({"detail": f"Database '{db}' not found."}, status=status.HTTP_404_NOT_FOUND)
     serializer = DatabaseResponse(data)
     return Response(serializer.data)
+

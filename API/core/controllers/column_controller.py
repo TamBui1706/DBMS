@@ -1,14 +1,19 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from drf_spectacular.utils import extend_schema
 from core.services.column_service import ColumnService
 from core.dto.request.column_request import AddColumnRequest, UpdateColumnRequest
 from core.dto.response.column_response import ColumnResponse
 
 column_service = ColumnService()
 
+@extend_schema(
+    request=AddColumnRequest,
+    responses={200: ColumnResponse(many=True), 201: ColumnResponse}
+)
 @api_view(["GET", "POST"])
-def column_list(request, table):
+def column_list(request, db, schema, table):
     if request.method == "GET":
         data = column_service.list_columns(table)
         if data is None:
@@ -29,8 +34,14 @@ def column_list(request, table):
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema(
+    request=UpdateColumnRequest,
+    responses={200: ColumnResponse}
+)
 @api_view(["PUT", "DELETE"])
-def column_detail(request, table, column):
+def column_detail(request, db, schema, table, column):
+
+
     if request.method == "PUT":
         serializer = UpdateColumnRequest(data=request.data)
         if serializer.is_valid():

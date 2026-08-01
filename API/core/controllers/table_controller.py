@@ -1,14 +1,19 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from drf_spectacular.utils import extend_schema
 from core.services.table_service import TableService
 from core.dto.request.table_request import CreateTableRequest, UpdateTableRequest
 from core.dto.response.table_response import TableResponse
 
 table_service = TableService()
 
+@extend_schema(
+    request=CreateTableRequest,
+    responses={200: TableResponse(many=True), 201: TableResponse}
+)
 @api_view(["GET", "POST"])
-def table_list(request, schema):
+def table_list(request, db, schema):
     if request.method == "GET":
         data = table_service.list_tables(schema)
         if data is None:
@@ -28,8 +33,14 @@ def table_list(request, schema):
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema(
+    request=UpdateTableRequest,
+    responses={200: TableResponse}
+)
 @api_view(["GET", "PUT", "DELETE"])
-def table_detail(request, schema, table):
+def table_detail(request, db, schema, table):
+
+
     if request.method == "GET":
         data = table_service.get_table(schema, table)
         if not data:

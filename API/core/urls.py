@@ -26,16 +26,17 @@ urlpatterns = [
     path("databases/<str:db>/schemas/<str:schema>", schema_controller.schema_detail, name="schema_detail"),
 
     # Table Management Endpoints
-    path("schemas/<str:schema>/tables", table_controller.table_list, name="table_list"),
-    path("schemas/<str:schema>/tables/<str:table>", table_controller.table_detail, name="table_detail"),
+    path("databases/<str:db>/schemas/<str:schema>/tables", table_controller.table_list, name="table_list"),
+    path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>", table_controller.table_detail, name="table_detail"),
 
     # Column Management Endpoints
-    path("tables/<str:table>/columns", column_controller.column_list, name="column_list"),
-    path("tables/<str:table>/columns/<str:column>", column_controller.column_detail, name="column_detail"),
+    path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/columns", column_controller.column_list, name="column_list"),
+    path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/columns/<str:column>", column_controller.column_detail, name="column_detail"),
 
     # Row Data Endpoints
-    path("tables/<str:table>/rows", row_controller.row_list, name="row_list"),
-    path("tables/<str:table>/rows/<int:id>", row_controller.row_detail, name="row_detail"),
+    path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/rows", row_controller.row_list, name="row_list"),
+    path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/rows/<int:id>", row_controller.row_detail, name="row_detail"),
 ]
+
 
 
