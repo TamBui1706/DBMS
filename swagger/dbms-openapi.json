@@ -6,6 +6,262 @@
         "description": "REST API documentation for the DBMS project."
     },
     "paths": {
+        "/api/v1/constraints/{constraintId}": {
+            "put": {
+                "operationId": "v1_constraints_update",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "constraintId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateConstraintRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateConstraintRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateConstraintRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_constraints_destroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "constraintId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/constraints/check": {
+            "post": {
+                "operationId": "v1_constraints_check_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CheckConstraintRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CheckConstraintRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CheckConstraintRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/constraints/foreignkey": {
+            "post": {
+                "operationId": "v1_constraints_foreignkey_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ForeignKeyRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ForeignKeyRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ForeignKeyRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/constraints/primarykey": {
+            "post": {
+                "operationId": "v1_constraints_primarykey_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PrimaryKeyRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PrimaryKeyRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PrimaryKeyRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/constraints/unique": {
+            "post": {
+                "operationId": "v1_constraints_unique_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UniqueConstraintRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UniqueConstraintRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UniqueConstraintRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConstraintResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/databases": {
             "get": {
                 "operationId": "v1_databases_list",
@@ -1485,6 +1741,33 @@
                     "type"
                 ]
             },
+            "CheckConstraintRequest": {
+                "type": "object",
+                "properties": {
+                    "table_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "column_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "rule": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "expression": {
+                        "type": "string",
+                        "maxLength": 300
+                    }
+                },
+                "required": [
+                    "column_name",
+                    "expression",
+                    "rule",
+                    "table_name"
+                ]
+            },
             "ColumnResponse": {
                 "type": "object",
                 "properties": {
@@ -1503,6 +1786,34 @@
                 },
                 "required": [
                     "name",
+                    "type"
+                ]
+            },
+            "ConstraintResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "type": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "column_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "rule": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "details": {}
+                },
+                "required": [
+                    "column_name",
+                    "id",
+                    "rule",
                     "type"
                 ]
             },
@@ -1591,6 +1902,38 @@
                     "status"
                 ]
             },
+            "ForeignKeyRequest": {
+                "type": "object",
+                "properties": {
+                    "table_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "column_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "rule": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "referenced_table": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "referenced_column": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "column_name",
+                    "referenced_column",
+                    "referenced_table",
+                    "rule",
+                    "table_name"
+                ]
+            },
             "InsertRowRequest": {
                 "type": "object",
                 "properties": {
@@ -1604,6 +1947,28 @@
                 },
                 "required": [
                     "values"
+                ]
+            },
+            "PrimaryKeyRequest": {
+                "type": "object",
+                "properties": {
+                    "table_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "column_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "rule": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "required": [
+                    "column_name",
+                    "rule",
+                    "table_name"
                 ]
             },
             "RowResponse": {
@@ -1673,6 +2038,28 @@
                     "schema"
                 ]
             },
+            "UniqueConstraintRequest": {
+                "type": "object",
+                "properties": {
+                    "table_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "column_name": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "rule": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "required": [
+                    "column_name",
+                    "rule",
+                    "table_name"
+                ]
+            },
             "UpdateColumnRequest": {
                 "type": "object",
                 "properties": {
@@ -1683,6 +2070,18 @@
                 },
                 "required": [
                     "type"
+                ]
+            },
+            "UpdateConstraintRequest": {
+                "type": "object",
+                "properties": {
+                    "rule": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "required": [
+                    "rule"
                 ]
             },
             "UpdateRowRequest": {
