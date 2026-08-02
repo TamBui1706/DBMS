@@ -5,6 +5,7 @@ from drf_spectacular.types import OpenApiTypes
 from AssignmentStore.DTOs.overview_dto import OverviewSummaryResponseDto
 
 @extend_schema(
+    tags=["Dashboard"],
     parameters=[
         OpenApiParameter(name="from", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="to", type=OpenApiTypes.DATE, location=OpenApiParameter.QUERY),
@@ -13,6 +14,7 @@ from AssignmentStore.DTOs.overview_dto import OverviewSummaryResponseDto
     ],
     responses={200: OverviewSummaryResponseDto}
 )
+
 @api_view(["GET"])
 def overview_summary(request):
     return Response({

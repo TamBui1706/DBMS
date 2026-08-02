@@ -6,6 +6,7 @@ from drf_spectacular.types import OpenApiTypes
 from AssignmentStore.DTOs.subscription_dto import SubscriptionResponseDto
 
 @extend_schema(
+    tags=["Subscription"],
     parameters=[
         OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="status", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
@@ -28,6 +29,7 @@ def subscription_list(request):
     ])
 
 @extend_schema(
+    tags=["Subscription"],
     parameters=[OpenApiParameter(name="includeHistory", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY)],
     responses={200: SubscriptionResponseDto}
 )

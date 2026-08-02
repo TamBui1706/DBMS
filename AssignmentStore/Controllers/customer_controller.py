@@ -9,6 +9,7 @@ from AssignmentStore.DTOs.customer_dto import CreateCustomerRequestDto, Customer
 customer_service = CustomerService()
 
 @extend_schema(
+    tags=["Customers"],
     parameters=[
         OpenApiParameter(name="Search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, description="Search term"),
         OpenApiParameter(name="Status", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY, description="Status filter"),
@@ -54,8 +55,9 @@ def customer_list(request):
             return Response(CustomerResponseDto(created).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@extend_schema(responses={200: CustomerResponseDto})
+@extend_schema(tags=["Customers"], responses={200: CustomerResponseDto})
 @api_view(["GET", "DELETE"])
+
 def customer_detail(request, customerId):
     if request.method == "GET":
         data = customer_service.get_customer(customerId)

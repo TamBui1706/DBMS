@@ -9,6 +9,7 @@ from AssignmentStore.DTOs.product_dto import CreateProductRequestDto, UpdateProd
 product_service = ProductService()
 
 @extend_schema(
+    tags=["Product"],
     parameters=[
         OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="status", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
@@ -47,6 +48,7 @@ def product_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
+    tags=["Product"],
     parameters=[
         OpenApiParameter(name="includeImages", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="includeVariants", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY),
@@ -76,8 +78,8 @@ def product_detail(request, productId):
             return Response({"detail": f"Product '{productId}' not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"Product '{productId}' deleted successfully."}, status=status.HTTP_200_OK)
 
-
 @extend_schema(
+    tags=["Product"],
     parameters=[
         OpenApiParameter(name="setAsPrimary", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="position", type=OpenApiTypes.INT, location=OpenApiParameter.QUERY),

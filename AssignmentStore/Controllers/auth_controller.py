@@ -10,7 +10,8 @@ from AssignmentStore.DTOs.auth_dto import (
 
 auth_service = AuthService()
 
-@extend_schema(request=LoginRequestDto, responses={200: AuthResponseDto})
+@extend_schema(tags=["Auth"], request=LoginRequestDto, responses={200: AuthResponseDto})
+
 @api_view(["POST"])
 def login(request):
     serializer = LoginRequestDto(data=request.data)
@@ -21,7 +22,7 @@ def login(request):
         return Response(result)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@extend_schema(request=RegisterRequestDto, responses={201: AuthResponseDto})
+@extend_schema(tags=["Auth"], request=RegisterRequestDto, responses={201: AuthResponseDto})
 @api_view(["POST"])
 def register(request):
     serializer = RegisterRequestDto(data=request.data)
@@ -35,6 +36,7 @@ def register(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
+    tags=["Auth"],
     parameters=[OpenApiParameter(name="allDevices", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY)],
     request=LogoutRequestDto,
     responses={200: None}
@@ -43,7 +45,7 @@ def register(request):
 def logout(request):
     return Response({"message": "Successfully logged out."})
 
-@extend_schema(request=RefreshTokenRequestDto, responses={200: AuthResponseDto})
+@extend_schema(tags=["Auth"], request=RefreshTokenRequestDto, responses={200: AuthResponseDto})
 @api_view(["POST"])
 def refresh_token(request):
     serializer = RefreshTokenRequestDto(data=request.data)
@@ -56,12 +58,14 @@ def refresh_token(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
+    tags=["Auth"],
     parameters=[
         OpenApiParameter(name="includeStore", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="includeRole", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY),
     ],
     responses={200: UserMeResponseDto}
 )
+
 @api_view(["GET"])
 def user_me(request):
     data = auth_service.get_me()

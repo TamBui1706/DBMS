@@ -5,6 +5,7 @@ from drf_spectacular.types import OpenApiTypes
 from AssignmentStore.DTOs.discount_dto import DiscountResponseDto
 
 @extend_schema(
+    tags=["Discount"],
     parameters=[
         OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="status", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
@@ -20,6 +21,7 @@ from AssignmentStore.DTOs.discount_dto import DiscountResponseDto
     ],
     responses={200: DiscountResponseDto(many=True)}
 )
+
 @api_view(["GET"])
 def discount_list(request):
     return Response([

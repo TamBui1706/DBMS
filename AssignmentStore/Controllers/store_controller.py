@@ -6,6 +6,7 @@ from drf_spectacular.types import OpenApiTypes
 from AssignmentStore.DTOs.store_dto import UpdateStoreRequestDto, StoreResponseDto
 
 @extend_schema(
+    tags=["Store"],
     parameters=[
         OpenApiParameter(name="includeOwner", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="includeSettings", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY),
@@ -13,7 +14,6 @@ from AssignmentStore.DTOs.store_dto import UpdateStoreRequestDto, StoreResponseD
     request=UpdateStoreRequestDto,
     responses={200: StoreResponseDto}
 )
-
 @api_view(["GET", "PUT"])
 def store_detail(request):
     if request.method == "GET":
@@ -39,6 +39,7 @@ def store_detail(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
+    tags=["Store"],
     parameters=[OpenApiParameter(name="replaceExisting", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY)],
     responses={200: StoreResponseDto}
 )

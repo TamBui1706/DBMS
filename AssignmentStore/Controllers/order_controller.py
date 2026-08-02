@@ -11,6 +11,7 @@ from AssignmentStore.DTOs.order_dto import (
 order_service = OrderService()
 
 @extend_schema(
+    tags=["Order"],
     parameters=[
         OpenApiParameter(name="search", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="customerId", type=OpenApiTypes.STR, location=OpenApiParameter.QUERY),
@@ -47,6 +48,7 @@ def order_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
+    tags=["Order"],
     parameters=[
         OpenApiParameter(name="includeItems", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY),
         OpenApiParameter(name="includeCustomer", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY),
@@ -78,6 +80,7 @@ def order_detail(request, orderId):
         return Response({"message": f"Order '{orderId}' deleted successfully."}, status=status.HTTP_200_OK)
 
 @extend_schema(
+    tags=["Order"],
     parameters=[OpenApiParameter(name="notifyCustomer", type=OpenApiTypes.BOOL, location=OpenApiParameter.QUERY)],
     request=UpdateOrderStatusRequestDto,
     responses={200: OrderResponseDto}
