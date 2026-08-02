@@ -8,6 +8,8 @@ from core.controllers import (
     row_controller,
     constraint_controller,
     index_controller,
+    partition_controller,
+    view_controller,
 )
 
 urlpatterns = [
@@ -45,6 +47,14 @@ urlpatterns = [
     path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/indexes/<str:index>/search", index_controller.index_search, name="index_search"),
     path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/indexes/<str:index>/range-search", index_controller.index_range_search, name="index_range_search"),
 
+    # Partition Management Endpoints
+    path("partitions", partition_controller.partition_list, name="partition_list"),
+    path("partitions/<str:partitionId>", partition_controller.partition_detail, name="partition_detail"),
+
+    # View Management Endpoints
+    path("views", view_controller.view_list, name="view_list"),
+    path("views/<str:viewName>", view_controller.view_detail, name="view_detail"),
+
     # Constraint Management Endpoints
     path("constraints/check", constraint_controller.create_check_constraint, name="create_check_constraint"),
     path("constraints/primarykey", constraint_controller.create_primary_key, name="create_primary_key"),
@@ -52,6 +62,7 @@ urlpatterns = [
     path("constraints/foreignkey", constraint_controller.create_foreign_key, name="create_foreign_key"),
     path("constraints/<str:constraintId>", constraint_controller.constraint_detail, name="constraint_detail"),
 ]
+
 
 
 
