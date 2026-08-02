@@ -3,9 +3,12 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
+from AssignmentStore.Services.order_service import OrderService
 from AssignmentStore.DTOs.order_dto import (
     CreateOrderRequestDto, UpdateOrderRequestDto, UpdateOrderStatusRequestDto, OrderResponseDto
 )
+
+order_service = OrderService()
 
 @extend_schema(
     parameters=[
@@ -28,29 +31,19 @@ from AssignmentStore.DTOs.order_dto import (
 @api_view(["GET", "POST"])
 def order_list(request):
     if request.method == "GET":
-        return Response([
-            {
-                "id": "ord_1001",
-                "customerId": "cust_123",
-                "totalAmount": 250.0,
-                "status": "Completed",
-                "paymentStatus": "Paid",
-                "fulfillmentStatus": "Fulfilled",
-                "items": [{"productId": "prd_1", "quantity": 2, "price": 125.0}]
-            }
-        ])
+        customer_id = request.query_params.get("customerId")
+        status_val = request.query_params.get("status")
+        data = order_service.list_orders(customer_id=customer_id, status=status_val)
+        return Response(OrderResponseDto(data, many=True).data)
     elif request.method == "POST":
         serializer = CreateOrderRequestDto(data=request.data)
         if serializer.is_valid():
-            return Response({
-                "id": "ord_1002",
-                "customerId": serializer.validated_data["customerId"],
-                "totalAmount": serializer.validated_data["totalAmount"],
-                "status": "Pending",
-                "paymentStatus": "Unpaid",
-                "fulfillmentStatus": "Unfulfilled",
-                "items": serializer.validated_data.get("items", [])
-            }, status=status.HTTP_201_CREATED)
+            created = order_service.create_order(
+                customer_id=serializer.validated_data["customerId"],
+                total_amount=serializer.validated_data["totalAmount"],
+                items=serializer.validated_data.get("items", [])
+            )
+            return Response(OrderResponseDto(created).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
@@ -66,29 +59,22 @@ def order_list(request):
 @api_view(["GET", "PUT", "DELETE"])
 def order_detail(request, orderId):
     if request.method == "GET":
-        return Response({
-            "id": orderId,
-            "customerId": "cust_123",
-            "totalAmount": 250.0,
-            "status": "Completed",
-            "paymentStatus": "Paid",
-            "fulfillmentStatus": "Fulfilled",
-            "items": []
-        })
+        data = order_service.get_order(orderId)
+        if not data:
+            return Response({"detail": f"Order '{orderId}' not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(OrderResponseDto(data).data)
     elif request.method == "PUT":
         serializer = UpdateOrderRequestDto(data=request.data)
         if serializer.is_valid():
-            return Response({
-                "id": orderId,
-                "customerId": "cust_123",
-                "totalAmount": serializer.validated_data.get("totalAmount", 250.0),
-                "status": serializer.validated_data.get("status", "Completed"),
-                "paymentStatus": "Paid",
-                "fulfillmentStatus": "Fulfilled",
-                "items": []
-            })
+            data = order_service.get_order(orderId)
+            if not data:
+                return Response({"detail": f"Order '{orderId}' not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(OrderResponseDto(data).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "DELETE":
+        success = order_service.delete_order(orderId)
+        if not success:
+            return Response({"detail": f"Order '{orderId}' not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"Order '{orderId}' deleted successfully."}, status=status.HTTP_200_OK)
 
 @extend_schema(
@@ -100,13 +86,9 @@ def order_detail(request, orderId):
 def order_status(request, orderId):
     serializer = UpdateOrderStatusRequestDto(data=request.data)
     if serializer.is_valid():
-        return Response({
-            "id": orderId,
-            "customerId": "cust_123",
-            "totalAmount": 250.0,
-            "status": serializer.validated_data["status"],
-            "paymentStatus": "Paid",
-            "fulfillmentStatus": "Fulfilled",
-            "items": []
-        })
+        updated = order_service.update_order_status(orderId, serializer.validated_data["status"])
+        if not updated:
+            return Response({"detail": f"Order '{orderId}' not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(OrderResponseDto(updated).data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

@@ -3,20 +3,22 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
+from AssignmentStore.Services.auth_service import AuthService
 from AssignmentStore.DTOs.auth_dto import (
     LoginRequestDto, RegisterRequestDto, LogoutRequestDto, RefreshTokenRequestDto, AuthResponseDto, UserMeResponseDto
 )
+
+auth_service = AuthService()
 
 @extend_schema(request=LoginRequestDto, responses={200: AuthResponseDto})
 @api_view(["POST"])
 def login(request):
     serializer = LoginRequestDto(data=request.data)
     if serializer.is_valid():
-        return Response({
-            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "refreshToken": "d98347f8-9a3b-4c2d-8e1f-6a7b8c9d0e1f",
-            "tokenType": "Bearer"
-        })
+        result = auth_service.login(serializer.validated_data["email"], serializer.validated_data["password"])
+        if not result:
+            return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(result)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(request=RegisterRequestDto, responses={201: AuthResponseDto})
@@ -24,11 +26,12 @@ def login(request):
 def register(request):
     serializer = RegisterRequestDto(data=request.data)
     if serializer.is_valid():
-        return Response({
-            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "refreshToken": "d98347f8-9a3b-4c2d-8e1f-6a7b8c9d0e1f",
-            "tokenType": "Bearer"
-        }, status=status.HTTP_201_CREATED)
+        result = auth_service.register(
+            serializer.validated_data["fullName"],
+            serializer.validated_data["email"],
+            serializer.validated_data["password"]
+        )
+        return Response(result, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema(
@@ -46,8 +49,8 @@ def refresh_token(request):
     serializer = RefreshTokenRequestDto(data=request.data)
     if serializer.is_valid():
         return Response({
-            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "refreshToken": "d98347f8-9a3b-4c2d-8e1f-6a7b8c9d0e1f",
+            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refreshed",
+            "refreshToken": serializer.validated_data["refreshToken"],
             "tokenType": "Bearer"
         })
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -61,10 +64,6 @@ def refresh_token(request):
 )
 @api_view(["GET"])
 def user_me(request):
-    return Response({
-        "id": "usr_998877",
-        "fullName": "Sophia Munn",
-        "email": "sophia@untitledui.com",
-        "role": "Admin",
-        "store": {"name": "My online store"}
-    })
+    data = auth_service.get_me()
+    return Response(data)
+
