@@ -16,10 +16,12 @@ def root_view(request):
 urlpatterns = [
     path("", root_view, name="root_view"),
     path("api/v1/", include("core.urls")),
+    path("", include("AssignmentStore.urls")),
     
     # OpenAPI Schema & Swagger UI
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 ]
+
 
 
