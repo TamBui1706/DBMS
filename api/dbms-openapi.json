@@ -6,6 +6,179 @@
         "description": "REST API documentation for the DBMS project."
     },
     "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "operationId": "v1_auth_login_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequestDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "operationId": "v1_auth_logout_create",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "allDevices",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogoutRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogoutRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LogoutRequestDto"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh-token": {
+            "post": {
+                "operationId": "v1_auth_refresh_token_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshTokenRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshTokenRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshTokenRequestDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "operationId": "v1_auth_register_create",
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequestDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/constraints/{constraintId}": {
             "put": {
                 "operationId": "v1_constraints_update",
@@ -2341,6 +2514,115 @@
                 }
             }
         },
+        "/api/v1/discounts": {
+            "get": {
+                "operationId": "v1_discounts_list",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "applicableTo",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "expiresFrom",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "expiresTo",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "sort",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "startsFrom",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "startsTo",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DiscountResponseDto"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v1/health": {
             "get": {
                 "operationId": "v1_health_retrieve",
@@ -2369,6 +2651,584 @@
                 "responses": {
                     "200": {
                         "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v1/orders": {
+            "get": {
+                "operationId": "v1_orders_list",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "createdFrom",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "createdTo",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "customerId",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "fulfillmentStatus",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "maxTotal",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "minTotal",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "paymentStatus",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "sort",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/OrderResponseDto"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_orders_create",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "createdFrom",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "createdTo",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "customerId",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "fulfillmentStatus",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "maxTotal",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "minTotal",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "paymentStatus",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "sort",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateOrderRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateOrderRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateOrderRequestDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/OrderResponseDto"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{orderId}": {
+            "get": {
+                "operationId": "v1_orders_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeCustomer",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeHistory",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeItems",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includePayments",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "orderId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_orders_update",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeCustomer",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeHistory",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeItems",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includePayments",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "orderId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOrderRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOrderRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateOrderRequestDto"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_orders_destroy",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeCustomer",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeHistory",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeItems",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includePayments",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "orderId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/orders/{orderId}/status": {
+            "patch": {
+                "operationId": "v1_orders_status_partial_update",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "notifyCustomer",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "orderId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUpdateOrderStatusRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUpdateOrderStatusRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedUpdateOrderStatusRequestDto"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OrderResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/overview/summary": {
+            "get": {
+                "operationId": "v1_overview_summary_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "currency",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "from",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "timezone",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "to",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OverviewSummaryResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -2570,6 +3430,804 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/PartitionResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/products": {
+            "get": {
+                "operationId": "v1_products_list",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "categoryId",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "createdFrom",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "createdTo",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "maxPrice",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "minPrice",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "sort",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "stockStatus",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductResponseDto"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "v1_products_create",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "categoryId",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "createdFrom",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "createdTo",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "maxPrice",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "minPrice",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "sort",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "stockStatus",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateProductRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateProductRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateProductRequestDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductResponseDto"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{productId}": {
+            "get": {
+                "operationId": "v1_products_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeImages",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeStatistics",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeVariants",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "productId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_products_update",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeImages",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeStatistics",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeVariants",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "productId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateProductRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateProductRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateProductRequestDto"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_products_destroy",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeImages",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeStatistics",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeVariants",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "productId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/products/{productId}/images": {
+            "post": {
+                "operationId": "v1_products_images_create",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "position",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "productId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "setAsPrimary",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/store": {
+            "get": {
+                "operationId": "v1_store_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeOwner",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeSettings",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoreResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "v1_store_update",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeOwner",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeSettings",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateStoreRequestDto"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateStoreRequestDto"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateStoreRequestDto"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoreResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/store/logo": {
+            "post": {
+                "operationId": "v1_store_logo_create",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "replaceExisting",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoreResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/subscriptions": {
+            "get": {
+                "operationId": "v1_subscriptions_list",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "page",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "pageSize",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "planId",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SubscriptionResponseDto"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/subscriptions/{subscriptionId}": {
+            "get": {
+                "operationId": "v1_subscriptions_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeHistory",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "subscriptionId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubscriptionResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1_subscriptions_destroy",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeHistory",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "subscriptionId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubscriptionResponseDto"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/users/me": {
+            "get": {
+                "operationId": "v1_users_me_retrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "includeRole",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "includeStore",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "tags": [
+                    "v1"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserMeResponseDto"
                                 }
                             }
                         },
@@ -2803,6 +4461,28 @@
                     "type"
                 ]
             },
+            "AuthResponseDto": {
+                "type": "object",
+                "properties": {
+                    "accessToken": {
+                        "type": "string",
+                        "maxLength": 500
+                    },
+                    "refreshToken": {
+                        "type": "string",
+                        "maxLength": 500
+                    },
+                    "tokenType": {
+                        "type": "string",
+                        "default": "Bearer",
+                        "maxLength": 50
+                    }
+                },
+                "required": [
+                    "accessToken",
+                    "refreshToken"
+                ]
+            },
             "CheckConstraintRequest": {
                 "type": "object",
                 "properties": {
@@ -2957,6 +4637,27 @@
                     "type"
                 ]
             },
+            "CreateOrderRequestDto": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "totalAmount": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "totalAmount"
+                ]
+            },
             "CreatePartitionRequest": {
                 "type": "object",
                 "properties": {
@@ -2972,6 +4673,37 @@
                 "required": [
                     "partition_key",
                     "table_name"
+                ]
+            },
+            "CreateProductRequestDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "categoryId": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "type": {
+                        "type": "string",
+                        "default": "Physical",
+                        "maxLength": 50
+                    },
+                    "stockStatus": {
+                        "type": "string",
+                        "default": "InStock",
+                        "maxLength": 50
+                    }
+                },
+                "required": [
+                    "name",
+                    "price"
                 ]
             },
             "CreateSchemaRequest": {
@@ -3171,6 +4903,38 @@
                     "status"
                 ]
             },
+            "DiscountResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "code": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "type": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "value": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "status": {
+                        "type": "string",
+                        "maxLength": 50
+                    }
+                },
+                "required": [
+                    "code",
+                    "id",
+                    "status",
+                    "type",
+                    "value"
+                ]
+            },
             "ForeignKeyRequest": {
                 "type": "object",
                 "properties": {
@@ -3287,6 +5051,102 @@
                     "values"
                 ]
             },
+            "LoginRequestDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ]
+            },
+            "LogoutRequestDto": {
+                "type": "object",
+                "properties": {
+                    "refreshToken": {
+                        "type": "string",
+                        "maxLength": 500
+                    }
+                }
+            },
+            "OrderResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "customerId": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "totalAmount": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "status": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "paymentStatus": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "fulfillmentStatus": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "fulfillmentStatus",
+                    "id",
+                    "paymentStatus",
+                    "status",
+                    "totalAmount"
+                ]
+            },
+            "OverviewSummaryResponseDto": {
+                "type": "object",
+                "properties": {
+                    "totalRevenue": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "totalOrders": {
+                        "type": "integer"
+                    },
+                    "totalCustomers": {
+                        "type": "integer"
+                    },
+                    "activeNow": {
+                        "type": "integer"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                },
+                "required": [
+                    "activeNow",
+                    "currency",
+                    "totalCustomers",
+                    "totalOrders",
+                    "totalRevenue"
+                ]
+            },
             "PartitionResponse": {
                 "type": "object",
                 "properties": {
@@ -3309,6 +5169,19 @@
                     "table_name"
                 ]
             },
+            "PatchedUpdateOrderStatusRequestDto": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "notifyCustomer": {
+                        "type": "boolean",
+                        "default": true
+                    }
+                }
+            },
             "PrimaryKeyRequest": {
                 "type": "object",
                 "properties": {
@@ -3329,6 +5202,84 @@
                     "column_name",
                     "rule",
                     "table_name"
+                ]
+            },
+            "ProductResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "categoryId": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "type": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "stockStatus": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 500
+                        }
+                    }
+                },
+                "required": [
+                    "categoryId",
+                    "id",
+                    "name",
+                    "price",
+                    "stockStatus",
+                    "type"
+                ]
+            },
+            "RefreshTokenRequestDto": {
+                "type": "object",
+                "properties": {
+                    "refreshToken": {
+                        "type": "string",
+                        "maxLength": 500
+                    }
+                },
+                "required": [
+                    "refreshToken"
+                ]
+            },
+            "RegisterRequestDto": {
+                "type": "object",
+                "properties": {
+                    "fullName": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 128
+                    }
+                },
+                "required": [
+                    "email",
+                    "fullName",
+                    "password"
                 ]
             },
             "RowResponse": {
@@ -3372,6 +5323,71 @@
                 "required": [
                     "database",
                     "name"
+                ]
+            },
+            "StoreResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "domain": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "logoUrl": {
+                        "type": "string",
+                        "maxLength": 500
+                    },
+                    "currency": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "owner": {}
+                },
+                "required": [
+                    "currency",
+                    "domain",
+                    "id",
+                    "logoUrl",
+                    "name"
+                ]
+            },
+            "SubscriptionResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "customerId": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "planId": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "status": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "id",
+                    "planId",
+                    "price",
+                    "status"
                 ]
             },
             "TableResponse": {
@@ -3453,6 +5469,19 @@
                     "rule"
                 ]
             },
+            "UpdateOrderRequestDto": {
+                "type": "object",
+                "properties": {
+                    "totalAmount": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "status": {
+                        "type": "string",
+                        "maxLength": 50
+                    }
+                }
+            },
             "UpdatePartitionRequest": {
                 "type": "object",
                 "properties": {
@@ -3464,6 +5493,23 @@
                 "required": [
                     "partition_key"
                 ]
+            },
+            "UpdateProductRequestDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "stockStatus": {
+                        "type": "string",
+                        "maxLength": 50
+                    }
+                }
             },
             "UpdateRowRequest": {
                 "type": "object",
@@ -3492,6 +5538,27 @@
                     "name"
                 ]
             },
+            "UpdateStoreRequestDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "domain": {
+                        "type": "string",
+                        "maxLength": 150
+                    },
+                    "currency": {
+                        "type": "string",
+                        "default": "USD",
+                        "maxLength": 10
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
             "UpdateTableRequest": {
                 "type": "object",
                 "properties": {
@@ -3514,6 +5581,34 @@
                 },
                 "required": [
                     "query_definition"
+                ]
+            },
+            "UserMeResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "fullName": {
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "role": {
+                        "type": "string",
+                        "maxLength": 50
+                    },
+                    "store": {}
+                },
+                "required": [
+                    "email",
+                    "fullName",
+                    "id",
+                    "role"
                 ]
             },
             "ViewResponse": {
