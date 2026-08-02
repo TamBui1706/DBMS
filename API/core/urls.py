@@ -7,6 +7,7 @@ from core.controllers import (
     column_controller,
     row_controller,
     constraint_controller,
+    index_controller,
 )
 
 urlpatterns = [
@@ -38,6 +39,12 @@ urlpatterns = [
     path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/rows", row_controller.row_list, name="row_list"),
     path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/rows/<int:id>", row_controller.row_detail, name="row_detail"),
 
+    # Index Management Endpoints
+    path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/indexes", index_controller.index_list, name="index_list"),
+    path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/indexes/<str:index>", index_controller.index_detail, name="index_detail"),
+    path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/indexes/<str:index>/search", index_controller.index_search, name="index_search"),
+    path("databases/<str:db>/schemas/<str:schema>/tables/<str:table>/indexes/<str:index>/range-search", index_controller.index_range_search, name="index_range_search"),
+
     # Constraint Management Endpoints
     path("constraints/check", constraint_controller.create_check_constraint, name="create_check_constraint"),
     path("constraints/primarykey", constraint_controller.create_primary_key, name="create_primary_key"),
@@ -45,6 +52,7 @@ urlpatterns = [
     path("constraints/foreignkey", constraint_controller.create_foreign_key, name="create_foreign_key"),
     path("constraints/<str:constraintId>", constraint_controller.constraint_detail, name="constraint_detail"),
 ]
+
 
 
 
