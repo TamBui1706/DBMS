@@ -1,6 +1,6 @@
 # StoreManager REST API Specification
 
-A decoupled e-commerce application engine providing secure endpoints for authentication, order processing, product management, user privileges, and marketing discounts.
+[(https://github.com/TamBui1706/DBMS/blob/master/AssignmentStore/README.md)
 
 ---
 
