@@ -1,6 +1,6 @@
 # StoreManager REST API Specification
 
-[(https://github.com/TamBui1706/DBMS/blob/master/AssignmentStore/README.md)
+Link : https://builehongtam.id.vn/DBMS/api/
 
 ---
 
