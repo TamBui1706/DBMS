@@ -1,6 +1,6 @@
-# Hướng Dẫn & Ví Dụ Dễ Hiểu Về Nguyên Tắc S.O.L.I.D Trong Thiết Kế DBMS
+# Hướng Dẫn & Ví Dụ Chi Tiết Về Nguyên Tắc S.O.L.I.D Trong Thiết Kế DBMS Engine
 
-Tài liệu này giải thích chi tiết bằng **tiếng Việt** các nguyên tắc thiết kế **SOLID**, đi kèm với **mã nguồn Python chuẩn bằng tiếng Anh** áp dụng trực tiếp vào hệ thống Quản Trị CSDL (DBMS).
+Tài liệu này giải thích chi tiết bằng **tiếng Việt** các nguyên tắc thiết kế **SOLID**, đi kèm với **cách dùng, ví dụ so sánh (Bad Code vs Good Code)** và **đoạn mã Python runnable đầy đủ có hàm `if __name__ == "__main__":` cho TỪNG NGUYÊN TẮC** áp dụng vào hệ thống Quản Trị CSDL (DBMS).
 
 ---
 
@@ -15,12 +15,12 @@ Tài liệu này giải thích chi tiết bằng **tiếng Việt** các nguyên
 ---
 
 ## 1. S - Single Responsibility Principle (SRP)
-### 💡 Giải thích dễ hiểu:
-> **Mỗi class chỉ nên làm ĐÚNG 1 VIỆC duy nhất.**  
-> Ví dụ: Bạn không nên bắt một lớp `Table` vừa lưu trữ dữ liệu hàng trong RAM, vừa ghi log nhật ký (WAL) ra tập tin, vừa mã hóa dữ liệu xuống đĩa cứng. Nếu sau này cách ghi log hay cách lưu đĩa thay đổi, bạn phải sửa lớp `Table` - điều đó rất dễ gây ra lỗi dây chuyền.
+### 💡 1. Giải thích dễ hiểu:
+> **Mỗi class chỉ nên có đúng 1 lý do để thay đổi (Single Responsibility).**  
+> Trong DBMS, một lớp `Table` chỉ nên quản lý dữ liệu hàng trong RAM. Không nên bắt nó vừa quản lý hàng, vừa tự ghi nhật ký WAL ra tập tin, vừa mã hóa dữ liệu nhị phân xuống đĩa cứng.
 
-### ❌ Vi phạm SRP (Bad Code)
-Một class `TableManager` ôm đồm cả 3 việc: quản lý hàng, ghi log nhật ký, và ghi file đĩa.
+### ❌ 2. Vi phạm SRP (Bad Code):
+Lớp `TableManager` làm quá nhiều việc cùng lúc:
 
 ```python
 # BAD CODE: SRP Violation
@@ -30,36 +30,35 @@ class TableManager:
         self.rows = []
 
     def insert_row(self, row_data: dict):
-        # Task 1: Manage row memory
+        # Task 1: Row memory allocation
         self.rows.append(row_data)
         
-        # Task 2: Log write-ahead entry directly to file
+        # Task 2: Direct file log I/O
         with open("wal.log", "a") as log_file:
             log_file.write(f"INSERT INTO {self.table_name}: {row_data}\n")
             
-        # Task 3: Save binary data to storage file
+        # Task 3: Direct binary storage I/O
         with open(f"{self.table_name}.db", "w") as db_file:
             db_file.write(str(self.rows))
 ```
 
-### ✅ Tuân thủ SRP (Good Code)
-Tách thành 3 class riêng biệt, mỗi class làm đúng 1 việc:
-1. `Table`: Chỉ quản lý dữ liệu hàng trong bộ nhớ.
-2. `WalLogger`: Chỉ làm nhiệm vụ ghi log.
-3. `DiskStorage`: Chỉ làm nhiệm vụ ghi đĩa.
+### ✅ 3. Mã nguồn hoàn chỉnh tuân thủ SRP (Có hàm `main` chạy thử):
 
 ```python
-# GOOD CODE: SRP Compliant
+"""
+SRP DEMO: Single Responsibility Principle in DBMS
+"""
+
 class WalLogger:
     def __init__(self, log_path: str = "wal.log"):
         self.log_path = log_path
 
     def write_log(self, action: str, details: str):
-        print(f"[WAL Engine] Logged: [{action}] {details}")
+        print(f"[WAL Engine] Logged action: [{action}] -> {details}")
 
 class DiskStorage:
     def save_file(self, filename: str, content: str):
-        print(f"[Disk Engine] Saved file: {filename}")
+        print(f"[Disk Engine] Saved {len(content)} bytes to filename: {filename}")
 
 class Table:
     def __init__(self, name: str, logger: WalLogger, storage: DiskStorage):
@@ -69,20 +68,35 @@ class Table:
         self.rows = []
 
     def insert_row(self, row_data: dict):
+        # Only responsible for table row domain logic
         self.rows.append(row_data)
         self.logger.write_log("INSERT", f"Table {self.name}: {row_data}")
         self.storage.save_file(f"{self.name}.db", str(self.rows))
+
+# Cách dùng & Thực thi thử nghiệm SRP
+if __name__ == "__main__":
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
+    print("=== 1. SRP DEMO EXECUTION ===")
+    logger = WalLogger()
+    storage = DiskStorage()
+    users_table = Table("Users", logger, storage)
+
+    users_table.insert_row({"id": 1, "username": "admin", "role": "SuperAdmin"})
+    users_table.insert_row({"id": 2, "username": "john_doe", "role": "User"})
 ```
 
 ---
 
 ## 2. O - Open/Closed Principle (OCP)
-### 💡 Giải thích dễ hiểu:
-> **Thêm tính năng mới bằng cách MỞ RỘNG (viết thêm class mới), KHÔNG ĐƯỢC SỬA CODE CŨ.**  
-> Ví dụ: Hệ thống DBMS hỗ trợ tạo chỉ mục (Index). Hôm nay dùng `BTreeIndex`, hôm sau muốn thêm `HashIndex` hoặc `BitmapIndex`, ta chỉ việc tạo thêm class `BitmapIndex` mới kế thừa từ `BaseIndex`. Ta **không được dùng câu lệnh `if-elif`** để sửa code cũ của hệ thống.
+### 💡 1. Giải thích dễ hiểu:
+> **Cho phép mở rộng tính năng mới (Open for extension) nhưng Không được sửa mã nguồn cũ (Closed for modification).**  
+> Khi bổ sung một loại Index mới (`BTreeIndex`, `HashIndex`, `BitmapIndex`), ta viết class mới kế thừa từ `BaseIndex` mà **không dùng `if-elif`** để sửa code sẵn có.
 
-### ❌ Vi phạm OCP (Bad Code)
-Mỗi lần thêm loại Index mới lại phải vào sửa hàm `search` và thêm `if-elif`.
+### ❌ 2. Vi phạm OCP (Bad Code):
+Mỗi lần thêm Index mới lại phải sửa hàm `search`:
 
 ```python
 # BAD CODE: OCP Violation
@@ -92,53 +106,84 @@ class BadIndexManager:
 
     def search(self, key: str):
         if self.index_type == "BTree":
-            print(f"Searching with BTree Index for key '{key}'")
+            print(f"Searching BTree for '{key}'")
         elif self.index_type == "Hash":
-            print(f"Searching with Hash Index for key '{key}'")
-        elif self.index_type == "Bitmap": # Editing existing code when adding new features!
-            print(f"Searching with Bitmap Index for key '{key}'")
+            print(f"Searching Hash for '{key}'")
+        elif self.index_type == "Bitmap": # Must edit existing code!
+            print(f"Searching Bitmap for '{key}'")
         else:
-            raise ValueError("Unsupported index type!")
+            raise ValueError("Unsupported index!")
 ```
 
-### ✅ Tuân thủ OCP (Good Code)
-Tạo 1 class cha trừu tượng `BaseIndex`. Muốn có Index nào thì tạo class con cho Index đó. Code quản lý sẽ gọi qua class cha mà không bao giờ cần sửa đổi.
+### ✅ 3. Mã nguồn hoàn chỉnh tuân thủ OCP (Có hàm `main` chạy thử):
 
 ```python
-# GOOD CODE: OCP Compliant
+"""
+OCP DEMO: Open/Closed Principle in DBMS
+"""
 from abc import ABC, abstractmethod
+from typing import List, Any
 
 class BaseIndex(ABC):
+    def __init__(self, column_name: str):
+        self.column_name = column_name
+
     @abstractmethod
-    def search(self, key: str) -> list:
+    def search(self, key: Any) -> List[int]:
         pass
 
 class BTreeIndex(BaseIndex):
-    def search(self, key: str) -> list:
-        print(f"[BTreeIndex] Navigating B-Tree nodes for key '{key}'")
-        return [1, 2]
+    def search(self, key: Any) -> List[int]:
+        print(f"[BTreeIndex:{self.column_name}] Navigating B-Tree nodes for key '{key}'")
+        return [101, 102]
 
 class HashIndex(BaseIndex):
-    def search(self, key: str) -> list:
-        print(f"[HashIndex] Hashing key '{key}' for direct O(1) lookup")
-        return [3]
+    def search(self, key: Any) -> List[int]:
+        print(f"[HashIndex:{self.column_name}] Hashing key '{key}' for direct O(1) lookup")
+        return [201]
 
-# Extend a new index WITHOUT changing existing classes!
+# Extend new Index class WITHOUT changing existing classes
 class BitmapIndex(BaseIndex):
-    def search(self, key: str) -> list:
-        print(f"[BitmapIndex] Performing bitwise AND operation for key '{key}'")
-        return [4, 5]
+    def search(self, key: Any) -> List[int]:
+        print(f"[BitmapIndex:{self.column_name}] Performing bitwise AND operation for key '{key}'")
+        return [301, 302, 303]
+
+class IndexService:
+    def __init__(self):
+        self.indexes: List[BaseIndex] = []
+
+    def register_index(self, index: BaseIndex):
+        self.indexes.append(index)
+
+    def search_all(self, key: Any):
+        for idx in self.indexes:
+            results = idx.search(key)
+            print(f"  -> {idx.__class__.__name__} matched Row IDs: {results}")
+
+# Cách dùng & Thực thi thử nghiệm OCP
+if __name__ == "__main__":
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
+    print("=== 2. OCP DEMO EXECUTION ===")
+    service = IndexService()
+    service.register_index(BTreeIndex("user_id"))
+    service.register_index(HashIndex("email"))
+    service.register_index(BitmapIndex("status"))
+
+    service.search_all("active_user")
 ```
 
 ---
 
 ## 3. L - Liskov Substitution Principle (LSP)
-### 💡 Giải thích dễ hiểu:
-> **Class con phải thay thế được Class cha mà không làm hỏng chương trình.**  
-> Ví dụ: Class cha `Constraint` có phương thức `validate(value)` trả về `True` hoặc `False`. Class con `NotNullConstraint` hoặc `CheckMinConstraint` phải tuân thủ đúng việc trả về `True/False`, không được tự ý tung ra ngoại lệ `RuntimeError` gây treo ứng dụng khi gặp dữ liệu không hợp lệ.
+### 💡 1. Giải thích dễ hiểu:
+> **Class con phải có thể thay thế hoàn toàn cho Class cha mà không gây hỏng logic chương trình.**  
+> Nếu lớp cha `Constraint` trả về `bool` khi gọi `validate()`, thì mọi lớp con (`NotNullConstraint`, `CheckMinConstraint`) đều phải trả về `bool`, không được ném exception bất ngờ làm chết ứng dụng.
 
-### ❌ Vi phạm LSP (Bad Code)
-Class con `BadNotNullConstraint` lại ném exception bất ngờ làm chết chương trình thay vì trả về `False`.
+### ❌ 2. Vi phạm LSP (Bad Code):
+Class con `BadNotNullConstraint` lại tự ý ném exception gây crash ứng dụng:
 
 ```python
 # BAD CODE: LSP Violation
@@ -150,53 +195,82 @@ class BadNotNullConstraint(BaseConstraint):
     def validate(self, value) -> bool:
         if value is None:
             # LSP Violation: Unexpected crash breaks program flow!
-            raise RuntimeError("Crash! Null value is forbidden!")
+            raise RuntimeError("CRITICAL CRASH: Null value forbidden!")
         return True
 ```
 
-### ✅ Tuân thủ LSP (Good Code)
-Tất cả các class con (`NotNullConstraint`, `CheckMinConstraint`) đều trả về kết quả `bool` đồng nhất và đúng hợp đồng của class cha.
+### ✅ 3. Mã nguồn hoàn chỉnh tuân thủ LSP (Có hàm `main` chạy thử):
 
 ```python
-# GOOD CODE: LSP Compliant
+"""
+LSP DEMO: Liskov Substitution Principle in DBMS
+"""
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List
 
 class Constraint(ABC):
+    def __init__(self, column_name: str):
+        self.column_name = column_name
+
     @abstractmethod
-    def validate(self, value) -> bool:
+    def validate(self, value: Any) -> bool:
         pass
 
 class NotNullConstraint(Constraint):
-    def validate(self, value) -> bool:
+    def validate(self, value: Any) -> bool:
         return value is not None
 
 class CheckMinConstraint(Constraint):
-    def __init__(self, min_val: int):
+    def __init__(self, column_name: str, min_val: int):
+        super().__init__(column_name)
         self.min_val = min_val
 
-    def validate(self, value) -> bool:
+    def validate(self, value: Any) -> bool:
         if value is None:
             return False
         return value >= self.min_val
 
-# Safe execution function accepting any subclass
-def check_all_constraints(constraints: list[Constraint], data: dict) -> bool:
-    for constraint in constraints:
-        if not constraint.validate(data.get("age")):
-            print("[Constraint Check] Validation failed safely returning False!")
-            return False
-    return True
+class ConstraintValidator:
+    def __init__(self, constraints: List[Constraint]):
+        self.constraints = constraints
+
+    def validate_row(self, row_data: Dict[str, Any]) -> bool:
+        for c in self.constraints:
+            val = row_data.get(c.column_name)
+            if not c.validate(val):
+                print(f"[Constraint Fail] Rule '{c.__class__.__name__}' violated on column '{c.column_name}' with value '{val}'")
+                return False
+        return True
+
+# Cách dùng & Thực thi thử nghiệm LSP
+if __name__ == "__main__":
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
+    print("=== 3. LSP DEMO EXECUTION ===")
+    rules: List[Constraint] = [
+        NotNullConstraint("username"),
+        CheckMinConstraint("age", 18)
+    ]
+    validator = ConstraintValidator(rules)
+
+    valid_row = {"username": "john_doe", "age": 20}
+    invalid_row = {"username": "underage_user", "age": 15}
+
+    print(f"Row 1 Valid: {validator.validate_row(valid_row)}")
+    print(f"Row 2 Valid: {validator.validate_row(invalid_row)}")
 ```
 
 ---
 
 ## 4. I - Interface Segregation Principle (ISP)
-### 💡 Giải thích dễ hiểu:
-> **Chia nhỏ Interface thành nhiều bộ tính năng chuyên biệt, không ép class phải chứa phương thức dư thừa.**  
-> Ví dụ: Đừng tạo 1 Interface `Storage` quá to chứa cả `read()`, `write()`, `flush()`, `backup()`. Một bộ đọc dữ liệu Read-Only chỉ cần `IPageReader`, không hề cần hàm `write()` hay `backup()`.
+### 💡 1. Giải thích dễ hiểu:
+> **Nên chia Interface thành nhiều bộ tính năng nhỏ, không ép class phải chứa phương thức mà nó không sử dụng.**  
+> Một bộ đọc dữ liệu Read-Only chỉ cần `IPageReader`, không hề cần các phương thức `write()` hay `flush()`.
 
-### ❌ Vi phạm ISP (Bad Code)
-Một Interface `IMonolithicStorage` khổng lồ bắt bộ đọc Read-Only phải viết hàm `write()` và `flush()`.
+### ❌ 2. Vi phạm ISP (Bad Code):
+Interface khổng lồ `IMonolithicStorage` ép lớp Read-Only phải viết hàm `write()` và `flush()` dư thừa:
 
 ```python
 # BAD CODE: ISP Violation
@@ -211,124 +285,157 @@ class IMonolithicStorage(ABC):
     def flush(self): pass
 
 class ReadOnlyStorage(IMonolithicStorage):
-    def read_page(self, page_id: int):
-        return f"Page Data #{page_id}"
-
-    # Forced to implement useless methods!
-    def write_page(self, page_id: int, data: str):
-        raise NotImplementedError("Read-Only engine cannot write!")
-
-    def flush(self):
-        raise NotImplementedError("Read-Only engine cannot flush!")
+    def read_page(self, page_id: int): return "Data"
+    def write_page(self, page_id: int, data: str): raise NotImplementedError("Cannot write!")
+    def flush(self): raise NotImplementedError("Cannot flush!")
 ```
 
-### ✅ Tuân thủ ISP (Good Code)
-Tách thành các Interface nhỏ gọn: `IPageReader`, `IPageWriter`, `IFlushable`.
+### ✅ 3. Mã nguồn hoàn chỉnh tuân thủ ISP (Có hàm `main` chạy thử):
 
 ```python
-# GOOD CODE: ISP Compliant
+"""
+ISP DEMO: Interface Segregation Principle in DBMS
+"""
 from abc import ABC, abstractmethod
 
 class IPageReader(ABC):
     @abstractmethod
-    def read_page(self, page_id: int) -> str: pass
+    def read_page(self, page_id: int) -> str:
+        pass
 
 class IPageWriter(ABC):
     @abstractmethod
-    def write_page(self, page_id: int, data: str) -> bool: pass
+    def write_page(self, page_id: int, data: str) -> bool:
+        pass
 
-# Read-only class only inherits what it needs!
+class IFlushable(ABC):
+    @abstractmethod
+    def flush(self):
+        pass
+
+# Read-only class inherits ONLY IPageReader
 class FastPageReader(IPageReader):
     def read_page(self, page_id: int) -> str:
-        print(f"[Reader] Reading page #{page_id}")
-        return "PAGE_CONTENT"
+        print(f"[FastPageReader] High-speed reading Page #{page_id}")
+        return f"PAGE_BINARY_DATA_{page_id}"
 
-# Full storage class inherits all required interfaces
-class FullStorageEngine(IPageReader, IPageWriter):
+# Full storage engine inherits all required interfaces
+class FullStorageEngine(IPageReader, IPageWriter, IFlushable):
     def read_page(self, page_id: int) -> str:
-        return "PAGE_CONTENT"
+        return f"PAGE_BINARY_DATA_{page_id}"
 
     def write_page(self, page_id: int, data: str) -> bool:
-        print(f"[Writer] Writing data to page #{page_id}")
+        print(f"[FullStorageEngine] Writing data to Page #{page_id}")
         return True
+
+    def flush(self):
+        print("[FullStorageEngine] Flushing dirty buffer pages to physical disk.")
+
+# Cách dùng & Thực thi thử nghiệm ISP
+if __name__ == "__main__":
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
+    print("=== 4. ISP DEMO EXECUTION ===")
+    reader: IPageReader = FastPageReader()
+    full_engine = FullStorageEngine()
+
+    print("Reading data:", reader.read_page(101))
+    full_engine.write_page(102, "NEW_PAYLOAD")
+    full_engine.flush()
 ```
 
 ---
 
 ## 5. D - Dependency Inversion Principle (DIP)
-### 💡 Giải thích dễ hiểu:
-> **Class cấp cao không được phụ thuộc trực tiếp vào Class cấp thấp. Cả hai phải phụ thuộc qua một Interface trừu tượng.**  
-> Ví dụ: Lớp nghiệp vụ `TableService` không được hardcode trực tiếp `SqliteRepository()`. Hãy truyền qua Interface `ITableRepository`. Khi cần chuyển từ lưu tập tin sang lưu RAM, ta chỉ việc truyền `MemoryRepository` vào mà không phải sửa code của `TableService`.
+### 💡 1. Giải thích dễ hiểu:
+> **Class cấp cao không nên phụ thuộc trực tiếp vào Class cấp thấp. Cả hai phải phụ thuộc qua một Interface trừu tượng (Abstraction).**  
+> Lớp nghiệp vụ `TableService` phụ thuộc vào Interface `ITableRepository`. Lớp lưu trữ cụ thể (`MemoryRepository` hoặc `FileRepository`) được truyền vào thông qua Constructor (Dependency Injection).
 
-### ❌ Vi phạm DIP (Bad Code)
-`TableService` trực tiếp khởi tạo và phụ thuộc cứng vào `SqliteRepository`.
+### ❌ 2. Vi phạm DIP (Bad Code):
+`TableService` trực tiếp hardcode `SqliteRepository()`:
 
 ```python
 # BAD CODE: DIP Violation
 class SqliteRepository:
-    def save(self, data: dict):
-        print("[SQLite] Saved data to disk file.")
+    def save(self, data: dict): print("[SQLite] Saved to disk.")
 
 class BadTableService:
     def __init__(self):
         # Tightly coupled to concrete implementation!
         self.repository = SqliteRepository()
-
-    def create_row(self, data: dict):
-        self.repository.save(data)
 ```
 
-### ✅ Tuân thủ DIP (Good Code)
-`TableService` phụ thuộc vào Interface `ITableRepository`. Lớp lưu trữ cụ thể được truyền vào thông qua Constructor (Dependency Injection).
+### ✅ 3. Mã nguồn hoàn chỉnh tuân thủ DIP (Có hàm `main` chạy thử):
 
 ```python
-# GOOD CODE: DIP Compliant
+"""
+DIP DEMO: Dependency Inversion Principle in DBMS
+"""
 from abc import ABC, abstractmethod
+from typing import Dict, Any
 
 class ITableRepository(ABC):
     @abstractmethod
-    def save(self, data: dict) -> bool: pass
+    def save(self, table_name: str, data: Dict[str, Any]) -> bool:
+        pass
 
 class MemoryRepository(ITableRepository):
-    def save(self, data: dict) -> bool:
-        print("[MemoryRepo] Saved data into RAM storage.")
+    def __init__(self):
+        self.storage = {}
+
+    def save(self, table_name: str, data: Dict[str, Any]) -> bool:
+        if table_name not in self.storage:
+            self.storage[table_name] = []
+        self.storage[table_name].append(data)
+        print(f"[MemoryRepo] Saved to RAM: {table_name} -> {data}")
         return True
 
 class FileRepository(ITableRepository):
-    def save(self, data: dict) -> bool:
-        print("[FileRepo] Saved data into JSON file on disk.")
+    def save(self, table_name: str, data: Dict[str, Any]) -> bool:
+        print(f"[FileRepo] Saved JSON record to '{table_name}.json' on disk.")
         return True
 
-# High-level class depends on abstraction!
+# High-level class depends on ITableRepository abstraction!
 class TableService:
     def __init__(self, repository: ITableRepository):
         # Dependency Injection via constructor
         self.repository = repository
 
-    def create_row(self, data: dict):
-        return self.repository.save(data)
+    def insert_record(self, table_name: str, data: Dict[str, Any]):
+        return self.repository.save(table_name, data)
+
+# Cách dùng & Thực thi thử nghiệm DIP
+if __name__ == "__main__":
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
+    print("=== 5. DIP DEMO EXECUTION ===")
+    memory_service = TableService(MemoryRepository())
+    file_service = TableService(FileRepository())
+
+    memory_service.insert_record("Products", {"id": 1, "name": "Laptop"})
+    file_service.insert_record("Products", {"id": 2, "name": "Phone"})
 ```
 
 ---
 
 ## 6. Kịch Bản Tổng Hợp: Xây Dựng DBMS Đạt 100% SOLID
 
-Đoạn mã Python dưới đây minh họa toàn bộ 5 nguyên tắc **SOLID** hoạt động gắn kết với nhau trong một hệ thống DBMS thu nhỏ:
+Đoạn mã Python dưới đây minh họa toàn bộ 5 nguyên tắc **SOLID** làm việc cùng nhau trong một hệ thống DBMS mini hoàn chỉnh:
 
 ```python
 """
 ==================================================================
-  MINI DBMS ENGINE - IMPLEMENTING 100% S.O.L.I.D DESIGN PRINCIPLES
+  MASTER INTEGRATED DEMO - 100% S.O.L.I.D DBMS ARCHITECTURE
 ==================================================================
 """
-
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
 
-# ----------------------------------------------------------------
-# 1. INTERFACES (ISP & DIP)
-# ----------------------------------------------------------------
-
+# Interfaces (ISP & DIP)
 class IWalLogger(ABC):
     @abstractmethod
     def log(self, action: str, message: str): pass
@@ -336,7 +443,6 @@ class IWalLogger(ABC):
 class IIndexEngine(ABC):
     @abstractmethod
     def index(self, row_id: int, key: Any): pass
-
     @abstractmethod
     def search(self, key: Any) -> List[int]: pass
 
@@ -344,13 +450,10 @@ class ITableRepository(ABC):
     @abstractmethod
     def save_row(self, table_name: str, row_id: int, data: Dict[str, Any]): pass
 
-# ----------------------------------------------------------------
-# 2. CONCRETE IMPLEMENTATIONS (SRP & OCP)
-# ----------------------------------------------------------------
-
+# Implementations (SRP & OCP)
 class DiskWalLogger(IWalLogger):
     def log(self, action: str, message: str):
-        print(f"[WAL Engine] Logged action: [{action}] {message}")
+        print(f"[WAL Engine] [{action}] {message}")
 
 class BTreeIndex(IIndexEngine):
     def __init__(self, column_name: str):
@@ -376,10 +479,7 @@ class MemoryRepository(ITableRepository):
         self.db[table_name].append(data)
         print(f"[Memory Repository] Saved Row #{row_id} into table '{table_name}'")
 
-# ----------------------------------------------------------------
-# 3. CONSTRAINTS DOMAIN (LSP & OCP)
-# ----------------------------------------------------------------
-
+# Constraints Domain (LSP & OCP)
 class DbConstraint(ABC):
     def __init__(self, column_name: str):
         self.column_name = column_name
@@ -406,10 +506,7 @@ class UniqueConstraint(DbConstraint):
         self.seen_values.add(value)
         return True
 
-# ----------------------------------------------------------------
-# 4. HIGH-LEVEL CORE TABLE (SRP & DIP)
-# ----------------------------------------------------------------
-
+# High-Level Core Table Engine (SRP & DIP)
 class DbTable:
     def __init__(self, name: str, repository: ITableRepository, logger: IWalLogger):
         self.name = name
@@ -426,7 +523,6 @@ class DbTable:
         self.indexes.append(index)
 
     def insert(self, row_data: Dict[str, Any]) -> bool:
-        # 1. Validate Constraints (LSP & OCP)
         for constraint in self.constraints:
             val = row_data.get(constraint.column_name)
             if not constraint.validate(val):
@@ -437,44 +533,33 @@ class DbTable:
         row_data["id"] = row_id
         self.current_id += 1
 
-        # 2. Write Log (SRP)
         self.logger.log("INSERT", f"Table '{self.name}', Row #{row_id}")
 
-        # 3. Build Index (OCP)
         for idx in self.indexes:
             col_val = row_data.get(getattr(idx, "column_name", ""))
             if col_val is not None:
                 idx.index(row_id, col_val)
 
-        # 4. Save to Repository (DIP)
         self.repository.save_row(self.name, row_id, row_data)
         return True
 
-# ----------------------------------------------------------------
-# 5. DEMO EXECUTION
-# ----------------------------------------------------------------
-
+# Master Demo Execution
 if __name__ == "__main__":
     import sys
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
     print("=========================================================")
-    print("   DBMS ENGINE DEMO - 100% S.O.L.I.D COMPLIANT")
+    print("   MASTER DBMS ENGINE DEMO - 100% S.O.L.I.D COMPLIANT")
     print("=========================================================\n")
 
-    # Dependency Injection (DIP)
     logger = DiskWalLogger()
     repo = MemoryRepository()
 
-    # Table setup
     users_table = DbTable(name="Users", repository=repo, logger=logger)
-
-    # Attach Constraints (LSP & OCP)
     users_table.add_constraint(MinValueConstraint(column_name="age", min_val=18))
     users_table.add_constraint(UniqueConstraint(column_name="email"))
 
-    # Attach Index (OCP)
     age_index = BTreeIndex(column_name="age")
     users_table.add_index(age_index)
 
