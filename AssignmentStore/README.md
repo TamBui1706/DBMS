@@ -1,6 +1,6 @@
 # StoreManager REST API Specification
 
-A decoupled e-commerce application engine providing secure endpoints for authentication, order processing, product management, user privileges, and marketing discounts.
+Link : https://builehongtam.id.vn/DBMS/api/
 
 ---
 
@@ -112,14 +112,5 @@ Controls recurring client payment plan subscriptions, billing loops, and cancell
 | **PUT** | `/subscriptions/{subscriptionId}` | `subscriptionId` | `None` | `UpdateSubscriptionRequest` | System Administrator |
 | **DELETE** | `/subscriptions/{subscriptionId}` | `subscriptionId` | `cancelImmediately` | `None` | System Administrator |
 
----
 
-## 9. Activation Keys (Licenses)
-Generates, validates, and manages licensing API credentials and software access tokens.
 
-| HTTP Method | Route URI | URI parameters | Query Filters & Options | Request DTO | Access Control |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **GET** | `/licenses` | `None` | `search, status, page, pageSize` | `None` | System Administrator |
-| **GET** | `/licenses/{licenseId}` | `licenseId` | `None` | `None` | System Administrator |
-| **POST** | `/licenses` | `None` | `None` | `CreateLicenseRequest` | System Administrator |
-| **DELETE** | `/licenses/{licenseId}` | `licenseId` | `None` | `None` | System Administrator |
